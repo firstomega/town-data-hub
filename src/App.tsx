@@ -10,11 +10,23 @@ import TownZoning from "./pages/TownZoning";
 import TownPermits from "./pages/TownPermits";
 import TownOrdinances from "./pages/TownOrdinances";
 import TownContacts from "./pages/TownContacts";
+import ParamusOverview from "./pages/ParamusOverview";
+import ParamusZoning from "./pages/ParamusZoning";
+import ParamusPermits from "./pages/ParamusPermits";
+import ParamusOrdinances from "./pages/ParamusOrdinances";
+import ParamusContacts from "./pages/ParamusContacts";
 import ComparisonPage from "./pages/ComparisonPage";
 import QueryResults from "./pages/QueryResults";
 import ChecklistPage from "./pages/ChecklistPage";
 import ContractorDashboard from "./pages/ContractorDashboard";
 import PricingPage from "./pages/PricingPage";
+import LoginPage from "./pages/LoginPage";
+import OnboardingPage from "./pages/OnboardingPage";
+import SearchResultsPage from "./pages/SearchResultsPage";
+import SettingsPage from "./pages/SettingsPage";
+import GuidesPage from "./pages/GuidesPage";
+import GuidePage from "./pages/GuidePage";
+import AboutPage from "./pages/AboutPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,11 +45,23 @@ const App = () => (
           <Route path="/town/ridgewood/permits" element={<TownPermits />} />
           <Route path="/town/ridgewood/ordinances" element={<TownOrdinances />} />
           <Route path="/town/ridgewood/contacts" element={<TownContacts />} />
+          <Route path="/town/paramus" element={<ParamusOverview />} />
+          <Route path="/town/paramus/zoning" element={<ParamusZoning />} />
+          <Route path="/town/paramus/permits" element={<ParamusPermits />} />
+          <Route path="/town/paramus/ordinances" element={<ParamusOrdinances />} />
+          <Route path="/town/paramus/contacts" element={<ParamusContacts />} />
           <Route path="/compare" element={<ComparisonPage />} />
           <Route path="/query" element={<QueryResults />} />
           <Route path="/checklist" element={<ChecklistPage />} />
           <Route path="/contractor" element={<ContractorDashboard />} />
           <Route path="/pricing" element={<PricingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/onboarding" element={<OnboardingPage />} />
+          <Route path="/search" element={<SearchResultsPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
+          <Route path="/guides" element={<GuidesPage />} />
+          <Route path="/guides/:slug" element={<GuidePage />} />
+          <Route path="/about" element={<AboutPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

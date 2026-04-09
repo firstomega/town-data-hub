@@ -1,8 +1,15 @@
-import { Link, useLocation } from "react-router-dom";
-import { Search, Menu } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Search, Menu, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface NavBarProps {
   isLoggedIn?: boolean;
@@ -14,12 +21,23 @@ interface NavBarProps {
 
 export function NavBar({ isLoggedIn = false, showSearch = false, searchValue = "", onSearchChange, onSearchSubmit }: NavBarProps) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [query, setQuery] = useState(searchValue);
 
   const navLinks = [
     { label: "How It Works", href: "/#how-it-works" },
+    { label: "Guides", href: "/guides" },
     { label: "Pricing", href: "/pricing" },
+    { label: "About", href: "/about" },
   ];
+
+  const handleSearchSubmit = () => {
+    if (onSearchSubmit) {
+      onSearchSubmit();
+    } else if (query.trim()) {
+      navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b bg-card">
@@ -38,7 +56,7 @@ export function NavBar({ isLoggedIn = false, showSearch = false, searchValue = "
                 className="pl-9 h-9 bg-secondary border-0"
                 value={query}
                 onChange={(e) => { setQuery(e.target.value); onSearchChange?.(e.target.value); }}
-                onKeyDown={(e) => e.key === "Enter" && onSearchSubmit?.()}
+                onKeyDown={(e) => e.key === "Enter" && handleSearchSubmit()}
               />
             </div>
           </div>
@@ -59,11 +77,35 @@ export function NavBar({ isLoggedIn = false, showSearch = false, searchValue = "
               <Link to="/dashboard">
                 <Button variant="ghost" size="sm">Dashboard</Button>
               </Link>
-              <div className="h-8 w-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-xs font-semibold">JD</div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="h-8 w-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-xs font-semibold cursor-pointer">
+                    JD
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <div className="px-2 py-1.5">
+                    <p className="text-sm font-medium">John Doe</p>
+                    <p className="text-xs text-muted-foreground">john@example.com</p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/settings" className="flex items-center gap-2">
+                      <Settings className="h-3.5 w-3.5" /> Account Settings
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link to="/login" className="flex items-center gap-2 text-destructive">
+                      <LogOut className="h-3.5 w-3.5" /> Sign Out
+                    </Link>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           ) : (
             <div className="flex items-center gap-2">
-              <Link to="/dashboard"><Button variant="ghost" size="sm">Log In</Button></Link>
+              <Link to="/login"><Button variant="ghost" size="sm">Log In</Button></Link>
               <Link to="/pricing"><Button size="sm">Get Started</Button></Link>
             </div>
           )}

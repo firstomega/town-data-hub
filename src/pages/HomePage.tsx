@@ -1,11 +1,12 @@
 import { Search, ArrowRight, Lightbulb, MapPin, Clock, Shield, RefreshCw, Layers } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { useState } from "react";
 
 const featuredTowns = [
   { name: "Ridgewood", county: "Bergen", zones: 14, slug: "ridgewood" },
@@ -23,6 +24,16 @@ const suggestions = [
   "Pool permit requirements Teaneck",
 ];
 
+const quickPills = [
+  { label: "Ridgewood", link: "/town/ridgewood" },
+  { label: "Paramus", link: "/town/paramus" },
+  { label: "Hackensack", link: "/search?q=Hackensack" },
+  { label: "Fort Lee", link: "/search?q=Fort+Lee" },
+  { label: "Fence permits", link: "/search?q=fence+permits" },
+  { label: "Setback rules", link: "/search?q=setback+rules" },
+  { label: "ADU regulations", link: "/search?q=ADU+regulations" },
+];
+
 const howItWorks = [
   { step: 1, icon: Search, title: "Search your address or town", description: "Enter any address, town name, or ask a natural language question about zoning rules." },
   { step: 2, icon: Layers, title: "Get instant zoning rules & permit info", description: "See setbacks, lot coverage, height limits, permit requirements, fees, and timelines." },
@@ -36,6 +47,15 @@ const valueProps = [
 ];
 
 export default function HomePage() {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <NavBar />
@@ -59,8 +79,11 @@ export default function HomePage() {
               <Input
                 placeholder="Enter an address, town name, or ask a question…"
                 className="h-14 pl-12 pr-4 text-base bg-card text-card-foreground border-0 shadow-lg"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
               />
-              <Button className="absolute right-2 top-1/2 -translate-y-1/2 bg-accent hover:bg-accent/90 text-accent-foreground" size="sm">
+              <Button className="absolute right-2 top-1/2 -translate-y-1/2 bg-accent hover:bg-accent/90 text-accent-foreground" size="sm" onClick={handleSearch}>
                 Search
               </Button>
             </div>
@@ -72,6 +95,19 @@ export default function HomePage() {
                   className="text-xs text-primary-foreground/50 hover:text-primary-foreground/80 bg-primary-foreground/10 px-3 py-1.5 rounded transition-colors"
                 >
                   {s}
+                </Link>
+              ))}
+            </div>
+
+            {/* Quick-search pills */}
+            <div className="flex flex-wrap justify-center gap-2 mt-3">
+              {quickPills.map((pill) => (
+                <Link
+                  key={pill.label}
+                  to={pill.link}
+                  className="text-xs text-primary-foreground/60 hover:text-primary-foreground bg-primary-foreground/5 border border-primary-foreground/10 px-3 py-1 rounded-full transition-colors"
+                >
+                  {pill.label}
                 </Link>
               ))}
             </div>
@@ -93,7 +129,7 @@ export default function HomePage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {featuredTowns.map((town) => (
-            <Link key={town.slug} to="/town/ridgewood">
+            <Link key={town.slug} to={town.slug === "ridgewood" || town.slug === "paramus" ? `/town/${town.slug}` : `/search?q=${town.name}`}>
               <Card className="hover:shadow-md transition-shadow cursor-pointer border">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-3">
