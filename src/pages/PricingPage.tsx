@@ -1,4 +1,5 @@
 import { NavBar } from "@/components/NavBar";
+import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,8 +15,8 @@ const tiers = [
     features: [
       { name: "5 town searches/month", included: true },
       { name: "Basic zoning data", included: true },
-      { name: "Community forums", included: true },
-      { name: "AI-powered Q&A", included: false },
+      { name: "Community Notes (read-only)", included: true },
+      { name: "Natural Language Query", included: false },
       { name: "Permit checklists", included: false },
       { name: "Ordinance change alerts", included: false },
       { name: "Town comparisons", included: false },
@@ -32,8 +33,8 @@ const tiers = [
     features: [
       { name: "Unlimited searches", included: true },
       { name: "Full zoning data", included: true },
-      { name: "Community forums", included: true },
-      { name: "AI-powered Q&A", included: true },
+      { name: "Community Notes (read-only)", included: true },
+      { name: "Natural Language Query", included: true },
       { name: "Permit checklists", included: true },
       { name: "Ordinance change alerts", included: true },
       { name: "Town comparisons (2 towns)", included: true },
@@ -50,11 +51,11 @@ const tiers = [
     features: [
       { name: "Everything in Homeowner", included: true },
       { name: "Multi-town dashboards", included: true },
-      { name: "Cross-town rule comparison", included: true },
+      { name: "Unlimited town comparisons", included: true },
       { name: "Team management", included: true },
       { name: "Project tracking", included: true },
       { name: "Priority data updates", included: true },
-      { name: "API access", included: true },
+      { name: "Community Notes (read & write)", included: true },
       { name: "Dedicated support", included: true },
     ],
     cta: "Start 14-Day Free Trial",
@@ -67,9 +68,9 @@ export default function PricingPage() {
   const [seats, setSeats] = useState(3);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <NavBar />
-      <div className="container py-12 max-w-5xl">
+      <div className="container py-12 max-w-5xl flex-1">
         <div className="text-center mb-10">
           <h1 className="text-3xl font-bold text-primary mb-2">Simple, Transparent Pricing</h1>
           <p className="text-muted-foreground mb-6">Start free. Upgrade when you need more.</p>
@@ -185,6 +186,7 @@ export default function PricingPage() {
               { q: "Can I switch plans anytime?", a: "Yes, upgrade or downgrade at any time. Changes take effect at your next billing cycle." },
               { q: "How often is zoning data updated?", a: "We update data within 30 days of any official ordinance change. Pro and Contractor plans get priority updates." },
               { q: "What towns are covered?", a: "We currently cover all 70 municipalities in Bergen County, NJ. More counties coming soon." },
+              { q: "Is my data secure?", a: "Yes. We use industry-standard encryption and never share your personal information with third parties." },
             ].map((faq) => (
               <Card key={faq.q}>
                 <CardContent className="p-4">
@@ -194,8 +196,12 @@ export default function PricingPage() {
               </Card>
             ))}
           </div>
+          <p className="text-center text-sm text-muted-foreground mt-6">
+            Questions? Contact us at <a href="mailto:support@towncenter.io" className="text-accent hover:underline">support@towncenter.io</a>
+          </p>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }

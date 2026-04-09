@@ -1,7 +1,9 @@
 import { TownProfileLayout } from "@/components/TownProfileLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, DollarSign, Layers, MapPin, ArrowRight, Map } from "lucide-react";
+import { Users, DollarSign, Layers, MapPin, ArrowRight, Map, Gavel, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 const stats = [
   { label: "Population", value: "25,255", icon: Users },
@@ -11,15 +13,22 @@ const stats = [
 ];
 
 const nearbyTowns = [
-  { name: "Glen Rock", pop: "11,926", medianHome: "$635,000", zones: 8 },
-  { name: "Midland Park", pop: "7,128", medianHome: "$475,000", zones: 6 },
-  { name: "Wyckoff", pop: "17,006", medianHome: "$720,000", zones: 9 },
-  { name: "Paramus", pop: "26,342", medianHome: "$580,000", zones: 11 },
+  { name: "Glen Rock", medianHome: "$635,000", zones: 8 },
+  { name: "Midland Park", medianHome: "$475,000", zones: 6 },
+  { name: "Wyckoff", medianHome: "$720,000", zones: 9 },
+  { name: "Paramus", medianHome: "$580,000", zones: 11 },
 ];
 
 export default function TownOverview() {
   return (
     <TownProfileLayout>
+      {/* Source Attribution */}
+      <div className="mb-6 p-3 rounded border bg-secondary/30">
+        <p className="text-xs text-muted-foreground">
+          <strong className="text-foreground">Data sourced from Village of Ridgewood Municipal Code.</strong> Last verified: January 15, 2026. Always confirm with the municipality before making decisions.
+        </p>
+      </div>
+
       {/* Stats Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map((s) => (
@@ -63,13 +72,52 @@ export default function TownOverview() {
             <CardContent className="p-5">
               <h3 className="font-semibold text-sm mb-3">Town Character</h3>
               <p className="text-sm text-muted-foreground leading-relaxed">
-                The Village of Ridgewood is a suburban community known for its charming downtown, excellent schools,
-                and tree-lined residential streets. The town features a vibrant Central Business District with local shops
-                and restaurants, surrounded by well-maintained residential neighborhoods. Ridgewood maintains strict
-                zoning regulations to preserve its residential character, with a focus on single-family homes in most
-                residential zones. Recent ordinance updates have addressed accessory dwelling units and sustainable
-                building practices.
+                The Village of Ridgewood is a suburban community known for its charming, walkable downtown and
+                tree-lined residential streets. Located in the heart of Bergen County, Ridgewood features a vibrant
+                Central Business District with locally owned shops, restaurants, and cafés. The town is predominantly
+                single-family residential, with housing stock ranging from turn-of-the-century Colonials to mid-century
+                split-levels. Ridgewood is consistently ranked among the best places to live in New Jersey, driven by
+                its excellent public schools (consistently ranked top 10 in the state), strong property values, and
+                active civic community. The town maintains strict zoning regulations to preserve its residential
+                character, with recent ordinance updates addressing accessory dwelling units (ADUs), sustainable
+                building practices, and stormwater management.
               </p>
+            </CardContent>
+          </Card>
+
+          {/* Variance & Zoning Board */}
+          <Card className="border-accent/20">
+            <CardContent className="p-5">
+              <div className="flex items-start gap-3">
+                <div className="h-9 w-9 rounded bg-accent/10 flex items-center justify-center flex-shrink-0">
+                  <Gavel className="h-4 w-4 text-accent" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-sm mb-1">Variance & Zoning Board of Adjustment</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    If your project doesn't conform to current zoning, you may need to apply for a variance from the
+                    Ridgewood Board of Adjustment. The board meets on the 2nd and 4th Tuesday of each month.
+                  </p>
+                  <div className="grid sm:grid-cols-2 gap-3 text-xs mb-3">
+                    <div className="p-2.5 rounded bg-secondary">
+                      <p className="font-semibold text-foreground mb-0.5">"C" Variance (Bulk)</p>
+                      <p className="text-muted-foreground">For deviations from setback, height, coverage, or lot size requirements.</p>
+                    </div>
+                    <div className="p-2.5 rounded bg-secondary">
+                      <p className="font-semibold text-foreground mb-0.5">"D" Variance (Use)</p>
+                      <p className="text-muted-foreground">For uses not permitted in the zone. Requires enhanced showing of need.</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                    <span>Typical timeline: 6–8 weeks</span>
+                    <span>·</span>
+                    <span>Application fee: $250–$500</span>
+                  </div>
+                  <Link to="/town/ridgewood/contacts" className="inline-flex items-center gap-1 text-xs text-accent mt-2 hover:underline">
+                    View ZBA contact details <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </div>
@@ -90,11 +138,7 @@ export default function TownOverview() {
                       <span className="text-sm font-medium">{t.name}</span>
                       <ArrowRight className="h-3 w-3 text-muted-foreground" />
                     </div>
-                    <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
-                      <div>
-                        <p>Pop.</p>
-                        <p className="font-medium text-foreground">{t.pop}</p>
-                      </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
                       <div>
                         <p>Med. Home</p>
                         <p className="font-medium text-foreground">{t.medianHome}</p>

@@ -1,20 +1,19 @@
-import { Search, ArrowRight, Lightbulb, MapPin, Users, Layers, DollarSign } from "lucide-react";
+import { Search, ArrowRight, Lightbulb, MapPin, Clock, Shield, RefreshCw, Layers } from "lucide-react";
 import { Link } from "react-router-dom";
 import { NavBar } from "@/components/NavBar";
+import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
 const featuredTowns = [
-  { name: "Ridgewood", pop: "25,255", zones: 14, medianHome: "$825,000", slug: "ridgewood" },
-  { name: "Paramus", pop: "26,342", zones: 11, medianHome: "$580,000", slug: "paramus" },
-  { name: "Hackensack", pop: "44,113", zones: 18, medianHome: "$420,000", slug: "hackensack" },
-  { name: "Teaneck", pop: "40,356", zones: 12, medianHome: "$485,000", slug: "teaneck" },
-  { name: "Glen Rock", pop: "11,926", zones: 8, medianHome: "$635,000", slug: "glen-rock" },
-  { name: "Fair Lawn", pop: "33,710", zones: 15, medianHome: "$510,000", slug: "fair-lawn" },
-  { name: "Wyckoff", pop: "17,006", zones: 9, medianHome: "$720,000", slug: "wyckoff" },
-  { name: "Mahwah", pop: "26,363", zones: 16, medianHome: "$575,000", slug: "mahwah" },
+  { name: "Ridgewood", county: "Bergen", zones: 14, slug: "ridgewood" },
+  { name: "Paramus", county: "Bergen", zones: 11, slug: "paramus" },
+  { name: "Hackensack", county: "Bergen", zones: 18, slug: "hackensack" },
+  { name: "Fort Lee", county: "Bergen", zones: 13, slug: "fort-lee" },
+  { name: "Teaneck", county: "Bergen", zones: 12, slug: "teaneck" },
+  { name: "Englewood", county: "Bergen", zones: 15, slug: "englewood" },
 ];
 
 const suggestions = [
@@ -24,9 +23,21 @@ const suggestions = [
   "Pool permit requirements Teaneck",
 ];
 
+const howItWorks = [
+  { step: 1, icon: Search, title: "Search your address or town", description: "Enter any address, town name, or ask a natural language question about zoning rules." },
+  { step: 2, icon: Layers, title: "Get instant zoning rules & permit info", description: "See setbacks, lot coverage, height limits, permit requirements, fees, and timelines." },
+  { step: 3, icon: Clock, title: "Save your project and track changes", description: "Save your address, generate checklists, and get notified when ordinances change." },
+];
+
+const valueProps = [
+  { icon: Clock, title: "Time Savings", description: "Get answers in seconds instead of hours spent calling municipal offices and reading code." },
+  { icon: Shield, title: "Risk Mitigation", description: "Avoid costly permit delays and code violations by knowing the rules before you start." },
+  { icon: RefreshCw, title: "Always Current", description: "Data updated within 30 days of any official ordinance change. Never work with stale info." },
+];
+
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <NavBar />
 
       {/* Hero */}
@@ -80,7 +91,7 @@ export default function HomePage() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {featuredTowns.map((town) => (
             <Link key={town.slug} to="/town/ridgewood">
               <Card className="hover:shadow-md transition-shadow cursor-pointer border">
@@ -89,21 +100,14 @@ export default function HomePage() {
                     <div className="h-8 w-8 rounded bg-secondary flex items-center justify-center">
                       <MapPin className="h-4 w-4 text-accent" />
                     </div>
-                    <h3 className="font-semibold text-sm">{town.name}</h3>
+                    <div>
+                      <h3 className="font-semibold text-sm">{town.name}</h3>
+                      <p className="text-xs text-muted-foreground">{town.county} County</p>
+                    </div>
                   </div>
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div>
-                      <p className="text-muted-foreground">Population</p>
-                      <p className="font-medium">{town.pop}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Zones</p>
-                      <p className="font-medium">{town.zones}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Med. Home</p>
-                      <p className="font-medium">{town.medianHome}</p>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">{town.zones} zoning districts</p>
+                    <span className="text-xs text-accent font-medium">View Profile →</span>
                   </div>
                 </CardContent>
               </Card>
@@ -112,8 +116,28 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* How It Works */}
+      <section className="bg-secondary/30">
+        <div className="container py-12" id="how-it-works">
+          <h2 className="text-xl font-bold text-primary text-center mb-2">How It Works</h2>
+          <p className="text-sm text-muted-foreground text-center mb-8">Three simple steps to zoning clarity</p>
+          <div className="grid md:grid-cols-3 gap-6">
+            {howItWorks.map((step) => (
+              <div key={step.step} className="text-center">
+                <div className="h-12 w-12 rounded-lg bg-accent/10 flex items-center justify-center mx-auto mb-4">
+                  <step.icon className="h-6 w-6 text-accent" />
+                </div>
+                <div className="text-xs font-semibold text-accent mb-1">Step {step.step}</div>
+                <h3 className="font-semibold text-sm mb-2">{step.title}</h3>
+                <p className="text-sm text-muted-foreground">{step.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Did You Know */}
-      <section className="container pb-12">
+      <section className="container py-12">
         <Card className="border-accent/20 bg-accent/5">
           <CardContent className="p-6 flex items-start gap-4">
             <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
@@ -131,15 +155,47 @@ export default function HomePage() {
         </Card>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t bg-card">
-        <div className="container py-8 text-center text-xs text-muted-foreground">
-          <p className="mb-2">
-            TownCenter provides zoning and ordinance information for educational purposes only. Always verify with your local municipality before making decisions.
-          </p>
-          <p>© 2026 TownCenter. All rights reserved.</p>
+      {/* Value Propositions */}
+      <section className="container pb-12">
+        <div className="grid md:grid-cols-3 gap-6">
+          {valueProps.map((vp) => (
+            <Card key={vp.title}>
+              <CardContent className="p-5 text-center">
+                <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center mx-auto mb-3">
+                  <vp.icon className="h-5 w-5 text-accent" />
+                </div>
+                <h3 className="font-semibold text-sm mb-1">{vp.title}</h3>
+                <p className="text-sm text-muted-foreground">{vp.description}</p>
+              </CardContent>
+            </Card>
+          ))}
         </div>
-      </footer>
+      </section>
+
+      {/* Social Proof */}
+      <section className="container pb-12">
+        <div className="text-center py-8 border rounded-lg bg-secondary/20">
+          <p className="text-sm font-semibold text-muted-foreground">
+            Trusted by homeowners and contractors across Bergen County
+          </p>
+          <div className="flex items-center justify-center gap-8 mt-4">
+            <div className="text-center">
+              <p className="text-2xl font-bold text-primary">70</p>
+              <p className="text-xs text-muted-foreground">Municipalities</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-primary">2,400+</p>
+              <p className="text-xs text-muted-foreground">Active Users</p>
+            </div>
+            <div className="text-center">
+              <p className="text-2xl font-bold text-primary">15,000+</p>
+              <p className="text-xs text-muted-foreground">Queries Answered</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <Footer />
     </div>
   );
 }

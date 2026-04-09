@@ -8,6 +8,8 @@ import Dashboard from "./pages/Dashboard";
 import TownOverview from "./pages/TownOverview";
 import TownZoning from "./pages/TownZoning";
 import TownPermits from "./pages/TownPermits";
+import TownOrdinances from "./pages/TownOrdinances";
+import TownContacts from "./pages/TownContacts";
 import ComparisonPage from "./pages/ComparisonPage";
 import QueryResults from "./pages/QueryResults";
 import ChecklistPage from "./pages/ChecklistPage";
@@ -29,6 +31,8 @@ const App = () => (
           <Route path="/town/ridgewood" element={<TownOverview />} />
           <Route path="/town/ridgewood/zoning" element={<TownZoning />} />
           <Route path="/town/ridgewood/permits" element={<TownPermits />} />
+          <Route path="/town/ridgewood/ordinances" element={<TownOrdinances />} />
+          <Route path="/town/ridgewood/contacts" element={<TownContacts />} />
           <Route path="/compare" element={<ComparisonPage />} />
           <Route path="/query" element={<QueryResults />} />
           <Route path="/checklist" element={<ChecklistPage />} />
