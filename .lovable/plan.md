@@ -1,87 +1,95 @@
 
-# TownCenter — Visual Prototype (10 Screens)
 
-## Design System
-- **Palette**: Dark navy (`#0F1A2E`), white, light gray (`#F5F7FA`), accent blue (`#2563EB`), green for positive indicators, amber for warnings, red for negative
-- **Typography**: Inter for body, system font stack. Large bold headings, tight line heights for data density
-- **Aesthetic**: Bloomberg Terminal meets Zillow — authoritative, data-forward, professional. No rounded playful elements. Sharp cards, subtle borders, high information density with good whitespace
-- **Iconography**: Consistent project-type icons (deck, fence, pool, ADU, addition) using Lucide icons throughout
-- **Light mode only**
+# Missing Features from the PRD
 
-## Screens (each as a separate route/page)
+After cross-referencing the full PRD against the current prototype, here are the gaps — organized from most impactful to nice-to-have.
 
-### Screen 1 — Homepage (Logged Out)
-- Top nav: TownCenter logo, "How It Works", "Pricing", Login button, "Get Started" CTA
-- Hero: Large heading "Know Your Zoning Before You Build", prominent search bar (address, town, or question), placeholder suggestions beneath
-- Featured Towns grid: 6-8 Bergen County town cards with town name, population, # of zones, median home value
-- "Did You Know?" trivia card with an interesting zoning fact
-- Footer with legal disclaimer
+---
 
-### Screen 2 — Homepage (Logged In / Dashboard)
-- Persistent left sidebar: saved towns list, saved projects, quick links
-- Top: global search bar remains prominent
-- Main content: "Your Dashboard" with sections for saved towns (cards), active projects (list with status), recent ordinance changes (timeline/feed with affected town + summary)
-- Welcome back greeting with user name
+## High-Impact Missing Features
 
-### Screen 3 — Town Profile: Overview Tab
-- Breadcrumb: NJ > Bergen County > Ridgewood
-- Town header: "Village of Ridgewood" with last updated timestamp and source attribution
-- Tab bar: Overview (active), Zoning, Permits, Ordinances, Contacts
-- Overview content: Key stats row (population, median home value, # zones, total area), embedded zoning map placeholder (gray box with map icon), general town character description
-- Nearby Municipalities module: 3-4 bordering towns as small cards with key stats and links
+### 1. Project Feasibility Quick-Check
+**PRD reference:** "Before a homeowner even calls a contractor, they describe what they want to do ('I want to add a second-story addition') and the app tells them whether it's likely permissible in their zone."
 
-### Screen 4 — Town Profile: Zoning Tab
-- Same header/tabs, Zoning tab active
-- Zone cards or table rows for each district (R-1, R-2, R-3, C-1, C-2, etc.) showing: zone name, description, min lot size, setbacks (front/side/rear), max height, max lot coverage, FAR, permitted uses summary
-- Glossary tooltips on terms like "setback", "FAR", "lot coverage" — shown as dotted underlines with tooltip on hover
-- Clean table layout with alternating row backgrounds for scannability
+Currently missing entirely. This should be a dedicated page or modal (e.g., `/feasibility`) where a user selects a project type + address/zone and gets a pass/fail result against the zone's rules, with specific constraints listed.
 
-### Screen 5 — Town Profile: Permits Tab
-- Same header/tabs, Permits tab active
-- Permit types listed as structured cards: Building Permit, Zoning Permit, Demolition Permit, etc. Each showing requirements, typical timeline, fees, application link
-- Prominent "Permit Checklist Generator" CTA card: "Select your project type to generate a custom checklist" with project type icons (deck, fence, pool, etc.)
+### 2. In-App Notification Center
+**PRD reference:** "In-app notification center for ordinance updates, new community notes on their saved towns, and permit timeline reminders."
 
-### Screen 6 — Town Comparison View
-- Header with two town selectors: Ridgewood vs Paramus
-- Side-by-side comparison table with rows for: population, median home value, # of zones, R-1 setbacks (front/side/rear), max lot coverage, max height, permit turnaround time, building permit fee
-- Color-coded difference indicators (green = more permissive, red = more restrictive, neutral for informational)
-- Icons and visual bars where applicable
+The sidebar has badge counts, but there's no notification dropdown/panel where users can see and dismiss individual notifications. Should be a bell icon in the NavBar with a dropdown showing recent alerts.
 
-### Screen 7 — Natural Language Query Results
-- Search bar at top showing the query: "Can I build a fence over 6 feet in Ridgewood R-1 zone?"
-- AI answer card with blue "AI-Generated Summary" badge and confidence indicator (e.g., "High Confidence" with green dot)
-- Clear answer text with the ruling
-- Source section below showing the actual ordinance text excerpt with citation
-- Disclaimer banner: "Always verify with your municipality before proceeding"
-- Related questions suggestions
+### 3. Saved Projects Feature
+**PRD reference:** "Let users save a specific address + project type combination and track everything related to it: applicable rules, permit status, ordinance changes that might affect it."
 
-### Screen 8 — Permit Checklist Output
-- Header: "Before You Call" Cheat Sheet — Deck at 123 Oak St, Ridgewood NJ
-- Property context: Zone R-2, lot size, current coverage
-- Checklist with checkboxes: required permits, documents to prepare, each with details
-- Municipal contact card: building dept phone, hours, address
-- Estimated timeline and total fees summary
-- Action buttons: "Export as PDF", "Print", "Save to My Projects"
+The Dashboard shows "Active Projects" but there's no `/projects` detail view or a way to create/manage a saved project. A simple project detail page showing the address, zone, applicable rules, and checklist status would complete this.
 
-### Screen 9 — Contractor Dashboard
-- Sidebar with contractor org name and team members
-- Top: global search bar
-- Main: Service area section with multi-town coverage map placeholder, list of covered towns
-- "Rule Variations Across Your Towns" comparison table (key rules across all service area towns)
-- Saved projects across municipalities (list with town, project type, status)
-- Recent ordinance changes feed filtered to service area towns
+### 4. Community Notes on Town Profiles
+**PRD reference:** "Allow verified contractors to leave notes on specific town profiles."
 
-### Screen 10 — Pricing Page
-- Header: "Simple, Transparent Pricing"
-- Toggle: Monthly / Annual (with "Save 20%" badge on annual)
-- Three tier cards: Free ($0), Homeowner ($3/mo), Contractor ($15/mo per seat)
-- Feature comparison matrix below the cards
-- Contractor card includes visual of seat management (add/remove team members)
-- Free trial CTA: "Start your 14-day free trial"
-- FAQ section at bottom
+Community Notes exist on the Contractor Dashboard, but they don't appear on the actual Town Profile pages where homeowners would see them. Each town profile should have a "Community Notes" section (perhaps on the Overview or a new tab) showing contractor tips with upvote counts and verified badges.
 
-## Implementation Approach
-- Each screen as a separate route (`/`, `/dashboard`, `/town/ridgewood`, `/town/ridgewood/zoning`, `/town/ridgewood/permits`, `/compare`, `/query`, `/checklist`, `/contractor`, `/pricing`)
-- All data is hardcoded/mock — this is a visual prototype only
-- Shared layout components: NavBar, Sidebar, TownProfileLayout with tabs
-- Responsive design shown at desktop width
+### 5. Glossary Page
+**PRD reference:** "A persistent, linkable glossary that contextually appears when these terms show up in the data."
+
+Inline tooltips exist on the Zoning tab, but there's no standalone `/glossary` page users can browse. Should list all zoning terms (setback, FAR, variance, nonconforming use, etc.) with definitions.
+
+### 6. "Compare with Another Town" Button on Town Profiles
+**PRD reference:** "This should be accessible from any town profile with a single click."
+
+Town profiles have no link to the comparison page pre-filled with that town. Add a "Compare with another town" button on each Town Profile header.
+
+---
+
+## Medium-Impact Missing Features
+
+### 7. Seasonal Prompts / Contextual Tips
+**PRD reference:** "Surface timely content based on the season."
+
+A small banner or card on the homepage/dashboard: "Spring: Planning a pool? Here's what you need to know about pool permits." Simple to add, makes the app feel alive.
+
+### 8. "Data Pending" State for Incomplete Towns
+**PRD reference:** "When a municipality's data is unavailable or incomplete, the town profile should still exist but display a clear 'data pending' state."
+
+The featured towns grid shows 6 towns but only 2 have actual profiles. The other 4 (Hackensack, Fort Lee, Teaneck, Englewood) should link to stub pages with a "Data coming soon" state rather than dead links.
+
+### 9. User-Submitted Corrections
+**PRD reference:** "Let users flag outdated information ('This setback rule changed in 2024') and route it to you for verification."
+
+A small "Report an issue" or "Suggest a correction" link on town profile data sections. Can be a simple modal with a text field — no backend needed for the prototype.
+
+### 10. Town Meeting Calendar
+**PRD reference:** "If a town has an upcoming zoning board meeting, surface that in the town profile."
+
+Add an "Upcoming Meetings" card on the Town Overview or Contacts tab showing next ZBA and Planning Board meeting dates.
+
+### 11. Project Cost Estimator Hints
+**PRD reference:** "Give users a rough ballpark of what common projects cost in their area."
+
+Add estimated project costs (not just permit fees) to the Checklist page or Permits tab: "Average deck cost in Bergen County: $8,000–$15,000."
+
+### 12. Shareable Town Profile Links
+**PRD reference:** "A shareable link feature — contractors who send a town profile link to a client are doing your marketing."
+
+Add a "Share" button on town profiles that copies the URL with a toast confirmation.
+
+---
+
+## Implementation Plan
+
+### Files to create:
+- `src/pages/FeasibilityCheck.tsx` — Project feasibility quick-check wizard
+- `src/pages/GlossaryPage.tsx` — Full glossary of zoning terms
+- `src/pages/TownStubPage.tsx` — "Data pending" placeholder for towns without full data
+- `src/components/NotificationCenter.tsx` — Bell icon dropdown with notification items
+
+### Files to modify:
+- `src/App.tsx` — Add routes for `/feasibility`, `/glossary`, `/town/:slug` (stub)
+- `src/components/NavBar.tsx` — Add notification bell with dropdown
+- `src/pages/TownOverview.tsx` & `src/pages/ParamusOverview.tsx` — Add Community Notes section, "Compare" button, upcoming meetings card, "Suggest correction" link, "Share" button
+- `src/pages/TownContacts.tsx` & `src/pages/ParamusContacts.tsx` — Add upcoming meeting dates
+- `src/pages/ChecklistPage.tsx` — Add estimated project cost section
+- `src/pages/HomePage.tsx` — Add seasonal prompt card, link stub towns to stub pages
+- `src/pages/Dashboard.tsx` — Add seasonal tip banner
+
+### Estimated scope: ~8 files to create/modify. All mock data, no backend changes.
+
