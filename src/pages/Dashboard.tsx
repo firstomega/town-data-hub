@@ -73,7 +73,21 @@ export default function Dashboard() {
         <main className="flex-1 p-6">
           <div className="max-w-4xl">
             <h1 className="text-2xl font-bold text-primary mb-1">Welcome back, John</h1>
-            <p className="text-sm text-muted-foreground mb-6">Here's what's happening across your saved towns.</p>
+            <p className="text-sm text-muted-foreground mb-4">Here's what's happening across your saved towns.</p>
+
+            {/* Seasonal Tip */}
+            <Card className="mb-6 border-warning/20 bg-warning/5">
+              <CardContent className="p-4 flex items-start gap-3">
+                <span className="text-lg">☀️</span>
+                <div>
+                  <p className="text-sm font-medium">Spring Building Season</p>
+                  <p className="text-xs text-muted-foreground">
+                    Permit applications spike in spring. Submit early to avoid delays.{" "}
+                    <Link to="/feasibility" className="text-accent hover:underline">Check project feasibility →</Link>
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Quick Actions */}
             <section className="mb-8">

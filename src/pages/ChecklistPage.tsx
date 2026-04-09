@@ -125,7 +125,7 @@ export default function ChecklistPage() {
                 <div className="flex items-center gap-3">
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
                   <div>
-                    <p className="text-sm font-medium">Estimated Fees</p>
+                    <p className="text-sm font-medium">Estimated Permit Fees</p>
                     <p className="text-xs text-muted-foreground">$200 - $650 (zoning: $50 + building: $150-$600)</p>
                   </div>
                 </div>
@@ -169,6 +169,32 @@ export default function ChecklistPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Project Cost Estimator */}
+        <Card className="mb-6 border-accent/20">
+          <CardContent className="p-5">
+            <h3 className="font-semibold text-sm mb-1">Estimated Project Cost</h3>
+            <p className="text-xs text-muted-foreground mb-3">Average costs for deck projects in Bergen County, NJ (excluding permit fees).</p>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="p-3 rounded bg-secondary text-center">
+                <p className="text-xs text-muted-foreground mb-1">Basic Deck</p>
+                <p className="text-sm font-bold">$8,000 – $12,000</p>
+                <p className="text-[10px] text-muted-foreground">Pressure-treated wood, 200 sq ft</p>
+              </div>
+              <div className="p-3 rounded bg-secondary text-center">
+                <p className="text-xs text-muted-foreground mb-1">Mid-Range</p>
+                <p className="text-sm font-bold">$15,000 – $25,000</p>
+                <p className="text-[10px] text-muted-foreground">Composite, 300 sq ft with railing</p>
+              </div>
+              <div className="p-3 rounded bg-secondary text-center">
+                <p className="text-xs text-muted-foreground mb-1">Premium</p>
+                <p className="text-sm font-bold">$30,000 – $50,000</p>
+                <p className="text-[10px] text-muted-foreground">Multi-level, built-in seating, lighting</p>
+              </div>
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-2">Source: HomeAdvisor & local contractor estimates, 2025. Costs vary by materials, complexity, and contractor.</p>
+          </CardContent>
+        </Card>
       </div>
       <Footer />
     </div>

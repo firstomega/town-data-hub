@@ -27,6 +27,9 @@ import SettingsPage from "./pages/SettingsPage";
 import GuidesPage from "./pages/GuidesPage";
 import GuidePage from "./pages/GuidePage";
 import AboutPage from "./pages/AboutPage";
+import FeasibilityCheck from "./pages/FeasibilityCheck";
+import GlossaryPage from "./pages/GlossaryPage";
+import TownStubPage from "./pages/TownStubPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -50,6 +53,7 @@ const App = () => (
           <Route path="/town/paramus/permits" element={<ParamusPermits />} />
           <Route path="/town/paramus/ordinances" element={<ParamusOrdinances />} />
           <Route path="/town/paramus/contacts" element={<ParamusContacts />} />
+          <Route path="/town/:slug" element={<TownStubPage />} />
           <Route path="/compare" element={<ComparisonPage />} />
           <Route path="/query" element={<QueryResults />} />
           <Route path="/checklist" element={<ChecklistPage />} />
@@ -62,6 +66,8 @@ const App = () => (
           <Route path="/guides" element={<GuidesPage />} />
           <Route path="/guides/:slug" element={<GuidePage />} />
           <Route path="/about" element={<AboutPage />} />
+          <Route path="/feasibility" element={<FeasibilityCheck />} />
+          <Route path="/glossary" element={<GlossaryPage />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
