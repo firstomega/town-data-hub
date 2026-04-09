@@ -2,17 +2,24 @@ import { Link, useLocation } from "react-router-dom";
 import { NavBar } from "./NavBar";
 import { Footer } from "./Footer";
 import { ChevronRight, Clock } from "lucide-react";
+import { getTown } from "@/data/towns";
 
-const tabs = [
-  { label: "Overview", href: "/town/ridgewood" },
-  { label: "Zoning", href: "/town/ridgewood/zoning" },
-  { label: "Permits", href: "/town/ridgewood/permits" },
-  { label: "Ordinances", href: "/town/ridgewood/ordinances" },
-  { label: "Contacts", href: "/town/ridgewood/contacts" },
-];
+interface TownProfileLayoutProps {
+  children: React.ReactNode;
+  townSlug?: string;
+}
 
-export function TownProfileLayout({ children }: { children: React.ReactNode }) {
+export function TownProfileLayout({ children, townSlug = "ridgewood" }: TownProfileLayoutProps) {
   const location = useLocation();
+  const town = getTown(townSlug);
+
+  const tabs = [
+    { label: "Overview", href: `/town/${town.slug}` },
+    { label: "Zoning", href: `/town/${town.slug}/zoning` },
+    { label: "Permits", href: `/town/${town.slug}/permits` },
+    { label: "Ordinances", href: `/town/${town.slug}/ordinances` },
+    { label: "Contacts", href: `/town/${town.slug}/contacts` },
+  ];
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -22,20 +29,20 @@ export function TownProfileLayout({ children }: { children: React.ReactNode }) {
         <nav className="flex items-center gap-1.5 text-sm text-muted-foreground mb-4">
           <Link to="/" className="hover:text-foreground">NJ</Link>
           <ChevronRight className="h-3 w-3" />
-          <Link to="/" className="hover:text-foreground">Bergen County</Link>
+          <Link to="/" className="hover:text-foreground">{town.county} County</Link>
           <ChevronRight className="h-3 w-3" />
-          <span className="text-foreground font-medium">Ridgewood</span>
+          <span className="text-foreground font-medium">{town.name}</span>
         </nav>
 
         {/* Town Header */}
         <div className="flex items-start justify-between mb-1">
           <div>
-            <h1 className="text-2xl font-bold text-primary">Village of Ridgewood</h1>
-            <p className="text-sm text-muted-foreground">Bergen County, New Jersey</p>
+            <h1 className="text-2xl font-bold text-primary">{town.fullName}</h1>
+            <p className="text-sm text-muted-foreground">{town.county} County, New Jersey</p>
           </div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <Clock className="h-3 w-3" />
-            Updated Jan 15, 2026 · Source: Ridgewood Village Code
+            Updated {town.updated} · Source: {town.source}
           </div>
         </div>
 
