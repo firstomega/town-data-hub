@@ -97,6 +97,27 @@ export default function ParamusContacts() {
           </Card>
         ))}
       </div>
+      {/* Upcoming Meetings */}
+      <Card className="mt-6">
+        <CardContent className="p-5">
+          <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-accent" /> Upcoming Meetings
+          </h3>
+          <div className="grid sm:grid-cols-2 gap-3">
+            <div className="p-3 rounded border bg-secondary/20">
+              <p className="text-sm font-semibold">Zoning Board of Adjustment</p>
+              <p className="text-xs text-muted-foreground">April 17, 2026 · 7:30 PM</p>
+              <p className="text-xs text-muted-foreground">Borough Hall, 1 Jockish Square</p>
+            </div>
+            <div className="p-3 rounded border bg-secondary/20">
+              <p className="text-sm font-semibold">Planning Board</p>
+              <p className="text-xs text-muted-foreground">April 28, 2026 · 7:30 PM</p>
+              <p className="text-xs text-muted-foreground">Borough Hall, 1 Jockish Square</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <Card className="mt-6">
         <CardContent className="p-5">
           <h3 className="font-semibold text-sm mb-3">Official Links</h3>
