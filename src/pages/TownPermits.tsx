@@ -12,6 +12,7 @@ const permits = [
     requirements: ["Completed application form", "Two sets of construction plans", "Property survey", "Contractor license"],
     timeline: "4-6 weeks",
     fee: "$150 - $2,500",
+    feeNote: "depending on project scope",
     link: "#",
   },
   {
@@ -20,6 +21,7 @@ const permits = [
     requirements: ["Completed zoning application", "Property survey showing setbacks", "Plot plan"],
     timeline: "1-2 weeks",
     fee: "$50 - $150",
+    feeNote: "flat fee",
     link: "#",
   },
   {
@@ -28,6 +30,7 @@ const permits = [
     requirements: ["Demolition plan", "Asbestos inspection report", "Utility disconnect confirmation"],
     timeline: "2-3 weeks",
     fee: "$200 - $500",
+    feeNote: "plus inspection fees",
     link: "#",
   },
   {
@@ -36,6 +39,7 @@ const permits = [
     requirements: ["Licensed electrician information", "Scope of work description", "Electrical plans"],
     timeline: "1-2 weeks",
     fee: "$75 - $300",
+    feeNote: "based on amperage",
     link: "#",
   },
 ];
@@ -85,7 +89,7 @@ export default function TownPermits() {
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold text-sm">{p.name}</h3>
                 <Button variant="ghost" size="sm" className="text-xs text-accent gap-1">
-                  Apply <ExternalLink className="h-3 w-3" />
+                  Application Form (PDF) <ExternalLink className="h-3 w-3" />
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground mb-4">{p.description}</p>
@@ -93,11 +97,15 @@ export default function TownPermits() {
               <div className="flex gap-4 mb-4">
                 <div className="flex items-center gap-1.5 text-xs">
                   <Clock className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span>{p.timeline}</span>
+                  <div>
+                    <span className="font-medium">Typical Timeline:</span> {p.timeline}
+                  </div>
                 </div>
-                <div className="flex items-center gap-1.5 text-xs">
-                  <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
-                  <span>{p.fee}</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-xs mb-4">
+                <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
+                <div>
+                  <span className="font-medium">Estimated Fee:</span> {p.fee} <span className="text-muted-foreground">({p.feeNote})</span>
                 </div>
               </div>
 

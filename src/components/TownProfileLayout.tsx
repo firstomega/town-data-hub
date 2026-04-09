@@ -1,22 +1,23 @@
 import { Link, useLocation } from "react-router-dom";
 import { NavBar } from "./NavBar";
+import { Footer } from "./Footer";
 import { ChevronRight, Clock } from "lucide-react";
 
 const tabs = [
   { label: "Overview", href: "/town/ridgewood" },
   { label: "Zoning", href: "/town/ridgewood/zoning" },
   { label: "Permits", href: "/town/ridgewood/permits" },
-  { label: "Ordinances", href: "#" },
-  { label: "Contacts", href: "#" },
+  { label: "Ordinances", href: "/town/ridgewood/ordinances" },
+  { label: "Contacts", href: "/town/ridgewood/contacts" },
 ];
 
 export function TownProfileLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <NavBar isLoggedIn showSearch />
-      <div className="container py-4">
+      <div className="container py-4 flex-1">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1.5 text-sm text-muted-foreground mb-4">
           <Link to="/" className="hover:text-foreground">NJ</Link>
@@ -62,6 +63,7 @@ export function TownProfileLayout({ children }: { children: React.ReactNode }) {
 
         {children}
       </div>
+      <Footer />
     </div>
   );
 }

@@ -1,8 +1,9 @@
 import { NavBar } from "@/components/NavBar";
+import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowUpDown, ChevronDown } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const comparisonData = [
@@ -14,27 +15,29 @@ const comparisonData = [
   { metric: "R-1 Rear Setback", ridgewood: "30 ft", paramus: "25 ft", type: "compare", winner: "paramus" },
   { metric: "Max Lot Coverage (R-1)", ridgewood: "25%", paramus: "30%", type: "compare", winner: "paramus" },
   { metric: "Max Building Height", ridgewood: "35 ft", paramus: "35 ft", type: "compare", winner: "tie" },
-  { metric: "Permit Turnaround", ridgewood: "4-6 weeks", paramus: "3-4 weeks", type: "compare", winner: "paramus" },
-  { metric: "Building Permit Fee", ridgewood: "$150-$2,500", paramus: "$125-$2,000", type: "compare", winner: "paramus" },
   { metric: "ADU Permitted", ridgewood: "Yes (conditional)", paramus: "Yes (all residential)", type: "compare", winner: "paramus" },
   { metric: "Fence Max Height (rear)", ridgewood: "6 ft", paramus: "6 ft", type: "compare", winner: "tie" },
+  { metric: "Building Permit Fee", ridgewood: "$150-$2,500", paramus: "$125-$2,000", type: "compare", winner: "paramus" },
+  { metric: "Zoning Permit Fee", ridgewood: "$50-$150", paramus: "$40-$100", type: "compare", winner: "paramus" },
+  { metric: "Permit Turnaround", ridgewood: "4-6 weeks", paramus: "3-4 weeks", type: "compare", winner: "paramus" },
+  { metric: "Demolition Permit Fee", ridgewood: "$200-$500", paramus: "$150-$400", type: "compare", winner: "paramus" },
 ];
 
 function CompareIndicator({ winner, side }: { winner?: string; side: string }) {
   if (!winner || winner === "tie") return null;
   if (winner === side) {
-    return <span className="inline-block h-2 w-2 rounded-full bg-success ml-2" title="More permissive" />;
+    return <Badge className="ml-2 bg-success/10 text-success border-0 text-[9px]">More Permissive</Badge>;
   }
-  return <span className="inline-block h-2 w-2 rounded-full bg-destructive/40 ml-2" title="More restrictive" />;
+  return <Badge className="ml-2 bg-destructive/10 text-destructive border-0 text-[9px]">More Restrictive</Badge>;
 }
 
 export default function ComparisonPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <NavBar isLoggedIn showSearch />
-      <div className="container py-6">
+      <div className="container py-6 flex-1">
         <h1 className="text-2xl font-bold text-primary mb-1">Town Comparison</h1>
-        <p className="text-sm text-muted-foreground mb-6">Side-by-side comparison of zoning rules and requirements.</p>
+        <p className="text-sm text-muted-foreground mb-6">Side-by-side comparison of zoning rules, permit fees, and timelines.</p>
 
         {/* Town Selectors */}
         <div className="flex items-center gap-4 mb-6">
@@ -45,12 +48,19 @@ export default function ComparisonPage() {
           <Button variant="outline" className="gap-2 min-w-[180px] justify-between">
             Paramus <ChevronDown className="h-4 w-4" />
           </Button>
+          <Button variant="ghost" size="sm" className="text-xs text-accent gap-1.5">
+            <Plus className="h-3.5 w-3.5" /> Add a Third Town
+          </Button>
         </div>
 
         {/* Legend */}
         <div className="flex items-center gap-4 mb-4 text-xs text-muted-foreground">
-          <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-success" /> More permissive</div>
-          <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-destructive/40" /> More restrictive</div>
+          <div className="flex items-center gap-1.5">
+            <Badge className="bg-success/10 text-success border-0 text-[9px]">More Permissive</Badge>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <Badge className="bg-destructive/10 text-destructive border-0 text-[9px]">More Restrictive</Badge>
+          </div>
           <div className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-border" /> Same</div>
         </div>
 
@@ -93,6 +103,7 @@ export default function ComparisonPage() {
           </CardContent>
         </Card>
       </div>
+      <Footer />
     </div>
   );
 }

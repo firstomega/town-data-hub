@@ -1,10 +1,12 @@
 import { NavBar } from "@/components/NavBar";
+import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MapPin, Users, Hammer, Bell, ChevronRight, Map, Plus, Settings } from "lucide-react";
+import { MapPin, Users, Hammer, Bell, ChevronRight, Map, Plus, Settings, ThumbsUp, Filter, UserPlus, Mail } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 
 const serviceTowns = [
   { name: "Ridgewood", zones: 14, activeProjects: 3 },
@@ -36,16 +38,26 @@ const changes = [
 ];
 
 const teamMembers = [
-  { name: "John Doe", role: "Owner", initials: "JD" },
-  { name: "Sarah Kim", role: "Project Manager", initials: "SK" },
-  { name: "Mike Chen", role: "Estimator", initials: "MC" },
+  { name: "John Doe", role: "Owner", initials: "JD", email: "john@buildright.com" },
+  { name: "Sarah Kim", role: "Project Manager", initials: "SK", email: "sarah@buildright.com" },
+  { name: "Mike Chen", role: "Estimator", initials: "MC", email: "mike@buildright.com" },
+];
+
+const communityNotes = [
+  { town: "Ridgewood", note: "Building dept is strict on survey accuracy — use a licensed surveyor, not a sketch.", upvotes: 24 },
+  { town: "Paramus", note: "ADU applications are being fast-tracked since the new ordinance. Expect 2-3 weeks.", upvotes: 18 },
+  { town: "Fair Lawn", note: "Inspector availability limited on Fridays — schedule early in the week.", upvotes: 12 },
 ];
 
 export default function ContractorDashboard() {
+  const [townFilter, setTownFilter] = useState("All");
+
+  const filteredChanges = townFilter === "All" ? changes : changes.filter((c) => c.town === townFilter);
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <NavBar isLoggedIn showSearch />
-      <div className="flex">
+      <div className="flex flex-1">
         {/* Sidebar */}
         <aside className="hidden lg:flex w-64 flex-col border-r bg-card min-h-[calc(100vh-3.5rem)] p-4">
           <div className="mb-6">
@@ -53,7 +65,7 @@ export default function ContractorDashboard() {
               <div className="h-8 w-8 rounded bg-accent text-accent-foreground flex items-center justify-center text-xs font-bold">BD</div>
               <div>
                 <p className="text-sm font-semibold">BuildRight Contractors</p>
-                <p className="text-xs text-muted-foreground">Pro Plan · 3 seats</p>
+                <p className="text-xs text-muted-foreground">Pro Plan · 3 of 5 seats</p>
               </div>
             </div>
           </div>
@@ -70,7 +82,7 @@ export default function ContractorDashboard() {
               </div>
             ))}
             <Button variant="ghost" size="sm" className="mt-2 w-full text-xs text-accent gap-1">
-              <Plus className="h-3 w-3" /> Add Seat
+              <UserPlus className="h-3 w-3" /> Invite Member
             </Button>
           </div>
 
@@ -92,10 +104,33 @@ export default function ContractorDashboard() {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h1 className="text-2xl font-bold text-primary">Contractor Dashboard</h1>
-                <p className="text-sm text-muted-foreground">5 towns · 11 active projects · 3 team members</p>
+                <p className="text-sm text-muted-foreground">5 towns · 11 active projects · 3 of 5 seats used</p>
               </div>
               <Button variant="outline" size="sm" className="gap-1.5"><Settings className="h-3.5 w-3.5" /> Manage</Button>
             </div>
+
+            {/* Team Management Card */}
+            <Card className="mb-6">
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-sm">Team Management</h3>
+                    <p className="text-xs text-muted-foreground">3 of 5 seats used · 2 seats available</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="flex -space-x-2">
+                      {teamMembers.map((m) => (
+                        <div key={m.initials} className="h-8 w-8 rounded-full bg-secondary border-2 border-card flex items-center justify-center text-xs font-medium">{m.initials}</div>
+                      ))}
+                      <div className="h-8 w-8 rounded-full bg-secondary/50 border-2 border-card flex items-center justify-center text-xs text-muted-foreground border-dashed">+2</div>
+                    </div>
+                    <Button variant="outline" size="sm" className="text-xs gap-1.5">
+                      <Mail className="h-3 w-3" /> Invite
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
             {/* Coverage Map */}
             <Card className="mb-6">
@@ -146,7 +181,7 @@ export default function ContractorDashboard() {
               </CardContent>
             </Card>
 
-            <div className="grid lg:grid-cols-2 gap-6">
+            <div className="grid lg:grid-cols-2 gap-6 mb-6">
               {/* Projects */}
               <Card>
                 <CardContent className="p-0">
@@ -166,14 +201,27 @@ export default function ContractorDashboard() {
                 </CardContent>
               </Card>
 
-              {/* Recent Changes */}
+              {/* Recent Changes — Filterable */}
               <Card>
                 <CardContent className="p-0">
-                  <div className="p-4 border-b">
+                  <div className="p-4 border-b flex items-center justify-between">
                     <h2 className="font-semibold text-sm">Recent Ordinance Changes</h2>
+                    <div className="flex items-center gap-1">
+                      <Filter className="h-3 w-3 text-muted-foreground" />
+                      <select
+                        value={townFilter}
+                        onChange={(e) => setTownFilter(e.target.value)}
+                        className="text-xs bg-transparent border-0 text-muted-foreground focus:outline-none"
+                      >
+                        <option value="All">All Towns</option>
+                        {serviceTowns.map((t) => (
+                          <option key={t.name} value={t.name}>{t.name}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                  {changes.map((c, i) => (
-                    <div key={i} className={`px-4 py-3 ${i < changes.length - 1 ? "border-b" : ""}`}>
+                  {filteredChanges.map((c, i) => (
+                    <div key={i} className={`px-4 py-3 ${i < filteredChanges.length - 1 ? "border-b" : ""}`}>
                       <div className="flex items-center gap-2 mb-1">
                         <Badge variant="secondary" className="text-[10px]">{c.town}</Badge>
                         <span className="text-xs text-muted-foreground">{c.date}</span>
@@ -181,12 +229,38 @@ export default function ContractorDashboard() {
                       <p className="text-xs text-muted-foreground">{c.summary}</p>
                     </div>
                   ))}
+                  {filteredChanges.length === 0 && (
+                    <p className="text-xs text-muted-foreground text-center py-4">No changes for this town.</p>
+                  )}
                 </CardContent>
               </Card>
             </div>
+
+            {/* Community Notes */}
+            <Card>
+              <CardContent className="p-0">
+                <div className="p-4 border-b">
+                  <h2 className="font-semibold text-sm">Your Community Notes</h2>
+                  <p className="text-xs text-muted-foreground">Tips you've shared with the community</p>
+                </div>
+                {communityNotes.map((n, i) => (
+                  <div key={i} className={`px-4 py-3 flex items-start gap-3 ${i < communityNotes.length - 1 ? "border-b" : ""}`}>
+                    <div className="flex flex-col items-center gap-0.5 flex-shrink-0 pt-0.5">
+                      <ThumbsUp className="h-3 w-3 text-accent" />
+                      <span className="text-xs font-semibold">{n.upvotes}</span>
+                    </div>
+                    <div>
+                      <Badge variant="secondary" className="text-[10px] mb-1">{n.town}</Badge>
+                      <p className="text-xs text-muted-foreground">{n.note}</p>
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
           </div>
         </main>
       </div>
+      <Footer />
     </div>
   );
 }

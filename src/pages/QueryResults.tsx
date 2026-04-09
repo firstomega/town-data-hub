@@ -1,7 +1,8 @@
 import { NavBar } from "@/components/NavBar";
+import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Search, AlertTriangle, BookOpen, MessageSquare, ExternalLink } from "lucide-react";
+import { Search, AlertTriangle, BookOpen, MessageSquare, ExternalLink, ThumbsUp, ThumbsDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -14,9 +15,9 @@ const relatedQuestions = [
 
 export default function QueryResults() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <NavBar isLoggedIn showSearch />
-      <div className="container py-6 max-w-3xl">
+      <div className="container py-6 max-w-3xl flex-1">
         {/* Search Bar with Query */}
         <div className="relative mb-6">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
@@ -54,6 +55,17 @@ export default function QueryResults() {
                   Variance applications typically take 6-8 weeks and require a public hearing.
                 </p>
               </div>
+            </div>
+
+            {/* Feedback */}
+            <div className="flex items-center gap-3 pt-3 border-t">
+              <span className="text-xs text-muted-foreground">Was this helpful?</span>
+              <Button variant="outline" size="sm" className="text-xs gap-1 h-7">
+                <ThumbsUp className="h-3 w-3" /> Yes
+              </Button>
+              <Button variant="outline" size="sm" className="text-xs gap-1 h-7">
+                <ThumbsDown className="h-3 w-3" /> No
+              </Button>
             </div>
           </CardContent>
         </Card>
@@ -95,7 +107,7 @@ export default function QueryResults() {
         </Card>
 
         {/* Related Questions */}
-        <div>
+        <div className="mb-6">
           <h3 className="font-semibold text-sm mb-3 flex items-center gap-2">
             <MessageSquare className="h-4 w-4 text-muted-foreground" />
             Related Questions
@@ -111,7 +123,22 @@ export default function QueryResults() {
             ))}
           </div>
         </div>
+
+        {/* Ask Another Question */}
+        <Card>
+          <CardContent className="p-4">
+            <h3 className="font-semibold text-sm mb-3">Ask Another Question</h3>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Ask a follow-up or new question…"
+                className="pl-9 h-10 bg-secondary border-0"
+              />
+            </div>
+          </CardContent>
+        </Card>
       </div>
+      <Footer />
     </div>
   );
 }

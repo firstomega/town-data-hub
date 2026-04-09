@@ -1,9 +1,10 @@
 import { NavBar } from "@/components/NavBar";
+import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { FileDown, Printer, Save, Phone, Clock, DollarSign, MapPin, Building } from "lucide-react";
+import { FileDown, Printer, Save, Phone, Clock, DollarSign, MapPin, Building, Mail, ExternalLink } from "lucide-react";
 
 const requiredPermits = [
   { name: "Zoning Permit", desc: "Confirm the deck complies with R-2 setback and coverage requirements" },
@@ -22,27 +23,32 @@ const documents = [
 
 export default function ChecklistPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
       <NavBar isLoggedIn showSearch />
-      <div className="container py-6 max-w-3xl">
+      <div className="container py-6 max-w-3xl flex-1">
         {/* Header */}
-        <div className="flex items-start justify-between mb-6">
+        <div className="flex items-start justify-between mb-4">
           <div>
             <Badge className="mb-2 bg-accent/10 text-accent border-0 text-xs">Before You Call</Badge>
             <h1 className="text-2xl font-bold text-primary mb-1">Permit Checklist: Deck</h1>
             <p className="text-sm text-muted-foreground">123 Oak St, Ridgewood, NJ 07450</p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" className="gap-1.5 text-xs">
-              <FileDown className="h-3.5 w-3.5" /> Export PDF
-            </Button>
-            <Button variant="outline" size="sm" className="gap-1.5 text-xs">
-              <Printer className="h-3.5 w-3.5" /> Print
-            </Button>
-            <Button size="sm" className="gap-1.5 text-xs bg-accent hover:bg-accent/90 text-accent-foreground">
-              <Save className="h-3.5 w-3.5" /> Save to Projects
-            </Button>
-          </div>
+        </div>
+
+        {/* Action Buttons — Prominent at top */}
+        <div className="flex flex-wrap gap-2 mb-6">
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+            <FileDown className="h-3.5 w-3.5" /> Export as PDF
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+            <Printer className="h-3.5 w-3.5" /> Print
+          </Button>
+          <Button variant="outline" size="sm" className="gap-1.5 text-xs">
+            <Mail className="h-3.5 w-3.5" /> Email This Checklist
+          </Button>
+          <Button size="sm" className="gap-1.5 text-xs bg-accent hover:bg-accent/90 text-accent-foreground">
+            <Save className="h-3.5 w-3.5" /> Save This Project
+          </Button>
         </div>
 
         {/* Property Context */}
@@ -153,11 +159,18 @@ export default function ChecklistPage() {
                     <p className="text-xs text-muted-foreground">Ridgewood, NJ 07450</p>
                   </div>
                 </div>
+                <div className="flex items-center gap-3">
+                  <ExternalLink className="h-4 w-4 text-muted-foreground" />
+                  <a href="https://www.ridgewoodnj.net/building" className="text-xs text-accent hover:underline">
+                    www.ridgewoodnj.net/building
+                  </a>
+                </div>
               </div>
             </CardContent>
           </Card>
         </div>
       </div>
+      <Footer />
     </div>
   );
 }
