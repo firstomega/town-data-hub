@@ -1,9 +1,11 @@
 import { TownProfileLayout } from "@/components/TownProfileLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, DollarSign, Layers, MapPin, ArrowRight, Map, Gavel, ExternalLink } from "lucide-react";
+import { Users, DollarSign, Layers, MapPin, ArrowRight, Map, Gavel, ThumbsUp, CheckCircle, Share2, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { SuggestCorrectionDialog } from "@/components/SuggestCorrectionDialog";
+import { toast } from "sonner";
 
 const stats = [
   { label: "Population", value: "25,255", icon: Users },
@@ -16,17 +18,49 @@ const nearbyTowns = [
   { name: "Glen Rock", medianHome: "$635,000", zones: 8 },
   { name: "Midland Park", medianHome: "$475,000", zones: 6 },
   { name: "Wyckoff", medianHome: "$720,000", zones: 9 },
-  { name: "Paramus", medianHome: "$580,000", zones: 11 },
+  { name: "Paramus", medianHome: "$580,000", zones: 11, slug: "paramus" },
+];
+
+const communityNotes = [
+  { author: "Mike R.", badge: "Licensed Contractor", note: "Ridgewood inspectors are very strict about joist hangers on decks. Use Simpson Strong-Tie and have the spec sheet ready at inspection.", upvotes: 14, date: "Dec 2025" },
+  { author: "Sarah K.", badge: "Licensed Contractor", note: "If your fence project is on a corner lot, call the Building Dept before applying — sight triangle rules catch a lot of people off guard.", upvotes: 9, date: "Nov 2025" },
+  { author: "Tom L.", badge: "Licensed Contractor", note: "The permit office gets backed up in spring. Submit your deck/pool applications in February if you want to start building by May.", upvotes: 22, date: "Jan 2026" },
+];
+
+const upcomingMeetings = [
+  { board: "Zoning Board of Adjustment", date: "April 22, 2026", time: "7:30 PM", location: "Village Hall" },
+  { board: "Planning Board", date: "April 16, 2026", time: "7:30 PM", location: "Village Hall" },
 ];
 
 export default function TownOverview() {
   return (
     <TownProfileLayout>
       {/* Source Attribution */}
-      <div className="mb-6 p-3 rounded border bg-secondary/30">
+      <div className="mb-6 p-3 rounded border bg-secondary/30 flex items-center justify-between">
         <p className="text-xs text-muted-foreground">
           <strong className="text-foreground">Data sourced from Village of Ridgewood Municipal Code.</strong> Last verified: January 15, 2026. Always confirm with the municipality before making decisions.
         </p>
+        <SuggestCorrectionDialog townName="Ridgewood" />
+      </div>
+
+      {/* Action Bar */}
+      <div className="flex gap-2 mb-6">
+        <Link to="/compare?town1=ridgewood">
+          <Button variant="outline" size="sm" className="text-xs gap-1.5">
+            <Layers className="h-3.5 w-3.5" /> Compare with Another Town
+          </Button>
+        </Link>
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-xs gap-1.5"
+          onClick={() => {
+            navigator.clipboard.writeText(window.location.href);
+            toast.success("Link copied to clipboard!");
+          }}
+        >
+          <Share2 className="h-3.5 w-3.5" /> Share
+        </Button>
       </div>
 
       {/* Stats Row */}
@@ -60,9 +94,7 @@ export default function TownOverview() {
                 </div>
               </div>
               <div className="p-4 border-t">
-                <p className="text-xs text-muted-foreground">
-                  14 zoning districts · Last boundary update: March 2025
-                </p>
+                <p className="text-xs text-muted-foreground">14 zoning districts · Last boundary update: March 2025</p>
               </div>
             </CardContent>
           </Card>
@@ -120,10 +152,54 @@ export default function TownOverview() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Community Notes */}
+          <Card>
+            <CardContent className="p-5">
+              <h3 className="font-semibold text-sm mb-4">Community Notes</h3>
+              <p className="text-xs text-muted-foreground mb-4">Tips from verified contractors who work in Ridgewood.</p>
+              <div className="space-y-3">
+                {communityNotes.map((n, i) => (
+                  <div key={i} className="p-3 rounded border bg-secondary/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-sm font-medium">{n.author}</span>
+                      <Badge variant="secondary" className="text-[10px] gap-1">
+                        <CheckCircle className="h-2.5 w-2.5" /> {n.badge}
+                      </Badge>
+                      <span className="text-[10px] text-muted-foreground ml-auto">{n.date}</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-2">{n.note}</p>
+                    <button className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+                      <ThumbsUp className="h-3 w-3" /> {n.upvotes}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Sidebar: Nearby Municipalities */}
-        <div>
+        {/* Sidebar */}
+        <div className="space-y-6">
+          {/* Upcoming Meetings */}
+          <Card>
+            <CardContent className="p-5">
+              <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-accent" /> Upcoming Meetings
+              </h3>
+              <div className="space-y-3">
+                {upcomingMeetings.map((m, i) => (
+                  <div key={i} className="p-3 rounded border bg-secondary/20 text-xs">
+                    <p className="font-semibold text-foreground">{m.board}</p>
+                    <p className="text-muted-foreground">{m.date} · {m.time}</p>
+                    <p className="text-muted-foreground">{m.location}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Nearby Municipalities */}
           <Card>
             <CardContent className="p-5">
               <h3 className="font-semibold text-sm mb-4">Nearby Municipalities</h3>
@@ -131,7 +207,7 @@ export default function TownOverview() {
                 {nearbyTowns.map((t) => (
                   <Link
                     key={t.name}
-                    to="/town/ridgewood"
+                    to={t.slug ? `/town/${t.slug}` : "#"}
                     className="block p-3 rounded border hover:bg-secondary/50 transition-colors"
                   >
                     <div className="flex items-center justify-between mb-1.5">

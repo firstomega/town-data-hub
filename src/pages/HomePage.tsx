@@ -9,12 +9,12 @@ import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
 
 const featuredTowns = [
-  { name: "Ridgewood", county: "Bergen", zones: 14, slug: "ridgewood" },
-  { name: "Paramus", county: "Bergen", zones: 11, slug: "paramus" },
-  { name: "Hackensack", county: "Bergen", zones: 18, slug: "hackensack" },
-  { name: "Fort Lee", county: "Bergen", zones: 13, slug: "fort-lee" },
-  { name: "Teaneck", county: "Bergen", zones: 12, slug: "teaneck" },
-  { name: "Englewood", county: "Bergen", zones: 15, slug: "englewood" },
+  { name: "Ridgewood", county: "Bergen", zones: 14, slug: "ridgewood", ready: true },
+  { name: "Paramus", county: "Bergen", zones: 11, slug: "paramus", ready: true },
+  { name: "Hackensack", county: "Bergen", zones: 18, slug: "hackensack", ready: false },
+  { name: "Fort Lee", county: "Bergen", zones: 13, slug: "fort-lee", ready: false },
+  { name: "Teaneck", county: "Bergen", zones: 12, slug: "teaneck", ready: false },
+  { name: "Englewood", county: "Bergen", zones: 15, slug: "englewood", ready: false },
 ];
 
 const suggestions = [
@@ -129,7 +129,7 @@ export default function HomePage() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {featuredTowns.map((town) => (
-            <Link key={town.slug} to={town.slug === "ridgewood" || town.slug === "paramus" ? `/town/${town.slug}` : `/search?q=${town.name}`}>
+            <Link key={town.slug} to={`/town/${town.slug}`}>
               <Card className="hover:shadow-md transition-shadow cursor-pointer border">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-3">
@@ -140,10 +140,13 @@ export default function HomePage() {
                       <h3 className="font-semibold text-sm">{town.name}</h3>
                       <p className="text-xs text-muted-foreground">{town.county} County</p>
                     </div>
+                    {!town.ready && (
+                      <Badge variant="secondary" className="ml-auto text-[10px]">Coming Soon</Badge>
+                    )}
                   </div>
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-muted-foreground">{town.zones} zoning districts</p>
-                    <span className="text-xs text-accent font-medium">View Profile →</span>
+                    <span className="text-xs text-accent font-medium">{town.ready ? "View Profile →" : "Preview →"}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -172,8 +175,26 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Seasonal Prompt */}
+      <section className="container py-6">
+        <Card className="border-warning/20 bg-warning/5">
+          <CardContent className="p-5 flex items-start gap-4">
+            <div className="h-10 w-10 rounded-lg bg-warning/10 flex items-center justify-center flex-shrink-0">
+              <span className="text-lg">☀️</span>
+            </div>
+            <div>
+              <h3 className="font-semibold text-sm mb-1">Spring Building Season</h3>
+              <p className="text-sm text-muted-foreground">
+                Planning a pool or deck this summer? Submit your permit applications now — Bergen County building departments
+                see a 3x increase in applications between March and May. <Link to="/feasibility" className="text-accent hover:underline">Check if your project is feasible →</Link>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </section>
+
       {/* Did You Know */}
-      <section className="container py-12">
+      <section className="container py-6">
         <Card className="border-accent/20 bg-accent/5">
           <CardContent className="p-6 flex items-start gap-4">
             <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">

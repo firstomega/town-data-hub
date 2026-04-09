@@ -1,8 +1,11 @@
 import { TownProfileLayout } from "@/components/TownProfileLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { Users, DollarSign, Layers, MapPin, ArrowRight, Map, Gavel } from "lucide-react";
+import { Users, DollarSign, Layers, MapPin, ArrowRight, Map, Gavel, ThumbsUp, CheckCircle, Share2, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { SuggestCorrectionDialog } from "@/components/SuggestCorrectionDialog";
+import { toast } from "sonner";
 
 const stats = [
   { label: "Population", value: "26,342", icon: Users },
@@ -12,19 +15,51 @@ const stats = [
 ];
 
 const nearbyTowns = [
-  { name: "Ridgewood", medianHome: "$825,000", zones: 14 },
+  { name: "Ridgewood", medianHome: "$825,000", zones: 14, slug: "ridgewood" },
   { name: "Fair Lawn", medianHome: "$490,000", zones: 15 },
   { name: "Rochelle Park", medianHome: "$410,000", zones: 7 },
   { name: "River Edge", medianHome: "$455,000", zones: 9 },
 ];
 
+const communityNotes = [
+  { author: "Joe D.", badge: "Licensed Contractor", note: "Paramus blue laws mean no Sunday deliveries. Plan material drops for Saturday or weekdays.", upvotes: 18, date: "Jan 2026" },
+  { author: "Lisa M.", badge: "Licensed Contractor", note: "The Building Dept here is actually fast — I've gotten permits back in under 2 weeks consistently.", upvotes: 11, date: "Dec 2025" },
+  { author: "Carlos V.", badge: "Licensed Contractor", note: "If you're building an ADU, Paramus just adopted new regs. Much easier than Ridgewood.", upvotes: 7, date: "Jan 2026" },
+];
+
+const upcomingMeetings = [
+  { board: "Zoning Board of Adjustment", date: "April 17, 2026", time: "7:30 PM", location: "Borough Hall" },
+  { board: "Planning Board", date: "April 28, 2026", time: "7:30 PM", location: "Borough Hall" },
+];
+
 export default function ParamusOverview() {
   return (
     <TownProfileLayout townSlug="paramus">
-      <div className="mb-6 p-3 rounded border bg-secondary/30">
+      <div className="mb-6 p-3 rounded border bg-secondary/30 flex items-center justify-between">
         <p className="text-xs text-muted-foreground">
           <strong className="text-foreground">Data sourced from Borough of Paramus Municipal Code.</strong> Last verified: January 10, 2026. Always confirm with the municipality before making decisions.
         </p>
+        <SuggestCorrectionDialog townName="Paramus" />
+      </div>
+
+      {/* Action Bar */}
+      <div className="flex gap-2 mb-6">
+        <Link to="/compare?town1=paramus">
+          <Button variant="outline" size="sm" className="text-xs gap-1.5">
+            <Layers className="h-3.5 w-3.5" /> Compare with Another Town
+          </Button>
+        </Link>
+        <Button
+          variant="outline"
+          size="sm"
+          className="text-xs gap-1.5"
+          onClick={() => {
+            navigator.clipboard.writeText(window.location.href);
+            toast.success("Link copied to clipboard!");
+          }}
+        >
+          <Share2 className="h-3.5 w-3.5" /> Share
+        </Button>
       </div>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -108,15 +143,58 @@ export default function ParamusOverview() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Community Notes */}
+          <Card>
+            <CardContent className="p-5">
+              <h3 className="font-semibold text-sm mb-4">Community Notes</h3>
+              <p className="text-xs text-muted-foreground mb-4">Tips from verified contractors who work in Paramus.</p>
+              <div className="space-y-3">
+                {communityNotes.map((n, i) => (
+                  <div key={i} className="p-3 rounded border bg-secondary/20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-sm font-medium">{n.author}</span>
+                      <Badge variant="secondary" className="text-[10px] gap-1">
+                        <CheckCircle className="h-2.5 w-2.5" /> {n.badge}
+                      </Badge>
+                      <span className="text-[10px] text-muted-foreground ml-auto">{n.date}</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground mb-2">{n.note}</p>
+                    <button className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground">
+                      <ThumbsUp className="h-3 w-3" /> {n.upvotes}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        <div>
+        <div className="space-y-6">
+          {/* Upcoming Meetings */}
+          <Card>
+            <CardContent className="p-5">
+              <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-accent" /> Upcoming Meetings
+              </h3>
+              <div className="space-y-3">
+                {upcomingMeetings.map((m, i) => (
+                  <div key={i} className="p-3 rounded border bg-secondary/20 text-xs">
+                    <p className="font-semibold text-foreground">{m.board}</p>
+                    <p className="text-muted-foreground">{m.date} · {m.time}</p>
+                    <p className="text-muted-foreground">{m.location}</p>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
           <Card>
             <CardContent className="p-5">
               <h3 className="font-semibold text-sm mb-4">Nearby Municipalities</h3>
               <div className="space-y-3">
                 {nearbyTowns.map((t) => (
-                  <Link key={t.name} to={t.name === "Ridgewood" ? "/town/ridgewood" : "#"} className="block p-3 rounded border hover:bg-secondary/50 transition-colors">
+                  <Link key={t.name} to={t.slug ? `/town/${t.slug}` : "#"} className="block p-3 rounded border hover:bg-secondary/50 transition-colors">
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-sm font-medium">{t.name}</span>
                       <ArrowRight className="h-3 w-3 text-muted-foreground" />

@@ -10,6 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { NotificationCenter } from "@/components/NotificationCenter";
 
 interface NavBarProps {
   isLoggedIn?: boolean;
@@ -74,6 +75,7 @@ export function NavBar({ isLoggedIn = false, showSearch = false, searchValue = "
           ))}
           {isLoggedIn ? (
             <div className="flex items-center gap-3">
+              <NotificationCenter />
               <Link to="/dashboard">
                 <Button variant="ghost" size="sm">Dashboard</Button>
               </Link>
