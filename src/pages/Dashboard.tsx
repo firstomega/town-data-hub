@@ -167,7 +167,7 @@ export default function Dashboard() {
                   {activeProjects.map((p, i) => {
                     const Icon = projectIcons[p.type] || Hammer;
                     return (
-                      <div key={i} className={`flex items-center justify-between px-4 py-3 ${i < activeProjects.length - 1 ? "border-b" : ""}`}>
+                      <Link key={i} to={`/project/${i + 1}`} className={`flex items-center justify-between px-4 py-3 hover:bg-secondary/50 transition-colors ${i < activeProjects.length - 1 ? "border-b" : ""}`}>
                         <div className="flex items-center gap-3">
                           <div className="h-8 w-8 rounded bg-secondary flex items-center justify-center">
                             <Icon className="h-4 w-4 text-muted-foreground" />
@@ -177,8 +177,8 @@ export default function Dashboard() {
                             <p className="text-xs text-muted-foreground">{p.address}</p>
                           </div>
                         </div>
-                        <Badge variant="secondary" className="text-xs">{p.status}</Badge>
-                      </div>
+                        <Badge variant="secondary" className={`text-xs ${p.status === "Permit Filed" ? "bg-warning/10 text-warning" : p.status === "Researching" ? "bg-accent/10 text-accent" : ""}`}>{p.status}</Badge>
+                      </Link>
                     );
                   })}
                 </CardContent>

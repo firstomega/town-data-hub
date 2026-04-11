@@ -11,10 +11,17 @@ import { useState } from "react";
 const featuredTowns = [
   { name: "Ridgewood", county: "Bergen", zones: 14, slug: "ridgewood", ready: true },
   { name: "Paramus", county: "Bergen", zones: 11, slug: "paramus", ready: true },
-  { name: "Hackensack", county: "Bergen", zones: 18, slug: "hackensack", ready: false },
-  { name: "Fort Lee", county: "Bergen", zones: 13, slug: "fort-lee", ready: false },
-  { name: "Teaneck", county: "Bergen", zones: 12, slug: "teaneck", ready: false },
-  { name: "Englewood", county: "Bergen", zones: 15, slug: "englewood", ready: false },
+  { name: "Hackensack", county: "Bergen", zones: 12, slug: "hackensack", ready: true, isNew: true },
+  { name: "Fort Lee", county: "Bergen", zones: 10, slug: "fort-lee", ready: true, isNew: true },
+  { name: "Teaneck", county: "Bergen", zones: 9, slug: "teaneck", ready: true, isNew: true },
+  { name: "Englewood", county: "Bergen", zones: 11, slug: "englewood", ready: true, isNew: true },
+  { name: "Glen Rock", county: "Bergen", zones: 6, slug: "glen-rock", ready: true, isNew: true },
+];
+
+const testimonials = [
+  { quote: "I saved over 5 hours researching setback rules for my deck project. TownCenter had everything in one place.", author: "Sarah M.", role: "Homeowner", town: "Ridgewood" },
+  { quote: "I use TownCenter for every new project. Comparing zoning rules across my 8 towns used to take half a day.", author: "Mike R.", role: "General Contractor", town: "Bergen County" },
+  { quote: "The permit checklist alone is worth the subscription. I knew exactly what to bring to town hall.", author: "David L.", role: "Homeowner", town: "Paramus" },
 ];
 
 const suggestions = [
@@ -127,10 +134,10 @@ export default function HomePage() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {featuredTowns.map((town) => (
             <Link key={town.slug} to={`/town/${town.slug}`}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer border">
+              <Card className="hover:shadow-md transition-all hover:-translate-y-0.5 cursor-pointer border">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="h-8 w-8 rounded bg-secondary flex items-center justify-center">
@@ -140,13 +147,13 @@ export default function HomePage() {
                       <h3 className="font-semibold text-sm">{town.name}</h3>
                       <p className="text-xs text-muted-foreground">{town.county} County</p>
                     </div>
-                    {!town.ready && (
-                      <Badge variant="secondary" className="ml-auto text-[10px]">Coming Soon</Badge>
+                    {(town as any).isNew && (
+                      <Badge className="ml-auto bg-success/10 text-success border-0 text-[10px]">New</Badge>
                     )}
                   </div>
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-muted-foreground">{town.zones} zoning districts</p>
-                    <span className="text-xs text-accent font-medium">{town.ready ? "View Profile →" : "Preview →"}</span>
+                    <span className="text-xs text-accent font-medium">View Profile →</span>
                   </div>
                 </CardContent>
               </Card>
@@ -229,13 +236,26 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Social Proof */}
-      <section className="container pb-12">
-        <div className="text-center py-8 border rounded-lg bg-secondary/20">
-          <p className="text-sm font-semibold text-muted-foreground">
-            Trusted by homeowners and contractors across Bergen County
-          </p>
-          <div className="flex items-center justify-center gap-8 mt-4">
+      {/* Testimonials */}
+      <section className="container pb-8">
+        <p className="text-sm font-semibold text-muted-foreground text-center mb-6">
+          Trusted by homeowners and contractors across Bergen County
+        </p>
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
+          {testimonials.map((t) => (
+            <Card key={t.author} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-5">
+                <p className="text-sm text-muted-foreground mb-4 italic">"{t.quote}"</p>
+                <div>
+                  <p className="text-sm font-semibold">{t.author}</p>
+                  <p className="text-xs text-muted-foreground">{t.role}, {t.town}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="text-center py-6 border rounded-lg bg-secondary/20">
+          <div className="flex items-center justify-center gap-8">
             <div className="text-center">
               <p className="text-2xl font-bold text-primary">70</p>
               <p className="text-xs text-muted-foreground">Municipalities</p>

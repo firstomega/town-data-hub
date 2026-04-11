@@ -3,6 +3,8 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { CommandPalette } from "@/components/CommandPalette";
+import { BackToTop } from "@/components/BackToTop";
 import HomePage from "./pages/HomePage";
 import Dashboard from "./pages/Dashboard";
 import TownOverview from "./pages/TownOverview";
@@ -15,6 +17,11 @@ import ParamusZoning from "./pages/ParamusZoning";
 import ParamusPermits from "./pages/ParamusPermits";
 import ParamusOrdinances from "./pages/ParamusOrdinances";
 import ParamusContacts from "./pages/ParamusContacts";
+import GenericTownOverview from "./pages/GenericTownOverview";
+import GenericTownZoning from "./pages/GenericTownZoning";
+import GenericTownPermits from "./pages/GenericTownPermits";
+import GenericTownOrdinances from "./pages/GenericTownOrdinances";
+import GenericTownContacts from "./pages/GenericTownContacts";
 import ComparisonPage from "./pages/ComparisonPage";
 import QueryResults from "./pages/QueryResults";
 import ChecklistPage from "./pages/ChecklistPage";
@@ -29,7 +36,9 @@ import GuidePage from "./pages/GuidePage";
 import AboutPage from "./pages/AboutPage";
 import FeasibilityCheck from "./pages/FeasibilityCheck";
 import GlossaryPage from "./pages/GlossaryPage";
-import TownStubPage from "./pages/TownStubPage";
+import ProjectDetail from "./pages/ProjectDetail";
+import TermsPage from "./pages/TermsPage";
+import AdminDashboard from "./pages/AdminDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -40,6 +49,8 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
+        <CommandPalette />
+        <BackToTop />
         <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/dashboard" element={<Dashboard />} />
@@ -53,7 +64,11 @@ const App = () => (
           <Route path="/town/paramus/permits" element={<ParamusPermits />} />
           <Route path="/town/paramus/ordinances" element={<ParamusOrdinances />} />
           <Route path="/town/paramus/contacts" element={<ParamusContacts />} />
-          <Route path="/town/:slug" element={<TownStubPage />} />
+          <Route path="/town/:slug" element={<GenericTownOverview />} />
+          <Route path="/town/:slug/zoning" element={<GenericTownZoning />} />
+          <Route path="/town/:slug/permits" element={<GenericTownPermits />} />
+          <Route path="/town/:slug/ordinances" element={<GenericTownOrdinances />} />
+          <Route path="/town/:slug/contacts" element={<GenericTownContacts />} />
           <Route path="/compare" element={<ComparisonPage />} />
           <Route path="/query" element={<QueryResults />} />
           <Route path="/checklist" element={<ChecklistPage />} />
@@ -68,6 +83,9 @@ const App = () => (
           <Route path="/about" element={<AboutPage />} />
           <Route path="/feasibility" element={<FeasibilityCheck />} />
           <Route path="/glossary" element={<GlossaryPage />} />
+          <Route path="/project/:id" element={<ProjectDetail />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/admin" element={<AdminDashboard />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
