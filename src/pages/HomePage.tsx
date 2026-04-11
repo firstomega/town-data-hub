@@ -11,10 +11,17 @@ import { useState } from "react";
 const featuredTowns = [
   { name: "Ridgewood", county: "Bergen", zones: 14, slug: "ridgewood", ready: true },
   { name: "Paramus", county: "Bergen", zones: 11, slug: "paramus", ready: true },
-  { name: "Hackensack", county: "Bergen", zones: 18, slug: "hackensack", ready: false },
-  { name: "Fort Lee", county: "Bergen", zones: 13, slug: "fort-lee", ready: false },
-  { name: "Teaneck", county: "Bergen", zones: 12, slug: "teaneck", ready: false },
-  { name: "Englewood", county: "Bergen", zones: 15, slug: "englewood", ready: false },
+  { name: "Hackensack", county: "Bergen", zones: 12, slug: "hackensack", ready: true, isNew: true },
+  { name: "Fort Lee", county: "Bergen", zones: 10, slug: "fort-lee", ready: true, isNew: true },
+  { name: "Teaneck", county: "Bergen", zones: 9, slug: "teaneck", ready: true, isNew: true },
+  { name: "Englewood", county: "Bergen", zones: 11, slug: "englewood", ready: true, isNew: true },
+  { name: "Glen Rock", county: "Bergen", zones: 6, slug: "glen-rock", ready: true, isNew: true },
+];
+
+const testimonials = [
+  { quote: "I saved over 5 hours researching setback rules for my deck project. TownCenter had everything in one place.", author: "Sarah M.", role: "Homeowner", town: "Ridgewood" },
+  { quote: "I use TownCenter for every new project. Comparing zoning rules across my 8 towns used to take half a day.", author: "Mike R.", role: "General Contractor", town: "Bergen County" },
+  { quote: "The permit checklist alone is worth the subscription. I knew exactly what to bring to town hall.", author: "David L.", role: "Homeowner", town: "Paramus" },
 ];
 
 const suggestions = [
