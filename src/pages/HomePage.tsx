@@ -134,10 +134,10 @@ export default function HomePage() {
           </Button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {featuredTowns.map((town) => (
             <Link key={town.slug} to={`/town/${town.slug}`}>
-              <Card className="hover:shadow-md transition-shadow cursor-pointer border">
+              <Card className="hover:shadow-md transition-all hover:-translate-y-0.5 cursor-pointer border">
                 <CardContent className="p-4">
                   <div className="flex items-center gap-2 mb-3">
                     <div className="h-8 w-8 rounded bg-secondary flex items-center justify-center">
@@ -147,13 +147,13 @@ export default function HomePage() {
                       <h3 className="font-semibold text-sm">{town.name}</h3>
                       <p className="text-xs text-muted-foreground">{town.county} County</p>
                     </div>
-                    {!town.ready && (
-                      <Badge variant="secondary" className="ml-auto text-[10px]">Coming Soon</Badge>
+                    {(town as any).isNew && (
+                      <Badge className="ml-auto bg-success/10 text-success border-0 text-[10px]">New</Badge>
                     )}
                   </div>
                   <div className="flex items-center justify-between">
                     <p className="text-xs text-muted-foreground">{town.zones} zoning districts</p>
-                    <span className="text-xs text-accent font-medium">{town.ready ? "View Profile →" : "Preview →"}</span>
+                    <span className="text-xs text-accent font-medium">View Profile →</span>
                   </div>
                 </CardContent>
               </Card>
@@ -236,13 +236,26 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Social Proof */}
-      <section className="container pb-12">
-        <div className="text-center py-8 border rounded-lg bg-secondary/20">
-          <p className="text-sm font-semibold text-muted-foreground">
-            Trusted by homeowners and contractors across Bergen County
-          </p>
-          <div className="flex items-center justify-center gap-8 mt-4">
+      {/* Testimonials */}
+      <section className="container pb-8">
+        <p className="text-sm font-semibold text-muted-foreground text-center mb-6">
+          Trusted by homeowners and contractors across Bergen County
+        </p>
+        <div className="grid md:grid-cols-3 gap-4 mb-8">
+          {testimonials.map((t) => (
+            <Card key={t.author} className="hover:shadow-md transition-shadow">
+              <CardContent className="p-5">
+                <p className="text-sm text-muted-foreground mb-4 italic">"{t.quote}"</p>
+                <div>
+                  <p className="text-sm font-semibold">{t.author}</p>
+                  <p className="text-xs text-muted-foreground">{t.role}, {t.town}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+        <div className="text-center py-6 border rounded-lg bg-secondary/20">
+          <div className="flex items-center justify-center gap-8">
             <div className="text-center">
               <p className="text-2xl font-bold text-primary">70</p>
               <p className="text-xs text-muted-foreground">Municipalities</p>
