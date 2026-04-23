@@ -31,6 +31,7 @@ import GlossaryPage from "./pages/GlossaryPage";
 import ProjectDetail from "./pages/ProjectDetail";
 import TermsPage from "./pages/TermsPage";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminDataReview from "./pages/AdminDataReview";
 import ResetPasswordPage from "./pages/ResetPasswordPage";
 import NotFound from "./pages/NotFound";
 
@@ -71,6 +72,7 @@ const App = () => (
           <Route path="/project/:id" element={<ProtectedRoute><ProjectDetail /></ProtectedRoute>} />
           <Route path="/terms" element={<TermsPage />} />
           <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+          <Route path="/admin/data-review" element={<ProtectedRoute><AdminDataReview /></ProtectedRoute>} />
           <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

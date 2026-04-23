@@ -5,20 +5,52 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Flag } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 interface SuggestCorrectionDialogProps {
   townName: string;
+  townSlug?: string;
   section?: string;
+  tableName?: string;
+  rowId?: string;
+  field?: string;
+  currentValue?: string;
 }
 
-export function SuggestCorrectionDialog({ townName, section }: SuggestCorrectionDialogProps) {
+export function SuggestCorrectionDialog({ townName, townSlug, section, tableName, rowId, field, currentValue }: SuggestCorrectionDialogProps) {
   const [open, setOpen] = useState(false);
   const [description, setDescription] = useState("");
+  const [proposedValue, setProposedValue] = useState("");
+  const [evidenceUrl, setEvidenceUrl] = useState("");
   const [email, setEmail] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const { user } = useAuth();
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    setSubmitting(true);
+    const { error } = await supabase.from("data_corrections").insert({
+      table_name: tableName ?? "towns",
+      town_slug: townSlug ?? null,
+      row_id: rowId ?? null,
+      field: field ?? null,
+      section: section ?? null,
+      current_value: currentValue ?? null,
+      proposed_value: proposedValue || null,
+      evidence_url: evidenceUrl || null,
+      description,
+      submitter_user_id: user?.id ?? null,
+      submitter_email: email || user?.email || null,
+    });
+    setSubmitting(false);
+    if (error) {
+      toast.error("Could not submit correction. Please try again.");
+      return;
+    }
     toast.success("Thank you! Your correction has been submitted for review.");
     setDescription("");
+    setProposedValue("");
+    setEvidenceUrl("");
     setEmail("");
     setOpen(false);
   };
@@ -44,6 +76,8 @@ export function SuggestCorrectionDialog({ townName, section }: SuggestCorrection
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
           />
+          <Input placeholder="Proposed correct value (optional)" value={proposedValue} onChange={(e) => setProposedValue(e.target.value)} />
+          <Input placeholder="Source / evidence URL (optional)" value={evidenceUrl} onChange={(e) => setEvidenceUrl(e.target.value)} />
           <Input
             placeholder="Your email (optional)"
             value={email}
@@ -51,8 +85,8 @@ export function SuggestCorrectionDialog({ townName, section }: SuggestCorrection
           />
           <div className="flex justify-end gap-2">
             <Button variant="outline" size="sm" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleSubmit} disabled={!description.trim()}>
-              Submit
+            <Button size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground" onClick={handleSubmit} disabled={!description.trim() || submitting}>
+              {submitting ? "Submitting…" : "Submit"}
             </Button>
           </div>
         </div>
