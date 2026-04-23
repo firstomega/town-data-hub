@@ -5,12 +5,85 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { z } from "zod";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+
+const emailSchema = z.string().trim().email("Enter a valid email").max(255);
+const passwordSchema = z
+  .string()
+  .min(8, "Password must be at least 8 characters")
+  .max(72, "Password must be less than 72 characters");
 
 export default function LoginPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user, loading: authLoading } = useAuth();
+  const from = (location.state as { from?: string } | null)?.from || "/dashboard";
+
   const [isSignUp, setIsSignUp] = useState(false);
   const [userType, setUserType] = useState<"homeowner" | "contractor">("homeowner");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!authLoading && user) navigate(from, { replace: true });
+  }, [user, authLoading, from, navigate]);
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const emailParse = emailSchema.safeParse(email);
+    if (!emailParse.success) return toast.error(emailParse.error.issues[0].message);
+    const passParse = passwordSchema.safeParse(password);
+    if (!passParse.success) return toast.error(passParse.error.issues[0].message);
+
+    setSubmitting(true);
+    if (isSignUp) {
+      const { error } = await supabase.auth.signUp({
+        email: emailParse.data,
+        password: passParse.data,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+          data: { user_type: userType },
+        },
+      });
+      setSubmitting(false);
+      if (error) return toast.error(error.message);
+      toast.success("Account created. Welcome to TownCenter.");
+      navigate("/onboarding");
+    } else {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: emailParse.data,
+        password: passParse.data,
+      });
+      setSubmitting(false);
+      if (error) return toast.error(error.message);
+      navigate(from, { replace: true });
+    }
+  };
+
+  const handleGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/dashboard` },
+    });
+    if (error) toast.error(error.message);
+  };
+
+  const handleForgotPassword = async () => {
+    const parsed = emailSchema.safeParse(email);
+    if (!parsed.success) return toast.error("Enter your email above first");
+    const { error } = await supabase.auth.resetPasswordForEmail(parsed.data, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    if (error) return toast.error(error.message);
+    toast.success("Password reset link sent. Check your email.");
+  };
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -32,7 +105,7 @@ export default function LoginPage() {
             </div>
 
             {/* Google Sign In */}
-            <Button variant="outline" className="w-full gap-2 mb-4 h-11">
+            <Button type="button" onClick={handleGoogle} variant="outline" className="w-full gap-2 mb-4 h-11">
               <svg className="h-4 w-4" viewBox="0 0 24 24">
                 <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
                 <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
@@ -50,14 +123,34 @@ export default function LoginPage() {
             </div>
 
             {/* Email Form */}
-            <div className="space-y-4">
+            <form onSubmit={handleEmailSubmit} className="space-y-4">
               <div>
                 <Label htmlFor="email" className="text-sm">Email</Label>
-                <Input id="email" type="email" placeholder="you@example.com" className="mt-1.5" />
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="you@example.com"
+                  className="mt-1.5"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  required
+                />
               </div>
               <div>
                 <Label htmlFor="password" className="text-sm">Password</Label>
-                <Input id="password" type="password" placeholder="••••••••" className="mt-1.5" />
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  className="mt-1.5"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete={isSignUp ? "new-password" : "current-password"}
+                  minLength={8}
+                  maxLength={72}
+                  required
+                />
               </div>
 
               {isSignUp && (
@@ -65,6 +158,7 @@ export default function LoginPage() {
                   <Label className="text-sm mb-2 block">I am a…</Label>
                   <div className="grid grid-cols-2 gap-3">
                     <button
+                      type="button"
                       onClick={() => setUserType("homeowner")}
                       className={`p-3 rounded border text-sm font-medium transition-colors ${
                         userType === "homeowner"
@@ -75,6 +169,7 @@ export default function LoginPage() {
                       🏠 Homeowner
                     </button>
                     <button
+                      type="button"
                       onClick={() => setUserType("contractor")}
                       className={`p-3 rounded border text-sm font-medium transition-colors ${
                         userType === "contractor"
@@ -88,22 +183,27 @@ export default function LoginPage() {
                 </div>
               )}
 
-              <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground h-11">
-                <Link to="/onboarding" className="w-full">
-                  {isSignUp ? "Create Account" : "Sign In"}
-                </Link>
+              <Button
+                type="submit"
+                disabled={submitting}
+                className="w-full bg-accent hover:bg-accent/90 text-accent-foreground h-11"
+              >
+                {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                {isSignUp ? "Create Account" : "Sign In"}
               </Button>
-            </div>
+            </form>
 
             {!isSignUp && (
               <p className="text-xs text-center text-muted-foreground mt-3">
-                <button className="text-accent hover:underline">Forgot password?</button>
+                <button type="button" onClick={handleForgotPassword} className="text-accent hover:underline">
+                  Forgot password?
+                </button>
               </p>
             )}
 
             <p className="text-sm text-center text-muted-foreground mt-6">
               {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-              <button onClick={() => setIsSignUp(!isSignUp)} className="text-accent font-medium hover:underline">
+              <button type="button" onClick={() => setIsSignUp(!isSignUp)} className="text-accent font-medium hover:underline">
                 {isSignUp ? "Sign in" : "Create account"}
               </button>
             </p>
