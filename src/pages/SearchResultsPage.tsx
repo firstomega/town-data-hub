@@ -3,130 +3,75 @@ import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search, MapPin, Layers, MessageSquare, ArrowRight } from "lucide-react";
+import { Search, MapPin, Layers, FileText, ArrowRight, Loader2 } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
-const townResults = [
-  { name: "Ridgewood", county: "Bergen", zones: 14, slug: "ridgewood", snippet: "Village of Ridgewood — 14 zoning districts, walkable downtown, strong residential character." },
-  { name: "Paramus", county: "Bergen", zones: 11, slug: "paramus", snippet: "Borough of Paramus — 11 zoning districts, major retail corridor along Route 17 and Route 4." },
-];
-
-const zoningResults = [
-  { title: "R-1 Residential Zone — Ridgewood", snippet: "Single-family residential. Front setback: 40 ft, side: 12 ft, rear: 30 ft. Max lot coverage: 25%. Max height: 35 ft.", town: "Ridgewood", link: "/town/ridgewood/zoning" },
-  { title: "Fence Height Regulations — Ridgewood", snippet: "Fences in residential zones shall not exceed 6 ft in side/rear yards and 4 ft in front yards. Corner lots treat street-side yards as front yards.", town: "Ridgewood", link: "/town/ridgewood/ordinances" },
-  { title: "R-1 Residential Zone — Paramus", snippet: "Single-family residential. Front setback: 30 ft, side: 10 ft, rear: 25 ft. Max lot coverage: 30%. Max height: 35 ft.", town: "Paramus", link: "/town/paramus/zoning" },
-];
-
-const noteResults = [
-  { author: "Verified Contractor", town: "Ridgewood", note: "Building dept is strict on survey accuracy — use a licensed surveyor, not a sketch.", upvotes: 24 },
-  { author: "Verified Contractor", town: "Paramus", note: "ADU applications are being fast-tracked since the new ordinance. Expect 2-3 weeks.", upvotes: 18 },
-];
+function useSearch(q: string) {
+  return useQuery({
+    queryKey: ["search", q],
+    enabled: q.trim().length >= 2,
+    queryFn: async () => {
+      const term = `%${q.trim()}%`;
+      const [townsRes, zonesRes, ordRes] = await Promise.all([
+        supabase
+          .from("towns")
+          .select("name,full_name,county,slug,num_zones,data_status,character")
+          .or(`name.ilike.${term},full_name.ilike.${term},county.ilike.${term}`)
+          .limit(10),
+        supabase
+          .from("zones")
+          .select("code,name,description,town_slug,confidence")
+          .neq("confidence", "placeholder")
+          .or(`name.ilike.${term},code.ilike.${term},description.ilike.${term}`)
+          .limit(15),
+        supabase
+          .from("ordinances")
+          .select("title,summary,category,town_slug,confidence")
+          .neq("confidence", "placeholder")
+          .or(`title.ilike.${term},summary.ilike.${term},category.ilike.${term}`)
+          .limit(15),
+      ]);
+      return {
+        towns: townsRes.data ?? [],
+        zones: zonesRes.data ?? [],
+        ordinances: ordRes.data ?? [],
+      };
+    },
+  });
+}
 
 export default function SearchResultsPage() {
   const [searchParams] = useSearchParams();
   const initialQuery = searchParams.get("q") || "";
   const [query, setQuery] = useState(initialQuery);
-  const hasResults = query.length > 0;
+  const { data, isLoading } = useSearch(query);
+  const hasQuery = query.trim().length >= 2;
+  const totalHits =
+    (data?.towns.length ?? 0) + (data?.zones.length ?? 0) + (data?.ordinances.length ?? 0);
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <NavBar isLoggedIn showSearch />
       <div className="container py-6 max-w-3xl flex-1">
-        {/* Search */}
         <div className="relative mb-8">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search towns, zoning rules, or community notes…"
+            placeholder="Search towns, zoning rules, or ordinances…"
             className="h-12 pl-12 pr-4 text-sm bg-card border shadow-sm"
           />
         </div>
 
-        {hasResults ? (
-          <>
-            {/* Towns */}
-            <section className="mb-8">
-              <div className="flex items-center gap-2 mb-3">
-                <MapPin className="h-4 w-4 text-accent" />
-                <h2 className="font-semibold text-sm">Towns</h2>
-                <Badge variant="secondary" className="text-[10px]">{townResults.length}</Badge>
-              </div>
-              <div className="space-y-2">
-                {townResults.map((t) => (
-                  <Link key={t.slug} to={`/town/${t.slug}`}>
-                    <Card className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4 flex items-start justify-between">
-                        <div>
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-semibold text-sm">{t.name}</span>
-                            <Badge variant="secondary" className="text-[10px]">{t.county} County</Badge>
-                          </div>
-                          <p className="text-xs text-muted-foreground">{t.snippet}</p>
-                        </div>
-                        <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
-                      </CardContent>
-                    </Card>
-                  </Link>
-                ))}
-              </div>
-            </section>
-
-            {/* Zoning Rules */}
-            <section className="mb-8">
-              <div className="flex items-center gap-2 mb-3">
-                <Layers className="h-4 w-4 text-accent" />
-                <h2 className="font-semibold text-sm">Zoning Rules</h2>
-                <Badge variant="secondary" className="text-[10px]">{zoningResults.length}</Badge>
-              </div>
-              <div className="space-y-2">
-                {zoningResults.map((r) => (
-                  <Link key={r.title} to={r.link}>
-                    <Card className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold text-sm">{r.title}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground mb-2">{r.snippet}</p>
-                        <Badge variant="outline" className="text-[10px]">{r.town}</Badge>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                ))}
-              </div>
-            </section>
-
-            {/* Community Notes */}
-            <section className="mb-8">
-              <div className="flex items-center gap-2 mb-3">
-                <MessageSquare className="h-4 w-4 text-accent" />
-                <h2 className="font-semibold text-sm">Community Notes</h2>
-                <Badge variant="secondary" className="text-[10px]">{noteResults.length}</Badge>
-              </div>
-              <div className="space-y-2">
-                {noteResults.map((n, i) => (
-                  <Card key={i}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="secondary" className="text-[10px]">{n.town}</Badge>
-                        <span className="text-[10px] text-muted-foreground">by {n.author}</span>
-                        <span className="text-[10px] text-muted-foreground ml-auto">👍 {n.upvotes}</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">{n.note}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </section>
-          </>
-        ) : (
-          /* Empty State */
+        {!hasQuery ? (
           <div className="text-center py-16">
             <Search className="h-10 w-10 text-muted-foreground/30 mx-auto mb-4" />
-            <h2 className="text-lg font-semibold text-primary mb-2">No results found</h2>
+            <h2 className="text-lg font-semibold text-primary mb-2">Start typing to search</h2>
             <p className="text-sm text-muted-foreground mb-6">
-              Try searching by town name or browse Bergen County towns.
+              Search across Bergen County towns, zoning districts, and ordinances.
             </p>
             <div className="flex flex-wrap justify-center gap-2">
               <Link to="/town/ridgewood">
@@ -140,6 +85,113 @@ export default function SearchResultsPage() {
               </Link>
             </div>
           </div>
+        ) : isLoading ? (
+          <div className="flex items-center justify-center py-16 text-muted-foreground gap-2 text-sm">
+            <Loader2 className="h-4 w-4 animate-spin" /> Searching…
+          </div>
+        ) : totalHits === 0 ? (
+          <div className="text-center py-16">
+            <Search className="h-10 w-10 text-muted-foreground/30 mx-auto mb-4" />
+            <h2 className="text-lg font-semibold text-primary mb-2">No results found</h2>
+            <p className="text-sm text-muted-foreground mb-2">
+              Nothing matched "<span className="text-foreground">{query}</span>".
+            </p>
+            <p className="text-xs text-muted-foreground mb-6">
+              Verified zoning and ordinance content is still being added — try a town name.
+            </p>
+          </div>
+        ) : (
+          <>
+            {data!.towns.length > 0 && (
+              <section className="mb-8">
+                <div className="flex items-center gap-2 mb-3">
+                  <MapPin className="h-4 w-4 text-accent" />
+                  <h2 className="font-semibold text-sm">Towns</h2>
+                  <Badge variant="secondary" className="text-[10px]">{data!.towns.length}</Badge>
+                </div>
+                <div className="space-y-2">
+                  {data!.towns.map((t) => (
+                    <Link key={t.slug} to={`/town/${t.slug}`}>
+                      <Card className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-4 flex items-start justify-between">
+                          <div>
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-semibold text-sm">{t.name}</span>
+                              <Badge variant="secondary" className="text-[10px]">{t.county} County</Badge>
+                              {t.data_status === "placeholder" && (
+                                <Badge variant="outline" className="text-[10px]">Coming soon</Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground">
+                              {t.character ?? `${t.full_name} — ${t.num_zones ?? "—"} zoning districts`}
+                            </p>
+                          </div>
+                          <ArrowRight className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-1" />
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {data!.zones.length > 0 && (
+              <section className="mb-8">
+                <div className="flex items-center gap-2 mb-3">
+                  <Layers className="h-4 w-4 text-accent" />
+                  <h2 className="font-semibold text-sm">Zoning Districts</h2>
+                  <Badge variant="secondary" className="text-[10px]">{data!.zones.length}</Badge>
+                </div>
+                <div className="space-y-2">
+                  {data!.zones.map((z) => (
+                    <Link key={`${z.town_slug}-${z.code}`} to={`/town/${z.town_slug}/zoning`}>
+                      <Card className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold text-sm">{z.code} — {z.name}</span>
+                          </div>
+                          {z.description && (
+                            <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{z.description}</p>
+                          )}
+                          <Badge variant="outline" className="text-[10px] capitalize">{z.town_slug}</Badge>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {data!.ordinances.length > 0 && (
+              <section className="mb-8">
+                <div className="flex items-center gap-2 mb-3">
+                  <FileText className="h-4 w-4 text-accent" />
+                  <h2 className="font-semibold text-sm">Ordinances</h2>
+                  <Badge variant="secondary" className="text-[10px]">{data!.ordinances.length}</Badge>
+                </div>
+                <div className="space-y-2">
+                  {data!.ordinances.map((o, i) => (
+                    <Link key={`${o.town_slug}-${i}`} to={`/town/${o.town_slug}/ordinances`}>
+                      <Card className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-semibold text-sm">{o.title}</span>
+                          </div>
+                          {o.summary && (
+                            <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{o.summary}</p>
+                          )}
+                          <div className="flex gap-1.5">
+                            <Badge variant="outline" className="text-[10px] capitalize">{o.town_slug}</Badge>
+                            <Badge variant="secondary" className="text-[10px]">{o.category}</Badge>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
+          </>
         )}
       </div>
       <Footer />
