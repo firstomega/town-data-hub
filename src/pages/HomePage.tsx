@@ -1,4 +1,4 @@
-import { Search, ArrowRight, Lightbulb, MapPin, Clock, Shield, RefreshCw, Layers } from "lucide-react";
+import { Search, ArrowRight, MapPin, Clock, Shield, RefreshCw, Layers } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
@@ -7,38 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useState } from "react";
-
-const featuredTowns = [
-  { name: "Ridgewood", county: "Bergen", zones: 14, slug: "ridgewood", ready: true },
-  { name: "Paramus", county: "Bergen", zones: 11, slug: "paramus", ready: true },
-  { name: "Hackensack", county: "Bergen", zones: 12, slug: "hackensack", ready: true, isNew: true },
-  { name: "Fort Lee", county: "Bergen", zones: 10, slug: "fort-lee", ready: true, isNew: true },
-  { name: "Teaneck", county: "Bergen", zones: 9, slug: "teaneck", ready: true, isNew: true },
-  { name: "Englewood", county: "Bergen", zones: 11, slug: "englewood", ready: true, isNew: true },
-  { name: "Glen Rock", county: "Bergen", zones: 6, slug: "glen-rock", ready: true, isNew: true },
-];
-
-const testimonials = [
-  { quote: "I saved over 5 hours researching setback rules for my deck project. TownCenter had everything in one place.", author: "Sarah M.", role: "Homeowner", town: "Ridgewood" },
-  { quote: "I use TownCenter for every new project. Comparing zoning rules across my 8 towns used to take half a day.", author: "Mike R.", role: "General Contractor", town: "Bergen County" },
-  { quote: "The permit checklist alone is worth the subscription. I knew exactly what to bring to town hall.", author: "David L.", role: "Homeowner", town: "Paramus" },
-];
+import { useAllTowns } from "@/hooks/useTownData";
+import { DataStatusBadge } from "@/components/DataStatusBadge";
 
 const suggestions = [
-  "Can I build a deck in Ridgewood?",
-  "Fence height limits in Paramus",
-  "ADU rules Bergen County",
-  "Pool permit requirements Teaneck",
-];
-
-const quickPills = [
-  { label: "Ridgewood", link: "/town/ridgewood" },
-  { label: "Paramus", link: "/town/paramus" },
-  { label: "Hackensack", link: "/search?q=Hackensack" },
-  { label: "Fort Lee", link: "/search?q=Fort+Lee" },
-  { label: "Fence permits", link: "/search?q=fence+permits" },
-  { label: "Setback rules", link: "/search?q=setback+rules" },
-  { label: "ADU regulations", link: "/search?q=ADU+regulations" },
+  "Setback rules",
+  "Fence height",
+  "ADU regulations",
+  "Pool permits",
 ];
 
 const howItWorks = [
@@ -50,12 +26,19 @@ const howItWorks = [
 const valueProps = [
   { icon: Clock, title: "Time Savings", description: "Get answers in seconds instead of hours spent calling municipal offices and reading code." },
   { icon: Shield, title: "Risk Mitigation", description: "Avoid costly permit delays and code violations by knowing the rules before you start." },
-  { icon: RefreshCw, title: "Always Current", description: "Data updated within 30 days of any official ordinance change. Never work with stale info." },
+  { icon: RefreshCw, title: "Refreshed weekly", description: "Every town is re-scanned weekly against its official source, with on-demand refreshes for active changes." },
 ];
 
 export default function HomePage() {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
+  const { data: towns } = useAllTowns();
+
+  const totalTowns = towns?.length ?? 0;
+  const verifiedTowns = (towns ?? []).filter((t) => t.data_status === "verified");
+  const partialTowns = (towns ?? []).filter((t) => t.data_status === "partial");
+  const liveTowns = [...verifiedTowns, ...partialTowns];
+  const featuredTowns = liveTowns.length > 0 ? liveTowns.slice(0, 8) : (towns ?? []).slice(0, 8);
 
   const handleSearch = () => {
     if (searchQuery.trim()) {
@@ -71,13 +54,13 @@ export default function HomePage() {
       <section className="bg-primary text-primary-foreground">
         <div className="container py-20 text-center">
           <Badge className="mb-4 bg-accent/20 text-accent-foreground border-0 text-xs font-medium">
-            Bergen County, NJ — Now Live
+            Bergen County, NJ — Early Access
           </Badge>
           <h1 className="text-4xl md:text-5xl font-bold mb-4 leading-tight">
             Know Your Zoning<br />Before You Build
           </h1>
           <p className="text-primary-foreground/70 text-lg mb-8 max-w-xl mx-auto">
-            Instant access to local zoning rules, permit requirements, and ordinances for every town in Bergen County.
+            Local zoning rules, permit requirements, and ordinances for Bergen County towns — sourced directly from each town's official code.
           </p>
 
           <div className="max-w-2xl mx-auto">
@@ -98,23 +81,10 @@ export default function HomePage() {
               {suggestions.map((s) => (
                 <Link
                   key={s}
-                  to="/query"
+                  to={`/search?q=${encodeURIComponent(s)}`}
                   className="text-xs text-primary-foreground/50 hover:text-primary-foreground/80 bg-primary-foreground/10 px-3 py-1.5 rounded transition-colors"
                 >
                   {s}
-                </Link>
-              ))}
-            </div>
-
-            {/* Quick-search pills */}
-            <div className="flex flex-wrap justify-center gap-2 mt-3">
-              {quickPills.map((pill) => (
-                <Link
-                  key={pill.label}
-                  to={pill.link}
-                  className="text-xs text-primary-foreground/60 hover:text-primary-foreground bg-primary-foreground/5 border border-primary-foreground/10 px-3 py-1 rounded-full transition-colors"
-                >
-                  {pill.label}
                 </Link>
               ))}
             </div>
@@ -126,40 +96,45 @@ export default function HomePage() {
       <section className="container py-12">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-xl font-bold text-primary">Featured Towns — Bergen County</h2>
-            <p className="text-sm text-muted-foreground">Explore zoning data for 70 municipalities</p>
+            <h2 className="text-xl font-bold text-primary">Towns — Bergen County</h2>
+            <p className="text-sm text-muted-foreground">
+              {totalTowns > 0
+                ? `${totalTowns} towns onboarded · ${verifiedTowns.length} verified · ${partialTowns.length} in progress`
+                : "Loading towns…"}
+            </p>
           </div>
-          <Button variant="ghost" size="sm" className="text-accent">
-            View All <ArrowRight className="ml-1 h-3 w-3" />
-          </Button>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {featuredTowns.map((town) => (
-            <Link key={town.slug} to={`/town/${town.slug}`}>
-              <Card className="hover:shadow-md transition-all hover:-translate-y-0.5 cursor-pointer border">
-                <CardContent className="p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <div className="h-8 w-8 rounded bg-secondary flex items-center justify-center">
-                      <MapPin className="h-4 w-4 text-accent" />
+        {featuredTowns.length === 0 ? (
+          <p className="text-sm text-muted-foreground py-8 text-center">No towns yet.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+            {featuredTowns.map((town) => (
+              <Link key={town.slug} to={`/town/${town.slug}`}>
+                <Card className="hover:shadow-md transition-all hover:-translate-y-0.5 cursor-pointer border h-full">
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="h-8 w-8 rounded bg-secondary flex items-center justify-center">
+                        <MapPin className="h-4 w-4 text-accent" />
+                      </div>
+                      <div className="min-w-0">
+                        <h3 className="font-semibold text-sm truncate">{town.name}</h3>
+                        <p className="text-xs text-muted-foreground">{town.county} County</p>
+                      </div>
+                      <div className="ml-auto"><DataStatusBadge status={town.data_status} /></div>
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-sm">{town.name}</h3>
-                      <p className="text-xs text-muted-foreground">{town.county} County</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs text-muted-foreground">
+                        {town.num_zones ? `${town.num_zones} zoning districts` : "—"}
+                      </p>
+                      <span className="text-xs text-accent font-medium">View Profile →</span>
                     </div>
-                    {(town as any).isNew && (
-                      <Badge className="ml-auto bg-success/10 text-success border-0 text-[10px]">New</Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">{town.zones} zoning districts</p>
-                    <span className="text-xs text-accent font-medium">View Profile →</span>
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
+                  </CardContent>
+                </Card>
+              </Link>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* How It Works */}
@@ -182,45 +157,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Seasonal Prompt */}
-      <section className="container py-6">
-        <Card className="border-warning/20 bg-warning/5">
-          <CardContent className="p-5 flex items-start gap-4">
-            <div className="h-10 w-10 rounded-lg bg-warning/10 flex items-center justify-center flex-shrink-0">
-              <span className="text-lg">☀️</span>
-            </div>
-            <div>
-              <h3 className="font-semibold text-sm mb-1">Spring Building Season</h3>
-              <p className="text-sm text-muted-foreground">
-                Planning a pool or deck this summer? Submit your permit applications now — Bergen County building departments
-                see a 3x increase in applications between March and May. <Link to="/feasibility" className="text-accent hover:underline">Check if your project is feasible →</Link>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
-      {/* Did You Know */}
-      <section className="container py-6">
-        <Card className="border-accent/20 bg-accent/5">
-          <CardContent className="p-6 flex items-start gap-4">
-            <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
-              <Lightbulb className="h-5 w-5 text-accent" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-sm mb-1">Did You Know?</h3>
-              <p className="text-sm text-muted-foreground">
-                In Ridgewood, fences in the front yard cannot exceed 4 feet, while side and rear fences can be up to 6 feet.
-                But if your property is on a corner lot, different rules may apply. Over 60% of homeowner permit delays are caused by
-                not knowing setback requirements before starting construction.
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </section>
-
       {/* Value Propositions */}
-      <section className="container pb-12">
+      <section className="container py-12">
         <div className="grid md:grid-cols-3 gap-6">
           {valueProps.map((vp) => (
             <Card key={vp.title}>
@@ -236,40 +174,21 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Testimonials */}
-      <section className="container pb-8">
-        <p className="text-sm font-semibold text-muted-foreground text-center mb-6">
-          Trusted by homeowners and contractors across Bergen County
-        </p>
-        <div className="grid md:grid-cols-3 gap-4 mb-8">
-          {testimonials.map((t) => (
-            <Card key={t.author} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-5">
-                <p className="text-sm text-muted-foreground mb-4 italic">"{t.quote}"</p>
-                <div>
-                  <p className="text-sm font-semibold">{t.author}</p>
-                  <p className="text-xs text-muted-foreground">{t.role}, {t.town}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-        <div className="text-center py-6 border rounded-lg bg-secondary/20">
-          <div className="flex items-center justify-center gap-8">
-            <div className="text-center">
-              <p className="text-2xl font-bold text-primary">70</p>
-              <p className="text-xs text-muted-foreground">Municipalities</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-primary">2,400+</p>
-              <p className="text-xs text-muted-foreground">Active Users</p>
-            </div>
-            <div className="text-center">
-              <p className="text-2xl font-bold text-primary">15,000+</p>
-              <p className="text-xs text-muted-foreground">Queries Answered</p>
-            </div>
-          </div>
-        </div>
+      {/* CTA */}
+      <section className="container pb-12 text-center">
+        <Card className="border-accent/20 bg-accent/5">
+          <CardContent className="p-8">
+            <h3 className="text-lg font-semibold text-primary mb-2">Don't see your town?</h3>
+            <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
+              We're onboarding Bergen County town-by-town. Verified rows go live as our team confirms each source.
+            </p>
+            <Link to="/about">
+              <Button variant="outline" size="sm" className="gap-1.5">
+                Learn more <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
       </section>
 
       <Footer />
