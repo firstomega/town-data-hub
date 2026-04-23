@@ -12,8 +12,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Loader2, ExternalLink, Check, X, Sparkles } from "lucide-react";
+import { Loader2, ExternalLink, Check, X, Sparkles, RefreshCw, ShieldCheck, Clock, AlertTriangle } from "lucide-react";
 import { useAllTowns } from "@/hooks/useTownData";
+import { Switch } from "@/components/ui/switch";
+import { formatDistanceToNow } from "date-fns";
 
 type TableName = "zones" | "permits" | "ordinances" | "contacts";
 
