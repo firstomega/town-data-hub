@@ -1,145 +1,130 @@
 
 
-# TownCenter — Prototype → Real Platform
+# The Data Problem — and the Plan to Fix It
 
-A grounded assessment of where the app stands today and the highest-leverage moves to make it real. **No code changes in this turn** — this is a roadmap. We can pick any slice and execute.
+## What we have today
 
----
+- 7 town **shells** in the DB (slug, name, county, fake population/home values)
+- 0 rows in `zones`, `permits`, `ordinances`, `contacts`
+- Pages still read from hardcoded `src/data/townData.ts` — placeholder fiction (e.g., "Paramus §250-45 fence rule") that *looks* real but isn't sourced from any actual ordinance
+- No provenance, no `source_url`, no verification timestamp tied to a real document
 
-## Where the prototype stands
+This is fatal for a product whose entire pitch is "trustworthy municipal data." A homeowner who builds a fence based on our data and gets fined will sue. We have to fix it before launch.
 
-**Strong:** 18 routes, full visual system, 7 town profiles (2 deep + 5 generic), feasibility wizard, glossary, admin dashboard, command palette, notification UI, project detail pages.
-
-**Hollow:** Everything is hardcoded. No auth, no database, no real search, no real AI answers, no real notifications, no real share/save. The Login page has a Google button that does nothing and routes to `/onboarding` regardless of input.
-
-To go from prototype → platform, the work splits into four tracks: **Backend foundation**, **Real data & intelligence**, **UX depth**, and **Trust & security**.
-
----
-
-## Track 1 — Backend foundation (unblocks everything else)
-
-Enable **Lovable Cloud** (Supabase under the hood). This single move unlocks auth, persistence, search, file storage, edge functions, and AI.
-
-**Schema (initial tables):**
-```text
-profiles          → id, full_name, user_type (homeowner|contractor), avatar_url
-user_roles        → user_id, role (admin|contractor|user)   ← separate table, RLS-safe
-towns             → slug, name, county, character, source, last_verified
-zones             → town_slug, code, name, setbacks, far, coverage, height, uses[]
-permits           → town_slug, name, fee_min, fee_max, timeline, requirements[]
-ordinances        → town_slug, category, code, title, summary, updated_at
-contacts          → town_slug, dept, phone, email, hours, address, meetings
-projects          → user_id, town_slug, address, project_type, zone, status, checklist
-saved_towns       → user_id, town_slug
-community_notes   → contractor_id, town_slug, body, upvotes, status (pending|approved)
-notifications     → user_id, type, title, body, read_at, link
-corrections       → user_id, town_slug, section, body, status
-contractor_apps   → user_id, business_name, license_no, status
-```
-RLS on every table. Roles in `user_roles` (never on profiles) — guards against privilege escalation.
-
----
-
-## Track 2 — Auth & social login (the question you asked)
-
-**Status today:** Not built in. The Login page is a styled shell.
-
-**What Lovable Cloud supports natively:** Email/password, Phone (SMS), **Google**, **Apple**, SSO/SAML.
-**Not native:** Facebook, GitHub, Discord (would require connecting external Supabase).
-
-**Recommended default for TownCenter:** Email/password + Google. Apple is a nice-to-have for the iOS audience.
-
-**Required pieces:**
-- Wire `LoginPage` to `supabase.auth.signInWithPassword` / `signInWithOAuth({provider: 'google'})`
-- Auth state listener in a top-level provider; protected routes for `/dashboard`, `/settings`, `/contractor`, `/admin`, `/project/:id`
-- `/reset-password` page (currently missing — without it, password resets silently log users in)
-- Profile auto-creation trigger on signup; user_type captured at onboarding
-- Enable **HIBP leaked-password check** (one toggle, blocks compromised passwords)
-- Session persistence + sign-out in the NavBar dropdown (currently a dead Link)
-
----
-
-## Track 3 — Real data & intelligence (the moat)
-
-The PRD's whole premise is *trustworthy, current municipal data*. That means:
-
-1. **Migrate hardcoded town data → DB.** `townData.ts` becomes a seed script.
-2. **Admin CRUD.** The `/admin` dashboard already has the UI shape — wire it to actually edit zones, permits, ordinances, with audit log + `last_verified` stamps.
-3. **Real search.** Replace the fake `/search` page with Postgres full-text search across zones/ordinances/notes; rank by town match first.
-4. **Real Natural Language Query.** Replace the hardcoded fence answer with **Lovable AI** (Gemini via the AI Gateway — no key needed). RAG pattern: embed all ordinance text, retrieve top-k chunks per town, ground the answer with citations. Confidence score from retrieval similarity. Log every Q&A for the admin to review low-confidence ones.
-5. **Real Feasibility Check.** Today it's a switch on `projectType`. Make it a rules engine that reads the actual zone row + project parameters (sq ft, height) from the form and computes pass/fail per rule.
-6. **Notification engine.** Edge function on a cron: when an ordinance row's `updated_at` changes for a town a user has saved → insert a notification + email.
-7. **Geocoding.** The address input on onboarding is text-only. Add Mapbox/Google geocoding to resolve address → town slug → zone (zone requires GIS shapefiles per town; start with town-level, add parcel-level later as a premium feature).
-
----
-
-## Track 4 — UX depth
-
-- **Saved projects actually save** (currently the "Save Project" button is decorative).
-- **Share buttons actually copy** real shareable URLs with OG meta tags for link previews.
-- **Notification bell** opens a real list, marks read, deep-links to the change.
-- **Comparison page** lets you pick towns from the DB instead of hardcoded Ridgewood vs Paramus.
-- **Mobile responsiveness** — sidebar collapses, NavBar gets a hamburger drawer (currently desktop-only).
-- **Empty/loading/error states** wired to real query states (TanStack Query is already installed but unused).
-- **PDF export** for checklists and zone summaries via an edge function (jsPDF or Puppeteer).
-- **Contractor verification flow** — license number lookup, manual admin review queue (UI exists, needs DB).
-
----
-
-## Track 5 — Trust, security & payments
-
-**Security baseline:**
-- RLS policies on every table (users see only their projects/notifications; community notes public-read after admin approval)
-- Roles in `user_roles` table with a `has_role()` SECURITY DEFINER function (the standard pattern — prevents recursive RLS bugs and privilege escalation)
-- Zod validation on every form (address, corrections, notes, profile) — client + edge function
-- Rate limiting on the NL Query endpoint (AI cost control + abuse prevention)
-- HIBP password check, email verification required before write access
-- Sanitize community note content (DOMPurify) — they render contractor-submitted text
-- Audit log for admin actions (who edited which ordinance, when)
-- HTTPS-only, secure cookies, CSP headers via meta tags
-
-**Payments (Pro plan required):**
-The pricing page promises Free / $3 Homeowner / $15 Contractor. To collect real money, enable **Stripe** (recommended over Paddle here — utility/data product, fits Stripe's profile, lets you choose tax handling per session). Webhook → updates a `subscriptions` table → gates premium features (NL Query quota, comparison limits, multi-seat contractor accounts).
-
----
-
-## Recommended sequence (4 phases)
+## The honest data hierarchy (best → worst)
 
 ```text
-Phase 1 — Foundation (the unlock)
-  Enable Lovable Cloud
-  Auth: email + Google + reset-password page + protected routes
-  Schema + RLS + user_roles
-  Migrate townData.ts → DB seed
-
-Phase 2 — Make the prototype real
-  Wire saved towns, projects, community notes, corrections to DB
-  Real search (Postgres FTS)
-  Real notification center
-  Admin CRUD on towns/zones/ordinances
-
-Phase 3 — Intelligence
-  Lovable AI for Natural Language Query (RAG with citations)
-  Feasibility Check rules engine on real data
-  Geocoding on onboarding
-  PDF export for checklists
-
-Phase 4 — Revenue & scale
-  Stripe payments + subscription gating
-  Contractor verification + multi-seat billing
-  Notification cron + email digests
-  Mobile responsive pass
-  Security audit + scan
+1. Official municipal code on eCode360/Municode/General Code (machine-readable, citable)
+2. Official town PDFs (zoning ordinance, fee schedule, application forms)
+3. Town clerk / building dept confirmation (email or phone)
+4. Reputable secondary sources (NJ DCA, county planning office)
+5. AI-summarized from #1–4 with citation back to source
+6. Hand-typed placeholder ← WHERE WE ARE NOW
 ```
+
+Bergen County towns mostly use **eCode360** (General Code) or **Municode** — both have public URLs per chapter. That's our anchor.
+
+## The plan: 5 phases, ship phase 1 now
+
+### Phase 1 — Provenance & honesty (build now)
+
+Make the data model honest about where every fact came from. Even before we ingest real data, the schema should track it.
+
+**Schema additions (one migration):**
+- Add `source_url`, `source_doc`, `last_verified_at`, `verified_by`, `confidence` (`verified` | `ai_extracted` | `placeholder`) to `zones`, `permits`, `ordinances`, `contacts`
+- Add `data_status` to `towns`: `verified` | `partial` | `placeholder`
+- New table `data_corrections` (already planned) — wired to the existing `SuggestCorrectionDialog`
+- New table `ingestion_runs` — audit log of every scrape/extraction job (when, source, rows added, who approved)
+
+**UI changes:**
+- Every data block on a Town Profile shows a small **provenance footer**: "Source: Borough of Paramus Code §250-45 · Verified Jan 15, 2026 · [View source]"
+- A `placeholder` confidence renders an amber badge: **"Placeholder — not yet verified"**
+- The 5 generic towns (Hackensack, Fort Lee, Teaneck, Englewood, Glen Rock) flip to a **"Data pending verification"** state (we already have the stub page pattern)
+- `last_verified_at` older than 12 months renders a yellow **"May be outdated"** chip
+
+**Migrate existing `townData.ts` into the DB** — but flagged `confidence='placeholder'` for everything. No more hardcoded reads; pages query Supabase. This makes the dishonesty *visible* instead of hidden.
+
+### Phase 2 — Real ingestion pipeline (next slice)
+
+An admin tool that takes a municipal code URL and produces draft DB rows for review.
+
+**Architecture:**
+```text
+Admin pastes eCode360 URL
+    ↓
+Edge function: ingest-ordinance
+    ├─ Firecrawl scrape (markdown of the chapter)
+    ├─ Lovable AI (Gemini) — extract structured rows:
+    │     { zone_code, min_lot, setback_front, ... } per zone
+    │     { permit_name, fee, timeline, requirements[] } per permit
+    │     { ordinance_code, title, summary } per ordinance
+    └─ Insert as confidence='ai_extracted', status='pending_review'
+    ↓
+Admin review queue (/admin/data-review)
+    Side-by-side: extracted row | source markdown excerpt | edit form
+    Approve → confidence='verified', verified_by=admin_id, last_verified_at=now()
+    Reject → archived with reason
+```
+
+Connectors needed: **Firecrawl** (already documented as available). Lovable AI Gateway is already enabled. No third-party API keys required.
+
+**Coverage target for Phase 2 launch:** Ridgewood + Paramus fully verified end-to-end (every zone, permit, ordinance has a real `source_url` and a human approval). Other 5 towns stay in `placeholder` with the amber banner.
+
+### Phase 3 — Continuous freshness
+
+- **Weekly cron** (edge function) re-scrapes each town's source URLs, diffs against current rows, flags changes for re-review
+- When a row's content changes upstream, push notifications to users with that town saved (the notification engine we already planned)
+- Public `/data-status` page showing per-town: % verified, last refresh, next refresh — radical transparency
+
+### Phase 4 — Community-sourced corrections
+
+The `SuggestCorrectionDialog` already exists in the UI. Wire it to:
+- Insert into `data_corrections` with `row_id`, `field`, `proposed_value`, `evidence_url`
+- Admin queue at `/admin/corrections` (UI shape already exists in AdminDashboard)
+- On approval → updates the row + bumps `last_verified_at` + credits the submitter
+
+### Phase 5 — Verified contractor signal
+
+Verified contractors can vouch for ordinance entries ("I pulled this exact permit in March 2025, fee was correct"). A vouch increments a `confidence_signals` count. Three independent vouches in 90 days → row gets a **"Confirmed by contractors"** badge. This is the moat the PRD describes.
 
 ---
 
-## Pick your next move
+## What I'd build in this slice (Phase 1)
 
-You don't have to do all four phases at once — and you shouldn't. Tell me which slice to start with and I'll switch to default mode and build it. Good first slices:
+A focused, shippable chunk:
 
-- **"Phase 1, all of it"** — the biggest single unlock; everything else compounds on it
-- **"Just auth + Google login + reset password"** — smallest real step, immediate user value
-- **"Real Natural Language Query with Lovable AI"** — most impressive demo, needs Cloud first
-- **"Stripe + paywall the premium tiers"** — if you want to test willingness to pay before more building
+1. **Migration** — add provenance columns to `zones`/`permits`/`ordinances`/`contacts`, add `data_status` to `towns`, create `data_corrections` and `ingestion_runs` tables
+2. **Seed** — port `src/data/townData.ts` into the DB, all flagged `confidence='placeholder'`. Set Hackensack/Fort Lee/Teaneck/Englewood/Glen Rock to `data_status='placeholder'`; Ridgewood/Paramus to `partial`
+3. **Refactor pages** to read from Supabase via TanStack Query (replaces the `getFullTownData` import everywhere). Loading states already exist.
+4. **Provenance UI** — small footer component on every data block; amber "Placeholder" badge; "May be outdated" chip when `last_verified_at` > 12 months
+5. **Honest empty states** — generic town profiles render "Data pending verification" with a "Be notified when this town is verified" CTA (writes to `saved_towns`)
+6. **Wire `SuggestCorrectionDialog`** to actually insert into `data_corrections` (not just toast)
+
+Phase 2 (real ingestion with Firecrawl + AI extraction + admin review queue) is a separate slice — bigger, and worth doing once Phase 1 makes the honesty visible.
+
+## Files to create / modify
+
+**New migrations:**
+- Add provenance columns + `data_corrections` + `ingestion_runs`
+
+**New files:**
+- `src/components/DataProvenance.tsx` — source/verified-on/link footer
+- `src/components/PlaceholderBanner.tsx` — amber "not yet verified" banner
+- `src/hooks/useTown.ts`, `useTownZones.ts`, `useTownPermits.ts`, etc. — TanStack Query wrappers
+- `supabase/functions/seed-town-data/index.ts` — one-time seed from `townData.ts`
+
+**Modify:**
+- All `Generic*` and `Paramus*` and `Town*` pages — read from DB, render provenance
+- `SuggestCorrectionDialog.tsx` — real insert
+- `TownProfileLayout.tsx` — show `data_status` badge in header
+
+**Out of scope for this slice (deliberately):** Firecrawl ingestion, AI extraction, admin review queue, cron refresh. Those are Phase 2.
+
+## Trade-off to be honest about
+
+This slice doesn't *get* real data — it makes the absence of real data **visible and trackable**, and gives us the rails to add real data row-by-row in Phase 2. That's the right order: don't claim verified data we don't have, build the verification pipeline next.
+
+---
+
+**Approve to build Phase 1, or tell me to jump straight to Phase 2 (Firecrawl ingestion of one town's eCode360 chapter as a real demo) — that's also a valid first move and arguably more exciting.**
 
