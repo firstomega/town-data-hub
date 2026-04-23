@@ -5,7 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Check, X, Users, Activity, TrendingUp, DollarSign, Search, BarChart3, Shield, Clock, CheckCircle, XCircle, Edit } from "lucide-react";
+import { Check, X, Users, Activity, TrendingUp, DollarSign, Search, BarChart3, Shield, Clock, CheckCircle, XCircle, Edit, Database } from "lucide-react";
+import { Link } from "react-router-dom";
 
 const towns = [
   { name: "Ridgewood", completeness: 95, zoning: true, permits: true, ordinances: true, contacts: true, updated: "Jan 15, 2026" },
@@ -56,6 +57,21 @@ export default function AdminDashboard() {
           </div>
           <Badge variant="destructive" className="text-xs">Admin Only</Badge>
         </div>
+
+        <Link to="/admin/data-review">
+          <Card className="mb-6 hover:shadow-md transition-shadow cursor-pointer border-accent/40">
+            <CardContent className="p-4 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Database className="h-5 w-5 text-accent" />
+                <div>
+                  <p className="font-semibold text-sm">Data Ingestion & Review</p>
+                  <p className="text-xs text-muted-foreground">Pull from official municipal sources, review AI-extracted rows, approve into the verified dataset.</p>
+                </div>
+              </div>
+              <Button size="sm" variant="outline">Open</Button>
+            </CardContent>
+          </Card>
+        </Link>
 
         {/* User Analytics */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
