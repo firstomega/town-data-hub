@@ -1,130 +1,63 @@
 
 
-# The Data Problem — and the Plan to Fix It
+# Fake-Data Audit + Prioritized Cleanup Plan
 
-## What we have today
-
-- 7 town **shells** in the DB (slug, name, county, fake population/home values)
-- 0 rows in `zones`, `permits`, `ordinances`, `contacts`
-- Pages still read from hardcoded `src/data/townData.ts` — placeholder fiction (e.g., "Paramus §250-45 fence rule") that *looks* real but isn't sourced from any actual ordinance
-- No provenance, no `source_url`, no verification timestamp tied to a real document
-
-This is fatal for a product whose entire pitch is "trustworthy municipal data." A homeowner who builds a fence based on our data and gets fined will sue. We have to fix it before launch.
-
-## The honest data hierarchy (best → worst)
+## Volatility scale (1 = never changes, 5 = changes constantly)
 
 ```text
-1. Official municipal code on eCode360/Municode/General Code (machine-readable, citable)
-2. Official town PDFs (zoning ordinance, fee schedule, application forms)
-3. Town clerk / building dept confirmation (email or phone)
-4. Reputable secondary sources (NJ DCA, county planning office)
-5. AI-summarized from #1–4 with citation back to source
-6. Hand-typed placeholder ← WHERE WE ARE NOW
+1 — Static reference (legal definitions, "About" copy)
+2 — Curated content (guide articles, glossary entries, pricing tiers)
+3 — Per-town official data (zoning, permits, ordinances, contacts)
+4 — User-generated state (saved towns, projects, checklists, profile)
+5 — Live signals (search queries, ordinance change feed, analytics, activity logs)
 ```
 
-Bergen County towns mostly use **eCode360** (General Code) or **Municode** — both have public URLs per chapter. That's our anchor.
+## The full audit, ranked by user-impact priority
 
-## The plan: 5 phases, ship phase 1 now
+| # | Page / Route | Status today | Volatility | Real source of truth | Fix approach |
+|---|---|---|---|---|---|
+| 1 | **Town Profile** — `/town/:slug` (Overview + Zoning + Permits + Ordinances + Contacts) | All 7 towns flagged `placeholder`. Pages already read from DB but DB is empty for 6 towns and partial for 1. Old hardcoded `Paramus*.tsx` / `Town*.tsx` files still exist as dead routes. | **3** | Ingestion pipeline (already built) | Use `/admin/data-review` to scrape + approve. Delete the 11 dead `Paramus*` / `Town*` page files. |
+| 2 | **Homepage** — `/` | "Bergen County, NJ — Now Live" badge implies coverage we don't have. Quick-pill testimonials and "Always Current — within 30 days" are unverified marketing claims. | **2** | DB `towns` table for counts; testimonials need real users | Replace town count + "ready" badges with live counts from `towns` table filtered by `data_status='verified'`. Mark testimonials as "Sample" or remove until we have real ones. Soften "30 days" claim to "Refreshed weekly + on-demand." |
+| 3 | **Dashboard** — `/dashboard` | Hardcoded "Welcome back, John", fake savedTowns, fake activeProjects, fake "Recent Ordinance Changes." | **4** (user state) / **5** (changes feed) | `auth.user`, `saved_towns`, `projects`, `data_drifts` tables | Wire to real auth user name. Read `saved_towns` + `projects` for current user. Replace hardcoded "Recent Changes" with live `data_drifts` rows where `status='applied'`. Empty states for new users. |
+| 4 | **Search Results** — `/search` | `townResults`, `zoningResults`, `noteResults` all hardcoded — search box doesn't actually search. | **5** | Postgres full-text on `towns`, `zones`, `ordinances` | Build real search: `ilike` across `towns.name`, `zones.name/code/description`, `ordinances.title/summary`, scoped to `confidence != 'placeholder'`. Empty state when no matches. |
+| 5 | **Query / Ask** — `/query` | Pre-filled question with hardcoded AI answer about Ridgewood R-1 fences. Looks authoritative — dangerous. | **5** | Lovable AI + RAG over `zones`/`ordinances` | Wire to a real edge function: take user question, embed-search the relevant town's rows, send to Gemini with strict "only answer from provided context" prompt. Show source citations. Until built, gate behind "Coming soon." |
+| 6 | **Comparison** — `/compare` | Hardcoded Ridgewood vs Paramus rule values. Town selectors don't change anything. | **3** | `zones` + `permits` tables | Make selectors driven by `useAllTowns()`. Pull rows from `zones` for chosen towns and render side-by-side. Hide rows where either side is `placeholder`. |
+| 7 | **Project Detail** — `/project/:id` | Hardcoded `projects` array of 3 fake projects — ignores route id. | **4** | `projects` table | Fetch project by id from DB scoped to `auth.uid()`. Pull rules from `zones` matching the project's town+zone. 404 on miss. |
+| 8 | **Checklist** — `/checklist` | Hardcoded "Deck at 123 Oak St, Ridgewood" with fixed permits + documents list. | **3** (permits/town) / **4** (saved instance) | `permits` table per town + project type taxonomy | Accept `?town=&type=` params; fetch matching permits from DB; allow "Save This Project" → insert into `projects`. |
+| 9 | **Feasibility Check** — `/feasibility` | `mockResults` keyed by project type — pretends to evaluate against real lot/zone data. | **3** | `zones` rows for chosen town | Make form actually read the chosen town's zone rules from DB and run real comparisons (setback, coverage, height). Until that logic is built, label results "Illustrative — not a binding decision." |
+| 10 | **Contractor Dashboard** — `/contractor` | Fake serviceTowns, ruleVariations, projects, team members, community notes. | **4** (own data) / **3** (rules) | `saved_towns` (multi), `projects` filtered by user, `zones` for rule grid | Wire serviceTowns to user's `saved_towns`. Pull real projects. Replace ruleVariations with live `zones` query across saved towns. Hide team/community-notes blocks until those features are real. |
+| 11 | **Admin Dashboard** — `/admin` | Fake user counts (1,247 users, MRR, churn), fake moderationQueue, fake verificationQueue, fake activityLog, fake signup chart, hardcoded "Data Completeness" town list. | **5** | `auth.users`, `data_corrections`, `towns.data_status`, `ingestion_runs` | Replace stats with live counts (`auth.users`, role counts, drift queue size). Wire moderationQueue to `data_corrections WHERE status='pending'`. Wire Data Completeness to live `towns` + COUNT of verified rows. Hide MRR/churn/contractor verification until billing + a contractor-application table exist. Drop the fake bar chart for now. |
+| 12 | **Onboarding** — `/onboarding` | Hardcoded list of 20 Bergen towns; selections aren't saved. | **2** (town list) / **4** (selection) | `towns` table; `saved_towns` insert | Pull town list from `towns`. On finish, insert chosen towns into `saved_towns` for current user, then redirect to `/dashboard`. |
+| 13 | **Settings** — `/settings` | "John Doe / john@example.com" hardcoded; saved towns hardcoded; toggles do nothing. | **4** | `auth.user`, `profiles`, `saved_towns` | Read+write profile from DB. Render saved towns from `saved_towns`. Wire delete + notification toggles. |
+| 14 | **Guides Index** — `/guides` | 6 hardcoded guide cards. | **2** | `guides` table (new) | Create lightweight `guides` table (slug, title, category, read_time, body, published_at). List from DB. |
+| 15 | **Guide Detail** — `/guides/:slug` | Ignores `:slug` — always shows the same hardcoded "Understanding NJ Zoning" article. | **1** per article / **2** for the set | `guides.body` | Fetch by slug, render markdown body, 404 on miss. |
+| 16 | **Glossary** — `/glossary` | 18 hardcoded terms. Definitions are mostly correct but unverified. | **1** | `glossary_terms` table (new) | Move to DB so admins can edit without a deploy. Low urgency. |
+| 17 | **Pricing** — `/pricing` | Hardcoded tiers + features. | **2** | Code is fine until billing is wired | Leave as-is. Revisit when Stripe/Paddle is added. |
+| 18 | **About / Terms** — `/about`, `/terms` | Static marketing/legal copy. | **1** | N/A | Leave as-is. |
+| 19 | **Login / Reset / NotFound / Index** | No fake data. | — | — | No action. |
+| 20 | **Dead duplicate town pages** — `ParamusOverview`, `ParamusZoning`, `ParamusPermits`, `ParamusOrdinances`, `ParamusContacts`, `TownOverview`, `TownZoning`, `TownPermits`, `TownOrdinances`, `TownContacts`, `TownStubPage` | Not routed in `App.tsx` but still in repo, full of hardcoded fiction. | — | **Delete all 11 files** + remove `src/data/townData.ts` and `src/data/towns.ts` if unused. |
 
-### Phase 1 — Provenance & honesty (build now)
+## Recommended execution order (4 slices)
 
-Make the data model honest about where every fact came from. Even before we ingest real data, the schema should track it.
+**Slice A — Stop the bleeding (highest user-trust impact)**
+- Items 1, 4, 5, 6 — anything a logged-out visitor sees that *looks* authoritative but isn't.
+- Delete dead duplicate town pages (#20).
+- Soften homepage marketing claims (#2).
 
-**Schema additions (one migration):**
-- Add `source_url`, `source_doc`, `last_verified_at`, `verified_by`, `confidence` (`verified` | `ai_extracted` | `placeholder`) to `zones`, `permits`, `ordinances`, `contacts`
-- Add `data_status` to `towns`: `verified` | `partial` | `placeholder`
-- New table `data_corrections` (already planned) — wired to the existing `SuggestCorrectionDialog`
-- New table `ingestion_runs` — audit log of every scrape/extraction job (when, source, rows added, who approved)
+**Slice B — Make the logged-in experience real**
+- Items 3, 7, 8, 12, 13 — Dashboard, Project Detail, Checklist, Onboarding, Settings all read/write real per-user data.
 
-**UI changes:**
-- Every data block on a Town Profile shows a small **provenance footer**: "Source: Borough of Paramus Code §250-45 · Verified Jan 15, 2026 · [View source]"
-- A `placeholder` confidence renders an amber badge: **"Placeholder — not yet verified"**
-- The 5 generic towns (Hackensack, Fort Lee, Teaneck, Englewood, Glen Rock) flip to a **"Data pending verification"** state (we already have the stub page pattern)
-- `last_verified_at` older than 12 months renders a yellow **"May be outdated"** chip
+**Slice C — Make admin real**
+- Item 11 — Admin Dashboard wired to live counts + queues. Pairs naturally with the Phase 3 work just shipped.
 
-**Migrate existing `townData.ts` into the DB** — but flagged `confidence='placeholder'` for everything. No more hardcoded reads; pages query Supabase. This makes the dishonesty *visible* instead of hidden.
+**Slice D — Content polish**
+- Items 9, 10, 14, 15, 16 — Feasibility, Contractor, Guides, Glossary moved to DB-backed content.
 
-### Phase 2 — Real ingestion pipeline (next slice)
+## Key trade-off
 
-An admin tool that takes a municipal code URL and produces draft DB rows for review.
+Slices A + B together are ~70% of perceived trust improvement. Slice C is mostly for you. Slice D can wait — those pages are low-traffic and the fake content there is least misleading.
 
-**Architecture:**
-```text
-Admin pastes eCode360 URL
-    ↓
-Edge function: ingest-ordinance
-    ├─ Firecrawl scrape (markdown of the chapter)
-    ├─ Lovable AI (Gemini) — extract structured rows:
-    │     { zone_code, min_lot, setback_front, ... } per zone
-    │     { permit_name, fee, timeline, requirements[] } per permit
-    │     { ordinance_code, title, summary } per ordinance
-    └─ Insert as confidence='ai_extracted', status='pending_review'
-    ↓
-Admin review queue (/admin/data-review)
-    Side-by-side: extracted row | source markdown excerpt | edit form
-    Approve → confidence='verified', verified_by=admin_id, last_verified_at=now()
-    Reject → archived with reason
-```
+## Suggested next move
 
-Connectors needed: **Firecrawl** (already documented as available). Lovable AI Gateway is already enabled. No third-party API keys required.
-
-**Coverage target for Phase 2 launch:** Ridgewood + Paramus fully verified end-to-end (every zone, permit, ordinance has a real `source_url` and a human approval). Other 5 towns stay in `placeholder` with the amber banner.
-
-### Phase 3 — Continuous freshness
-
-- **Weekly cron** (edge function) re-scrapes each town's source URLs, diffs against current rows, flags changes for re-review
-- When a row's content changes upstream, push notifications to users with that town saved (the notification engine we already planned)
-- Public `/data-status` page showing per-town: % verified, last refresh, next refresh — radical transparency
-
-### Phase 4 — Community-sourced corrections
-
-The `SuggestCorrectionDialog` already exists in the UI. Wire it to:
-- Insert into `data_corrections` with `row_id`, `field`, `proposed_value`, `evidence_url`
-- Admin queue at `/admin/corrections` (UI shape already exists in AdminDashboard)
-- On approval → updates the row + bumps `last_verified_at` + credits the submitter
-
-### Phase 5 — Verified contractor signal
-
-Verified contractors can vouch for ordinance entries ("I pulled this exact permit in March 2025, fee was correct"). A vouch increments a `confidence_signals` count. Three independent vouches in 90 days → row gets a **"Confirmed by contractors"** badge. This is the moat the PRD describes.
-
----
-
-## What I'd build in this slice (Phase 1)
-
-A focused, shippable chunk:
-
-1. **Migration** — add provenance columns to `zones`/`permits`/`ordinances`/`contacts`, add `data_status` to `towns`, create `data_corrections` and `ingestion_runs` tables
-2. **Seed** — port `src/data/townData.ts` into the DB, all flagged `confidence='placeholder'`. Set Hackensack/Fort Lee/Teaneck/Englewood/Glen Rock to `data_status='placeholder'`; Ridgewood/Paramus to `partial`
-3. **Refactor pages** to read from Supabase via TanStack Query (replaces the `getFullTownData` import everywhere). Loading states already exist.
-4. **Provenance UI** — small footer component on every data block; amber "Placeholder" badge; "May be outdated" chip when `last_verified_at` > 12 months
-5. **Honest empty states** — generic town profiles render "Data pending verification" with a "Be notified when this town is verified" CTA (writes to `saved_towns`)
-6. **Wire `SuggestCorrectionDialog`** to actually insert into `data_corrections` (not just toast)
-
-Phase 2 (real ingestion with Firecrawl + AI extraction + admin review queue) is a separate slice — bigger, and worth doing once Phase 1 makes the honesty visible.
-
-## Files to create / modify
-
-**New migrations:**
-- Add provenance columns + `data_corrections` + `ingestion_runs`
-
-**New files:**
-- `src/components/DataProvenance.tsx` — source/verified-on/link footer
-- `src/components/PlaceholderBanner.tsx` — amber "not yet verified" banner
-- `src/hooks/useTown.ts`, `useTownZones.ts`, `useTownPermits.ts`, etc. — TanStack Query wrappers
-- `supabase/functions/seed-town-data/index.ts` — one-time seed from `townData.ts`
-
-**Modify:**
-- All `Generic*` and `Paramus*` and `Town*` pages — read from DB, render provenance
-- `SuggestCorrectionDialog.tsx` — real insert
-- `TownProfileLayout.tsx` — show `data_status` badge in header
-
-**Out of scope for this slice (deliberately):** Firecrawl ingestion, AI extraction, admin review queue, cron refresh. Those are Phase 2.
-
-## Trade-off to be honest about
-
-This slice doesn't *get* real data — it makes the absence of real data **visible and trackable**, and gives us the rails to add real data row-by-row in Phase 2. That's the right order: don't claim verified data we don't have, build the verification pipeline next.
-
----
-
-**Approve to build Phase 1, or tell me to jump straight to Phase 2 (Firecrawl ingestion of one town's eCode360 chapter as a real demo) — that's also a valid first move and arguably more exciting.**
+Approve **Slice A** as a single build. I'll delete the 11 dead duplicate town pages, wire real search, kill the hardcoded AI answer on `/query` (gate it behind "Coming soon"), make `/compare` driven by real DB selectors, and replace homepage marketing fiction with live counts.
 
