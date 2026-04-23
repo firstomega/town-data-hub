@@ -15,6 +15,8 @@ import {
 import { NotificationCenter } from "@/components/NotificationCenter";
 
 interface NavBarProps {
+  /** @deprecated auth state is now read from useAuth(); prop accepted for back-compat */
+  isLoggedIn?: boolean;
   showSearch?: boolean;
   searchValue?: string;
   onSearchChange?: (value: string) => void;
