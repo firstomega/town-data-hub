@@ -1,95 +1,145 @@
 
 
-# Missing Features from the PRD
+# TownCenter — Prototype → Real Platform
 
-After cross-referencing the full PRD against the current prototype, here are the gaps — organized from most impactful to nice-to-have.
-
----
-
-## High-Impact Missing Features
-
-### 1. Project Feasibility Quick-Check
-**PRD reference:** "Before a homeowner even calls a contractor, they describe what they want to do ('I want to add a second-story addition') and the app tells them whether it's likely permissible in their zone."
-
-Currently missing entirely. This should be a dedicated page or modal (e.g., `/feasibility`) where a user selects a project type + address/zone and gets a pass/fail result against the zone's rules, with specific constraints listed.
-
-### 2. In-App Notification Center
-**PRD reference:** "In-app notification center for ordinance updates, new community notes on their saved towns, and permit timeline reminders."
-
-The sidebar has badge counts, but there's no notification dropdown/panel where users can see and dismiss individual notifications. Should be a bell icon in the NavBar with a dropdown showing recent alerts.
-
-### 3. Saved Projects Feature
-**PRD reference:** "Let users save a specific address + project type combination and track everything related to it: applicable rules, permit status, ordinance changes that might affect it."
-
-The Dashboard shows "Active Projects" but there's no `/projects` detail view or a way to create/manage a saved project. A simple project detail page showing the address, zone, applicable rules, and checklist status would complete this.
-
-### 4. Community Notes on Town Profiles
-**PRD reference:** "Allow verified contractors to leave notes on specific town profiles."
-
-Community Notes exist on the Contractor Dashboard, but they don't appear on the actual Town Profile pages where homeowners would see them. Each town profile should have a "Community Notes" section (perhaps on the Overview or a new tab) showing contractor tips with upvote counts and verified badges.
-
-### 5. Glossary Page
-**PRD reference:** "A persistent, linkable glossary that contextually appears when these terms show up in the data."
-
-Inline tooltips exist on the Zoning tab, but there's no standalone `/glossary` page users can browse. Should list all zoning terms (setback, FAR, variance, nonconforming use, etc.) with definitions.
-
-### 6. "Compare with Another Town" Button on Town Profiles
-**PRD reference:** "This should be accessible from any town profile with a single click."
-
-Town profiles have no link to the comparison page pre-filled with that town. Add a "Compare with another town" button on each Town Profile header.
+A grounded assessment of where the app stands today and the highest-leverage moves to make it real. **No code changes in this turn** — this is a roadmap. We can pick any slice and execute.
 
 ---
 
-## Medium-Impact Missing Features
+## Where the prototype stands
 
-### 7. Seasonal Prompts / Contextual Tips
-**PRD reference:** "Surface timely content based on the season."
+**Strong:** 18 routes, full visual system, 7 town profiles (2 deep + 5 generic), feasibility wizard, glossary, admin dashboard, command palette, notification UI, project detail pages.
 
-A small banner or card on the homepage/dashboard: "Spring: Planning a pool? Here's what you need to know about pool permits." Simple to add, makes the app feel alive.
+**Hollow:** Everything is hardcoded. No auth, no database, no real search, no real AI answers, no real notifications, no real share/save. The Login page has a Google button that does nothing and routes to `/onboarding` regardless of input.
 
-### 8. "Data Pending" State for Incomplete Towns
-**PRD reference:** "When a municipality's data is unavailable or incomplete, the town profile should still exist but display a clear 'data pending' state."
-
-The featured towns grid shows 6 towns but only 2 have actual profiles. The other 4 (Hackensack, Fort Lee, Teaneck, Englewood) should link to stub pages with a "Data coming soon" state rather than dead links.
-
-### 9. User-Submitted Corrections
-**PRD reference:** "Let users flag outdated information ('This setback rule changed in 2024') and route it to you for verification."
-
-A small "Report an issue" or "Suggest a correction" link on town profile data sections. Can be a simple modal with a text field — no backend needed for the prototype.
-
-### 10. Town Meeting Calendar
-**PRD reference:** "If a town has an upcoming zoning board meeting, surface that in the town profile."
-
-Add an "Upcoming Meetings" card on the Town Overview or Contacts tab showing next ZBA and Planning Board meeting dates.
-
-### 11. Project Cost Estimator Hints
-**PRD reference:** "Give users a rough ballpark of what common projects cost in their area."
-
-Add estimated project costs (not just permit fees) to the Checklist page or Permits tab: "Average deck cost in Bergen County: $8,000–$15,000."
-
-### 12. Shareable Town Profile Links
-**PRD reference:** "A shareable link feature — contractors who send a town profile link to a client are doing your marketing."
-
-Add a "Share" button on town profiles that copies the URL with a toast confirmation.
+To go from prototype → platform, the work splits into four tracks: **Backend foundation**, **Real data & intelligence**, **UX depth**, and **Trust & security**.
 
 ---
 
-## Implementation Plan
+## Track 1 — Backend foundation (unblocks everything else)
 
-### Files to create:
-- `src/pages/FeasibilityCheck.tsx` — Project feasibility quick-check wizard
-- `src/pages/GlossaryPage.tsx` — Full glossary of zoning terms
-- `src/pages/TownStubPage.tsx` — "Data pending" placeholder for towns without full data
-- `src/components/NotificationCenter.tsx` — Bell icon dropdown with notification items
+Enable **Lovable Cloud** (Supabase under the hood). This single move unlocks auth, persistence, search, file storage, edge functions, and AI.
 
-### Files to modify:
-- `src/App.tsx` — Add routes for `/feasibility`, `/glossary`, `/town/:slug` (stub)
-- `src/components/NavBar.tsx` — Add notification bell with dropdown
-- `src/pages/TownOverview.tsx` & `src/pages/ParamusOverview.tsx` — Add Community Notes section, "Compare" button, upcoming meetings card, "Suggest correction" link, "Share" button
-- `src/pages/TownContacts.tsx` & `src/pages/ParamusContacts.tsx` — Add upcoming meeting dates
-- `src/pages/ChecklistPage.tsx` — Add estimated project cost section
-- `src/pages/HomePage.tsx` — Add seasonal prompt card, link stub towns to stub pages
-- `src/pages/Dashboard.tsx` — Add seasonal tip banner
+**Schema (initial tables):**
+```text
+profiles          → id, full_name, user_type (homeowner|contractor), avatar_url
+user_roles        → user_id, role (admin|contractor|user)   ← separate table, RLS-safe
+towns             → slug, name, county, character, source, last_verified
+zones             → town_slug, code, name, setbacks, far, coverage, height, uses[]
+permits           → town_slug, name, fee_min, fee_max, timeline, requirements[]
+ordinances        → town_slug, category, code, title, summary, updated_at
+contacts          → town_slug, dept, phone, email, hours, address, meetings
+projects          → user_id, town_slug, address, project_type, zone, status, checklist
+saved_towns       → user_id, town_slug
+community_notes   → contractor_id, town_slug, body, upvotes, status (pending|approved)
+notifications     → user_id, type, title, body, read_at, link
+corrections       → user_id, town_slug, section, body, status
+contractor_apps   → user_id, business_name, license_no, status
+```
+RLS on every table. Roles in `user_roles` (never on profiles) — guards against privilege escalation.
 
-### Estimated scope: ~8 files to create/modify. All mock data, no backend changes.
+---
+
+## Track 2 — Auth & social login (the question you asked)
+
+**Status today:** Not built in. The Login page is a styled shell.
+
+**What Lovable Cloud supports natively:** Email/password, Phone (SMS), **Google**, **Apple**, SSO/SAML.
+**Not native:** Facebook, GitHub, Discord (would require connecting external Supabase).
+
+**Recommended default for TownCenter:** Email/password + Google. Apple is a nice-to-have for the iOS audience.
+
+**Required pieces:**
+- Wire `LoginPage` to `supabase.auth.signInWithPassword` / `signInWithOAuth({provider: 'google'})`
+- Auth state listener in a top-level provider; protected routes for `/dashboard`, `/settings`, `/contractor`, `/admin`, `/project/:id`
+- `/reset-password` page (currently missing — without it, password resets silently log users in)
+- Profile auto-creation trigger on signup; user_type captured at onboarding
+- Enable **HIBP leaked-password check** (one toggle, blocks compromised passwords)
+- Session persistence + sign-out in the NavBar dropdown (currently a dead Link)
+
+---
+
+## Track 3 — Real data & intelligence (the moat)
+
+The PRD's whole premise is *trustworthy, current municipal data*. That means:
+
+1. **Migrate hardcoded town data → DB.** `townData.ts` becomes a seed script.
+2. **Admin CRUD.** The `/admin` dashboard already has the UI shape — wire it to actually edit zones, permits, ordinances, with audit log + `last_verified` stamps.
+3. **Real search.** Replace the fake `/search` page with Postgres full-text search across zones/ordinances/notes; rank by town match first.
+4. **Real Natural Language Query.** Replace the hardcoded fence answer with **Lovable AI** (Gemini via the AI Gateway — no key needed). RAG pattern: embed all ordinance text, retrieve top-k chunks per town, ground the answer with citations. Confidence score from retrieval similarity. Log every Q&A for the admin to review low-confidence ones.
+5. **Real Feasibility Check.** Today it's a switch on `projectType`. Make it a rules engine that reads the actual zone row + project parameters (sq ft, height) from the form and computes pass/fail per rule.
+6. **Notification engine.** Edge function on a cron: when an ordinance row's `updated_at` changes for a town a user has saved → insert a notification + email.
+7. **Geocoding.** The address input on onboarding is text-only. Add Mapbox/Google geocoding to resolve address → town slug → zone (zone requires GIS shapefiles per town; start with town-level, add parcel-level later as a premium feature).
+
+---
+
+## Track 4 — UX depth
+
+- **Saved projects actually save** (currently the "Save Project" button is decorative).
+- **Share buttons actually copy** real shareable URLs with OG meta tags for link previews.
+- **Notification bell** opens a real list, marks read, deep-links to the change.
+- **Comparison page** lets you pick towns from the DB instead of hardcoded Ridgewood vs Paramus.
+- **Mobile responsiveness** — sidebar collapses, NavBar gets a hamburger drawer (currently desktop-only).
+- **Empty/loading/error states** wired to real query states (TanStack Query is already installed but unused).
+- **PDF export** for checklists and zone summaries via an edge function (jsPDF or Puppeteer).
+- **Contractor verification flow** — license number lookup, manual admin review queue (UI exists, needs DB).
+
+---
+
+## Track 5 — Trust, security & payments
+
+**Security baseline:**
+- RLS policies on every table (users see only their projects/notifications; community notes public-read after admin approval)
+- Roles in `user_roles` table with a `has_role()` SECURITY DEFINER function (the standard pattern — prevents recursive RLS bugs and privilege escalation)
+- Zod validation on every form (address, corrections, notes, profile) — client + edge function
+- Rate limiting on the NL Query endpoint (AI cost control + abuse prevention)
+- HIBP password check, email verification required before write access
+- Sanitize community note content (DOMPurify) — they render contractor-submitted text
+- Audit log for admin actions (who edited which ordinance, when)
+- HTTPS-only, secure cookies, CSP headers via meta tags
+
+**Payments (Pro plan required):**
+The pricing page promises Free / $3 Homeowner / $15 Contractor. To collect real money, enable **Stripe** (recommended over Paddle here — utility/data product, fits Stripe's profile, lets you choose tax handling per session). Webhook → updates a `subscriptions` table → gates premium features (NL Query quota, comparison limits, multi-seat contractor accounts).
+
+---
+
+## Recommended sequence (4 phases)
+
+```text
+Phase 1 — Foundation (the unlock)
+  Enable Lovable Cloud
+  Auth: email + Google + reset-password page + protected routes
+  Schema + RLS + user_roles
+  Migrate townData.ts → DB seed
+
+Phase 2 — Make the prototype real
+  Wire saved towns, projects, community notes, corrections to DB
+  Real search (Postgres FTS)
+  Real notification center
+  Admin CRUD on towns/zones/ordinances
+
+Phase 3 — Intelligence
+  Lovable AI for Natural Language Query (RAG with citations)
+  Feasibility Check rules engine on real data
+  Geocoding on onboarding
+  PDF export for checklists
+
+Phase 4 — Revenue & scale
+  Stripe payments + subscription gating
+  Contractor verification + multi-seat billing
+  Notification cron + email digests
+  Mobile responsive pass
+  Security audit + scan
+```
+
+---
+
+## Pick your next move
+
+You don't have to do all four phases at once — and you shouldn't. Tell me which slice to start with and I'll switch to default mode and build it. Good first slices:
+
+- **"Phase 1, all of it"** — the biggest single unlock; everything else compounds on it
+- **"Just auth + Google login + reset password"** — smallest real step, immediate user value
+- **"Real Natural Language Query with Lovable AI"** — most impressive demo, needs Cloud first
+- **"Stripe + paywall the premium tiers"** — if you want to test willingness to pay before more building
 
