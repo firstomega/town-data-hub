@@ -17,41 +17,56 @@ export type Database = {
       contacts: {
         Row: {
           address: string | null
+          confidence: Database["public"]["Enums"]["data_confidence"]
           created_at: string
           dept: string
           description: string | null
           email: string | null
           hours: string | null
           id: string
+          last_verified_at: string | null
           meetings: string | null
           phone: string | null
+          source_doc: string | null
+          source_url: string | null
           town_slug: string
+          verified_by: string | null
           website: string | null
         }
         Insert: {
           address?: string | null
+          confidence?: Database["public"]["Enums"]["data_confidence"]
           created_at?: string
           dept: string
           description?: string | null
           email?: string | null
           hours?: string | null
           id?: string
+          last_verified_at?: string | null
           meetings?: string | null
           phone?: string | null
+          source_doc?: string | null
+          source_url?: string | null
           town_slug: string
+          verified_by?: string | null
           website?: string | null
         }
         Update: {
           address?: string | null
+          confidence?: Database["public"]["Enums"]["data_confidence"]
           created_at?: string
           dept?: string
           description?: string | null
           email?: string | null
           hours?: string | null
           id?: string
+          last_verified_at?: string | null
           meetings?: string | null
           phone?: string | null
+          source_doc?: string | null
+          source_url?: string | null
           town_slug?: string
+          verified_by?: string | null
           website?: string | null
         }
         Relationships: [
@@ -64,36 +79,162 @@ export type Database = {
           },
         ]
       }
+      data_corrections: {
+        Row: {
+          created_at: string
+          current_value: string | null
+          description: string
+          evidence_url: string | null
+          field: string | null
+          id: string
+          proposed_value: string | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          row_id: string | null
+          section: string | null
+          status: Database["public"]["Enums"]["correction_status"]
+          submitter_email: string | null
+          submitter_user_id: string | null
+          table_name: string
+          town_slug: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          current_value?: string | null
+          description: string
+          evidence_url?: string | null
+          field?: string | null
+          id?: string
+          proposed_value?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          row_id?: string | null
+          section?: string | null
+          status?: Database["public"]["Enums"]["correction_status"]
+          submitter_email?: string | null
+          submitter_user_id?: string | null
+          table_name: string
+          town_slug?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          current_value?: string | null
+          description?: string
+          evidence_url?: string | null
+          field?: string | null
+          id?: string
+          proposed_value?: string | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          row_id?: string | null
+          section?: string | null
+          status?: Database["public"]["Enums"]["correction_status"]
+          submitter_email?: string | null
+          submitter_user_id?: string | null
+          table_name?: string
+          town_slug?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ingestion_runs: {
+        Row: {
+          error_message: string | null
+          finished_at: string | null
+          id: string
+          ingestion_type: string
+          raw_response: Json | null
+          rows_added: number | null
+          rows_updated: number | null
+          source_doc: string | null
+          source_url: string
+          started_at: string
+          status: string
+          town_slug: string | null
+          triggered_by: string | null
+        }
+        Insert: {
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          ingestion_type: string
+          raw_response?: Json | null
+          rows_added?: number | null
+          rows_updated?: number | null
+          source_doc?: string | null
+          source_url: string
+          started_at?: string
+          status?: string
+          town_slug?: string | null
+          triggered_by?: string | null
+        }
+        Update: {
+          error_message?: string | null
+          finished_at?: string | null
+          id?: string
+          ingestion_type?: string
+          raw_response?: Json | null
+          rows_added?: number | null
+          rows_updated?: number | null
+          source_doc?: string | null
+          source_url?: string
+          started_at?: string
+          status?: string
+          town_slug?: string | null
+          triggered_by?: string | null
+        }
+        Relationships: []
+      }
       ordinances: {
         Row: {
           category: string
           code: string | null
+          confidence: Database["public"]["Enums"]["data_confidence"]
           created_at: string
           id: string
+          last_verified_at: string | null
+          source_doc: string | null
+          source_url: string | null
           summary: string | null
           title: string
           town_slug: string
           updated_at: string
+          verified_by: string | null
         }
         Insert: {
           category: string
           code?: string | null
+          confidence?: Database["public"]["Enums"]["data_confidence"]
           created_at?: string
           id?: string
+          last_verified_at?: string | null
+          source_doc?: string | null
+          source_url?: string | null
           summary?: string | null
           title: string
           town_slug: string
           updated_at?: string
+          verified_by?: string | null
         }
         Update: {
           category?: string
           code?: string | null
+          confidence?: Database["public"]["Enums"]["data_confidence"]
           created_at?: string
           id?: string
+          last_verified_at?: string | null
+          source_doc?: string | null
+          source_url?: string | null
           summary?: string | null
           title?: string
           town_slug?: string
           updated_at?: string
+          verified_by?: string | null
         }
         Relationships: [
           {
@@ -107,37 +248,52 @@ export type Database = {
       }
       permits: {
         Row: {
+          confidence: Database["public"]["Enums"]["data_confidence"]
           created_at: string
           description: string | null
           fee: string | null
           fee_note: string | null
           id: string
+          last_verified_at: string | null
           name: string
           requirements: string[] | null
+          source_doc: string | null
+          source_url: string | null
           timeline: string | null
           town_slug: string
+          verified_by: string | null
         }
         Insert: {
+          confidence?: Database["public"]["Enums"]["data_confidence"]
           created_at?: string
           description?: string | null
           fee?: string | null
           fee_note?: string | null
           id?: string
+          last_verified_at?: string | null
           name: string
           requirements?: string[] | null
+          source_doc?: string | null
+          source_url?: string | null
           timeline?: string | null
           town_slug: string
+          verified_by?: string | null
         }
         Update: {
+          confidence?: Database["public"]["Enums"]["data_confidence"]
           created_at?: string
           description?: string | null
           fee?: string | null
           fee_note?: string | null
           id?: string
+          last_verified_at?: string | null
           name?: string
           requirements?: string[] | null
+          source_doc?: string | null
+          source_url?: string | null
           timeline?: string | null
           town_slug?: string
+          verified_by?: string | null
         }
         Relationships: [
           {
@@ -257,6 +413,7 @@ export type Database = {
           character: string | null
           county: string
           created_at: string
+          data_status: Database["public"]["Enums"]["town_data_status"]
           full_name: string
           last_verified: string | null
           median_home: string | null
@@ -272,6 +429,7 @@ export type Database = {
           character?: string | null
           county: string
           created_at?: string
+          data_status?: Database["public"]["Enums"]["town_data_status"]
           full_name: string
           last_verified?: string | null
           median_home?: string | null
@@ -287,6 +445,7 @@ export type Database = {
           character?: string | null
           county?: string
           created_at?: string
+          data_status?: Database["public"]["Enums"]["town_data_status"]
           full_name?: string
           last_verified?: string | null
           median_home?: string | null
@@ -325,10 +484,12 @@ export type Database = {
         Row: {
           code: string
           conditional: string[] | null
+          confidence: Database["public"]["Enums"]["data_confidence"]
           created_at: string
           description: string | null
           far: string | null
           id: string
+          last_verified_at: string | null
           max_coverage: string | null
           max_height: string | null
           min_lot: string | null
@@ -338,15 +499,20 @@ export type Database = {
           setback_front: string | null
           setback_rear: string | null
           setback_side: string | null
+          source_doc: string | null
+          source_url: string | null
           town_slug: string
+          verified_by: string | null
         }
         Insert: {
           code: string
           conditional?: string[] | null
+          confidence?: Database["public"]["Enums"]["data_confidence"]
           created_at?: string
           description?: string | null
           far?: string | null
           id?: string
+          last_verified_at?: string | null
           max_coverage?: string | null
           max_height?: string | null
           min_lot?: string | null
@@ -356,15 +522,20 @@ export type Database = {
           setback_front?: string | null
           setback_rear?: string | null
           setback_side?: string | null
+          source_doc?: string | null
+          source_url?: string | null
           town_slug: string
+          verified_by?: string | null
         }
         Update: {
           code?: string
           conditional?: string[] | null
+          confidence?: Database["public"]["Enums"]["data_confidence"]
           created_at?: string
           description?: string | null
           far?: string | null
           id?: string
+          last_verified_at?: string | null
           max_coverage?: string | null
           max_height?: string | null
           min_lot?: string | null
@@ -374,7 +545,10 @@ export type Database = {
           setback_front?: string | null
           setback_rear?: string | null
           setback_side?: string | null
+          source_doc?: string | null
+          source_url?: string | null
           town_slug?: string
+          verified_by?: string | null
         }
         Relationships: [
           {
@@ -401,6 +575,9 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "contractor" | "user"
+      correction_status: "pending" | "approved" | "rejected"
+      data_confidence: "verified" | "ai_extracted" | "placeholder"
+      town_data_status: "verified" | "partial" | "placeholder"
       user_type: "homeowner" | "contractor"
     }
     CompositeTypes: {
@@ -530,6 +707,9 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "contractor", "user"],
+      correction_status: ["pending", "approved", "rejected"],
+      data_confidence: ["verified", "ai_extracted", "placeholder"],
+      town_data_status: ["verified", "partial", "placeholder"],
       user_type: ["homeowner", "contractor"],
     },
   },

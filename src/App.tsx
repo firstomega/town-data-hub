@@ -9,16 +9,6 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import HomePage from "./pages/HomePage";
 import Dashboard from "./pages/Dashboard";
-import TownOverview from "./pages/TownOverview";
-import TownZoning from "./pages/TownZoning";
-import TownPermits from "./pages/TownPermits";
-import TownOrdinances from "./pages/TownOrdinances";
-import TownContacts from "./pages/TownContacts";
-import ParamusOverview from "./pages/ParamusOverview";
-import ParamusZoning from "./pages/ParamusZoning";
-import ParamusPermits from "./pages/ParamusPermits";
-import ParamusOrdinances from "./pages/ParamusOrdinances";
-import ParamusContacts from "./pages/ParamusContacts";
 import GenericTownOverview from "./pages/GenericTownOverview";
 import GenericTownZoning from "./pages/GenericTownZoning";
 import GenericTownPermits from "./pages/GenericTownPermits";
@@ -58,16 +48,6 @@ const App = () => (
           <Routes>
           <Route path="/" element={<HomePage />} />
           <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/town/ridgewood" element={<TownOverview />} />
-          <Route path="/town/ridgewood/zoning" element={<TownZoning />} />
-          <Route path="/town/ridgewood/permits" element={<TownPermits />} />
-          <Route path="/town/ridgewood/ordinances" element={<TownOrdinances />} />
-          <Route path="/town/ridgewood/contacts" element={<TownContacts />} />
-          <Route path="/town/paramus" element={<ParamusOverview />} />
-          <Route path="/town/paramus/zoning" element={<ParamusZoning />} />
-          <Route path="/town/paramus/permits" element={<ParamusPermits />} />
-          <Route path="/town/paramus/ordinances" element={<ParamusOrdinances />} />
-          <Route path="/town/paramus/contacts" element={<ParamusContacts />} />
           <Route path="/town/:slug" element={<GenericTownOverview />} />
           <Route path="/town/:slug/zoning" element={<GenericTownZoning />} />
           <Route path="/town/:slug/permits" element={<GenericTownPermits />} />
