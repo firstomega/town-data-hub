@@ -3,6 +3,8 @@ import { Search, Menu, Settings, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { toast } from "sonner";
+import { useAuth } from "@/hooks/useAuth";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +15,7 @@ import {
 import { NotificationCenter } from "@/components/NotificationCenter";
 
 interface NavBarProps {
+  /** @deprecated auth state is now read from useAuth(); prop accepted for back-compat */
   isLoggedIn?: boolean;
   showSearch?: boolean;
   searchValue?: string;
@@ -20,10 +23,19 @@ interface NavBarProps {
   onSearchSubmit?: () => void;
 }
 
-export function NavBar({ isLoggedIn = false, showSearch = false, searchValue = "", onSearchChange, onSearchSubmit }: NavBarProps) {
+export function NavBar({ showSearch = false, searchValue = "", onSearchChange, onSearchSubmit }: NavBarProps) {
   const location = useLocation();
   const navigate = useNavigate();
   const [query, setQuery] = useState(searchValue);
+  const { user, signOut } = useAuth();
+  const isLoggedIn = !!user;
+
+  const initials = (user?.user_metadata?.full_name || user?.email || "")
+    .split(/[\s@]/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((s: string) => s[0]?.toUpperCase())
+    .join("") || "U";
 
   const navLinks = [
     { label: "How It Works", href: "/#how-it-works" },
@@ -38,6 +50,12 @@ export function NavBar({ isLoggedIn = false, showSearch = false, searchValue = "
     } else if (query.trim()) {
       navigate(`/search?q=${encodeURIComponent(query.trim())}`);
     }
+  };
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast.success("Signed out");
+    navigate("/");
   };
 
   return (
@@ -82,13 +100,15 @@ export function NavBar({ isLoggedIn = false, showSearch = false, searchValue = "
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button className="h-8 w-8 rounded-full bg-accent text-accent-foreground flex items-center justify-center text-xs font-semibold cursor-pointer">
-                    JD
+                    {initials}
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
                   <div className="px-2 py-1.5">
-                    <p className="text-sm font-medium">John Doe</p>
-                    <p className="text-xs text-muted-foreground">john@example.com</p>
+                    <p className="text-sm font-medium truncate">
+                      {user?.user_metadata?.full_name || "Account"}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
                   </div>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
@@ -97,10 +117,8 @@ export function NavBar({ isLoggedIn = false, showSearch = false, searchValue = "
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link to="/login" className="flex items-center gap-2 text-destructive">
-                      <LogOut className="h-3.5 w-3.5" /> Sign Out
-                    </Link>
+                  <DropdownMenuItem onClick={handleSignOut} className="flex items-center gap-2 text-destructive cursor-pointer">
+                    <LogOut className="h-3.5 w-3.5" /> Sign Out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

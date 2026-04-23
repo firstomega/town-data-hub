@@ -1,0 +1,6 @@
+
+drop policy if exists "Profiles are viewable by authenticated users" on public.profiles;
+create policy "Users can view their own profile"
+  on public.profiles for select
+  to authenticated
+  using (auth.uid() = id);
