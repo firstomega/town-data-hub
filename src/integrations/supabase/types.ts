@@ -142,6 +142,60 @@ export type Database = {
         }
         Relationships: []
       }
+      data_drifts: {
+        Row: {
+          change_type: string
+          detected_at: string
+          diff_summary: string | null
+          id: string
+          ingestion_type: string
+          new_snapshot: Json | null
+          old_snapshot: Json | null
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          row_id: string | null
+          source_url: string
+          status: string
+          table_name: string
+          town_slug: string
+        }
+        Insert: {
+          change_type?: string
+          detected_at?: string
+          diff_summary?: string | null
+          id?: string
+          ingestion_type: string
+          new_snapshot?: Json | null
+          old_snapshot?: Json | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          row_id?: string | null
+          source_url: string
+          status?: string
+          table_name: string
+          town_slug: string
+        }
+        Update: {
+          change_type?: string
+          detected_at?: string
+          diff_summary?: string | null
+          id?: string
+          ingestion_type?: string
+          new_snapshot?: Json | null
+          old_snapshot?: Json | null
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          row_id?: string | null
+          source_url?: string
+          status?: string
+          table_name?: string
+          town_slug?: string
+        }
+        Relationships: []
+      }
       ingestion_runs: {
         Row: {
           error_message: string | null
@@ -410,6 +464,7 @@ export type Database = {
       }
       towns: {
         Row: {
+          auto_refresh_enabled: boolean
           character: string | null
           county: string
           created_at: string
@@ -418,6 +473,7 @@ export type Database = {
           last_verified: string | null
           median_home: string | null
           name: string
+          next_refresh_at: string | null
           num_zones: number | null
           population: string | null
           slug: string
@@ -426,6 +482,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          auto_refresh_enabled?: boolean
           character?: string | null
           county: string
           created_at?: string
@@ -434,6 +491,7 @@ export type Database = {
           last_verified?: string | null
           median_home?: string | null
           name: string
+          next_refresh_at?: string | null
           num_zones?: number | null
           population?: string | null
           slug: string
@@ -442,6 +500,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          auto_refresh_enabled?: boolean
           character?: string | null
           county?: string
           created_at?: string
@@ -450,6 +509,7 @@ export type Database = {
           last_verified?: string | null
           median_home?: string | null
           name?: string
+          next_refresh_at?: string | null
           num_zones?: number | null
           population?: string | null
           slug?: string
@@ -571,6 +631,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      recompute_town_data_status: {
+        Args: { _town_slug: string }
+        Returns: Database["public"]["Enums"]["town_data_status"]
       }
     }
     Enums: {
