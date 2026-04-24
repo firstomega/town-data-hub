@@ -8,11 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { User, MapPin, Trash2, Loader2 } from "lucide-react";
+import { User, MapPin, Trash2, Loader2, Home } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
+import { useAllTowns } from "@/hooks/useTownData";
 
 export default function SettingsPage() {
   const { user, signOut } = useAuth();
@@ -26,13 +27,15 @@ export default function SettingsPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
-        .select("full_name, user_type")
+        .select("full_name, user_type, primary_address, primary_town_slug, primary_zone_code")
         .eq("id", userId!)
         .maybeSingle();
       if (error) throw error;
       return data;
     },
   });
+
+  const { data: allTowns = [] } = useAllTowns();
 
   const { data: savedTowns = [], isLoading: loadingTowns } = useQuery({
     queryKey: ["settings", "saved-towns", userId],
@@ -52,6 +55,28 @@ export default function SettingsPage() {
   useEffect(() => {
     if (profile?.full_name) setFullName(profile.full_name);
   }, [profile?.full_name]);
+
+  const [homeAddress, setHomeAddress] = useState("");
+  const [homeSlug, setHomeSlug] = useState("");
+  useEffect(() => {
+    setHomeAddress(profile?.primary_address ?? "");
+    setHomeSlug(profile?.primary_town_slug ?? "");
+  }, [profile?.primary_address, profile?.primary_town_slug]);
+
+  const saveHome = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ primary_address: homeAddress || null, primary_town_slug: homeSlug || null })
+        .eq("id", userId!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Home updated");
+      qc.invalidateQueries({ queryKey: ["profile"] });
+    },
+    onError: (e: any) => toast.error(e.message ?? "Could not save home"),
+  });
 
   const saveProfile = useMutation({
     mutationFn: async () => {
@@ -135,6 +160,57 @@ export default function SettingsPage() {
                 </Button>
               </div>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Your Home */}
+        <Card className="mb-6">
+          <CardContent className="p-5">
+            <div className="flex items-center gap-2 mb-4">
+              <Home className="h-4 w-4 text-accent" />
+              <h2 className="font-semibold text-sm">Your Home</h2>
+            </div>
+            <div className="grid gap-4">
+              <div>
+                <Label className="text-xs">Street address</Label>
+                <Input
+                  value={homeAddress}
+                  onChange={(e) => setHomeAddress(e.target.value)}
+                  placeholder="123 Main St"
+                  className="mt-1.5"
+                />
+              </div>
+              <div>
+                <Label className="text-xs">Town</Label>
+                <div className="flex flex-wrap gap-2 mt-2 max-h-40 overflow-y-auto">
+                  {allTowns.map((t: any) => {
+                    const selected = homeSlug === t.slug;
+                    return (
+                      <button
+                        key={t.slug}
+                        onClick={() => setHomeSlug(t.slug)}
+                        className={`px-3 py-1.5 rounded text-xs font-medium border transition-colors ${
+                          selected
+                            ? "bg-accent text-accent-foreground border-accent"
+                            : "bg-secondary text-muted-foreground border-transparent hover:text-foreground"
+                        }`}
+                      >
+                        {t.name}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+              <Button
+                size="sm"
+                className="w-fit bg-accent hover:bg-accent/90 text-accent-foreground"
+                onClick={() => saveHome.mutate()}
+                disabled={saveHome.isPending}
+              >
+                {saveHome.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : null}
+                Save Home
+              </Button>
+            </div>
           </CardContent>
         </Card>
 
