@@ -12,12 +12,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Loader2, ExternalLink, Check, X, Sparkles, RefreshCw, ShieldCheck, Clock, AlertTriangle } from "lucide-react";
+import { Loader2, ExternalLink, Check, X, Sparkles, RefreshCw, ShieldCheck, Clock, AlertTriangle, Search, Bookmark, Trash2 } from "lucide-react";
 import { useAllTowns } from "@/hooks/useTownData";
 import { Switch } from "@/components/ui/switch";
 import { formatDistanceToNow } from "date-fns";
 
 type TableName = "zones" | "permits" | "ordinances" | "contacts";
+const ALL_TYPES: TableName[] = ["zones", "permits", "ordinances", "contacts"];
 
 function useExtracted(table: TableName) {
   return useQuery({
@@ -117,6 +118,23 @@ function IngestForm() {
   const [busy, setBusy] = useState(false);
   const qc = useQueryClient();
 
+  // Auto-fill URL when a saved source exists for this town+type
+  const { data: savedSources } = useQuery({
+    queryKey: ["town-sources", townSlug],
+    enabled: !!townSlug,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("town_sources")
+        .select("*")
+        .eq("town_slug", townSlug)
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const matchingSaved = (savedSources ?? []).filter((s) => s.ingestion_type === type);
+
   const submit = async () => {
     if (!townSlug || !url) return toast.error("Pick a town and paste a source URL");
     setBusy(true);
@@ -166,6 +184,22 @@ function IngestForm() {
             </Select>
           </div>
         </div>
+        {townSlug && matchingSaved.length > 0 && (
+          <div className="rounded border bg-muted/30 p-2 space-y-1">
+            <p className="text-[10px] uppercase text-muted-foreground font-semibold">Saved sources for this town & type</p>
+            {matchingSaved.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => { setUrl(s.source_url); setDoc(s.source_doc ?? ""); }}
+                className="w-full text-left text-[11px] hover:bg-background rounded px-1.5 py-1 truncate flex items-center gap-1"
+              >
+                <Bookmark className="h-2.5 w-2.5 text-accent flex-shrink-0" />
+                <span className="truncate">{s.source_url}</span>
+              </button>
+            ))}
+          </div>
+        )}
         <div>
           <Label className="text-xs">Source URL</Label>
           <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://ecode360.com/PA1234/laws/..." />
