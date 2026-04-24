@@ -32,6 +32,60 @@ export type Database = {
         }
         Relationships: []
       }
+      civic_events: {
+        Row: {
+          confidence: Database["public"]["Enums"]["data_confidence"]
+          created_at: string
+          description: string | null
+          ends_at: string | null
+          id: string
+          kind: string
+          last_verified_at: string | null
+          location: string | null
+          source_doc: string | null
+          source_url: string | null
+          starts_at: string
+          title: string
+          town_slug: string
+          updated_at: string
+          verified_by: string | null
+        }
+        Insert: {
+          confidence?: Database["public"]["Enums"]["data_confidence"]
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          kind?: string
+          last_verified_at?: string | null
+          location?: string | null
+          source_doc?: string | null
+          source_url?: string | null
+          starts_at: string
+          title: string
+          town_slug: string
+          updated_at?: string
+          verified_by?: string | null
+        }
+        Update: {
+          confidence?: Database["public"]["Enums"]["data_confidence"]
+          created_at?: string
+          description?: string | null
+          ends_at?: string | null
+          id?: string
+          kind?: string
+          last_verified_at?: string | null
+          location?: string | null
+          source_doc?: string | null
+          source_url?: string | null
+          starts_at?: string
+          title?: string
+          town_slug?: string
+          updated_at?: string
+          verified_by?: string | null
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           address: string | null
@@ -286,6 +340,36 @@ export type Database = {
         }
         Relationships: []
       }
+      homeowner_alerts: {
+        Row: {
+          alert_type: string
+          created_at: string
+          id: string
+          read_at: string | null
+          ref_id: string | null
+          town_slug: string | null
+          user_id: string
+        }
+        Insert: {
+          alert_type: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          ref_id?: string | null
+          town_slug?: string | null
+          user_id: string
+        }
+        Update: {
+          alert_type?: string
+          created_at?: string
+          id?: string
+          read_at?: string | null
+          ref_id?: string | null
+          town_slug?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       ingestion_runs: {
         Row: {
           error_message: string | null
@@ -455,6 +539,9 @@ export type Database = {
           created_at: string
           full_name: string | null
           id: string
+          primary_address: string | null
+          primary_town_slug: string | null
+          primary_zone_code: string | null
           updated_at: string
           user_type: Database["public"]["Enums"]["user_type"]
         }
@@ -463,6 +550,9 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id: string
+          primary_address?: string | null
+          primary_town_slug?: string | null
+          primary_zone_code?: string | null
           updated_at?: string
           user_type?: Database["public"]["Enums"]["user_type"]
         }
@@ -471,6 +561,9 @@ export type Database = {
           created_at?: string
           full_name?: string | null
           id?: string
+          primary_address?: string | null
+          primary_town_slug?: string | null
+          primary_zone_code?: string | null
           updated_at?: string
           user_type?: Database["public"]["Enums"]["user_type"]
         }
