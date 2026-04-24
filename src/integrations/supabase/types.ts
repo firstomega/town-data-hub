@@ -214,6 +214,78 @@ export type Database = {
         }
         Relationships: []
       }
+      glossary_terms: {
+        Row: {
+          created_at: string
+          definition: string
+          id: string
+          related: string[] | null
+          term: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          definition: string
+          id?: string
+          related?: string[] | null
+          term: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          definition?: string
+          id?: string
+          related?: string[] | null
+          term?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      guides: {
+        Row: {
+          author: string | null
+          body: string
+          category: string | null
+          created_at: string
+          description: string | null
+          hero_image_url: string | null
+          id: string
+          published_at: string
+          read_time: string | null
+          slug: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          author?: string | null
+          body?: string
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          hero_image_url?: string | null
+          id?: string
+          published_at?: string
+          read_time?: string | null
+          slug: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          author?: string | null
+          body?: string
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          hero_image_url?: string | null
+          id?: string
+          published_at?: string
+          read_time?: string | null
+          slug?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       ingestion_runs: {
         Row: {
           error_message: string | null
@@ -479,6 +551,48 @@ export type Database = {
             referencedColumns: ["slug"]
           },
         ]
+      }
+      town_sources: {
+        Row: {
+          created_at: string
+          discovered_by: string | null
+          id: string
+          ingestion_type: string
+          last_used_at: string | null
+          notes: string | null
+          source_doc: string | null
+          source_label: string | null
+          source_url: string
+          town_slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          discovered_by?: string | null
+          id?: string
+          ingestion_type: string
+          last_used_at?: string | null
+          notes?: string | null
+          source_doc?: string | null
+          source_label?: string | null
+          source_url: string
+          town_slug: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          discovered_by?: string | null
+          id?: string
+          ingestion_type?: string
+          last_used_at?: string | null
+          notes?: string | null
+          source_doc?: string | null
+          source_label?: string | null
+          source_url?: string
+          town_slug?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       towns: {
         Row: {
