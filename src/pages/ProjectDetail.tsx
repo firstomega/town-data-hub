@@ -3,118 +3,162 @@ import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Link, useParams } from "react-router-dom";
-import { Hammer, Fence, Waves, ArrowLeft, Trash2, Share2, ChevronRight, CheckCircle, Clock, AlertTriangle, FileText } from "lucide-react";
+import { Link, useParams, useNavigate } from "react-router-dom";
+import { Hammer, Fence, Waves, ArrowLeft, Trash2, Share2, CheckCircle, Loader2, FileText } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { useState, useEffect } from "react";
 
-const projects = [
-  {
-    id: "1",
-    type: "Deck",
-    icon: Hammer,
-    address: "123 Oak St, Ridgewood, NJ 07450",
-    town: "Ridgewood",
-    zone: "R-2",
-    status: "Researching",
-    statusColor: "bg-accent text-accent-foreground",
-    rules: [
-      { label: "Front Setback", value: "35 ft", status: "ok" },
-      { label: "Side Setback", value: "10 ft", status: "ok" },
-      { label: "Rear Setback", value: "25 ft", status: "ok" },
-      { label: "Max Lot Coverage", value: "30% (current: 22%)", status: "ok" },
-      { label: "Max Height", value: "35 ft", status: "ok" },
-    ],
-    timeline: [
-      { step: "Researching", active: true, complete: false },
-      { step: "Application Submitted", active: false, complete: false },
-      { step: "Under Review", active: false, complete: false },
-      { step: "Approved", active: false, complete: false },
-      { step: "Construction", active: false, complete: false },
-    ],
-    checklist: [
-      { item: "Property survey showing setbacks", done: true },
-      { item: "Construction plans (2 sets)", done: false },
-      { item: "Elevation drawings", done: false },
-      { item: "Material specifications", done: false },
-      { item: "Contractor license", done: true },
-      { item: "Zoning permit application", done: false },
-    ],
-    changes: [
-      { date: "Jan 10, 2026", summary: "Updated fence height regulations for corner lots in R-1 and R-2 zones." },
-    ],
-  },
-  {
-    id: "2",
-    type: "Fence",
-    icon: Fence,
-    address: "456 Maple Ave, Paramus, NJ 07652",
-    town: "Paramus",
-    zone: "R-1",
-    status: "Permit Filed",
-    statusColor: "bg-warning text-warning-foreground",
-    rules: [
-      { label: "Max Front Yard Height", value: "4 ft", status: "ok" },
-      { label: "Max Side/Rear Height", value: "6 ft", status: "ok" },
-      { label: "Solid Fence Zoning Permit", value: "Required for >4 ft", status: "warning" },
-      { label: "Material Restrictions", value: "No chain-link in front yard", status: "ok" },
-    ],
-    timeline: [
-      { step: "Researching", active: false, complete: true },
-      { step: "Application Submitted", active: false, complete: true },
-      { step: "Under Review", active: true, complete: false },
-      { step: "Approved", active: false, complete: false },
-      { step: "Construction", active: false, complete: false },
-    ],
-    checklist: [
-      { item: "Property survey", done: true },
-      { item: "Fence plan with dimensions", done: true },
-      { item: "Material specifications", done: true },
-      { item: "Zoning permit application", done: true },
-      { item: "Building permit application", done: true },
-      { item: "Neighbor notification", done: false },
-    ],
-    changes: [
-      { date: "Jan 8, 2026", summary: "New ADU ordinance adopted — accessory dwelling units now permitted in all residential zones." },
-    ],
-  },
-  {
-    id: "3",
-    type: "Pool",
-    icon: Waves,
-    address: "123 Oak St, Ridgewood, NJ 07450",
-    town: "Ridgewood",
-    zone: "R-2",
-    status: "Planning",
-    statusColor: "bg-secondary text-secondary-foreground",
-    rules: [
-      { label: "Pool Setback (rear)", value: "10 ft from property line", status: "ok" },
-      { label: "Pool Setback (side)", value: "5 ft from property line", status: "ok" },
-      { label: "Fence Requirement", value: "4 ft min with self-closing gate", status: "warning" },
-      { label: "Lot Coverage Impact", value: "+400 sf (within limit)", status: "ok" },
-    ],
-    timeline: [
-      { step: "Researching", active: true, complete: false },
-      { step: "Application Submitted", active: false, complete: false },
-      { step: "Under Review", active: false, complete: false },
-      { step: "Approved", active: false, complete: false },
-      { step: "Construction", active: false, complete: false },
-    ],
-    checklist: [
-      { item: "Pool plan with dimensions and location", done: false },
-      { item: "Property survey", done: true },
-      { item: "Fencing plan (4 ft min)", done: false },
-      { item: "Electrical plan for pump/filter", done: false },
-      { item: "Contractor license", done: false },
-    ],
-    changes: [],
-  },
-];
+const projectIcons: Record<string, React.ElementType> = {
+  deck: Hammer,
+  fence: Fence,
+  pool: Waves,
+};
+
+const TIMELINE_STEPS = ["researching", "submitted", "under_review", "approved", "construction"] as const;
+const TIMELINE_LABELS: Record<string, string> = {
+  researching: "Researching",
+  submitted: "Application Submitted",
+  under_review: "Under Review",
+  approved: "Approved",
+  construction: "Construction",
+};
+
+type ChecklistItem = { item: string; done: boolean };
 
 export default function ProjectDetail() {
   const { id } = useParams<{ id: string }>();
-  const project = projects.find((p) => p.id === id) || projects[0];
-  const Icon = project.icon;
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  const qc = useQueryClient();
+
+  const { data: project, isLoading, error } = useQuery({
+    queryKey: ["project", id],
+    enabled: !!id && !!user?.id,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("*")
+        .eq("id", id!)
+        .eq("user_id", user!.id)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: zone } = useQuery({
+    queryKey: ["project-zone", project?.town_slug, project?.zone],
+    enabled: !!project?.town_slug && !!project?.zone,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("zones")
+        .select("*")
+        .eq("town_slug", project!.town_slug!)
+        .eq("code", project!.zone!)
+        .maybeSingle();
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: drifts = [] } = useQuery({
+    queryKey: ["project-drifts", project?.town_slug],
+    enabled: !!project?.town_slug,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("data_drifts")
+        .select("id, detected_at, diff_summary")
+        .eq("town_slug", project!.town_slug!)
+        .eq("status", "applied")
+        .order("detected_at", { ascending: false })
+        .limit(3);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const [checklist, setChecklist] = useState<ChecklistItem[]>([]);
+  useEffect(() => {
+    if (project?.checklist && Array.isArray(project.checklist)) {
+      setChecklist(project.checklist as unknown as ChecklistItem[]);
+    }
+  }, [project?.checklist]);
+
+  const updateChecklist = useMutation({
+    mutationFn: async (next: ChecklistItem[]) => {
+      const { error } = await supabase
+        .from("projects")
+        .update({ checklist: next as unknown as any })
+        .eq("id", id!);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["project", id] }),
+  });
+
+  const deleteProject = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase.from("projects").delete().eq("id", id!);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      toast.success("Project deleted");
+      navigate("/dashboard");
+    },
+    onError: (e: any) => toast.error(e.message ?? "Could not delete project"),
+  });
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <NavBar isLoggedIn showSearch />
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (error || !project) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <NavBar isLoggedIn showSearch />
+        <div className="flex-1 flex flex-col items-center justify-center gap-3">
+          <p className="text-sm text-muted-foreground">Project not found.</p>
+          <Link to="/dashboard"><Button size="sm" variant="outline">Back to Dashboard</Button></Link>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  const Icon = projectIcons[project.project_type] || Hammer;
+  const typeLabel = project.project_type.charAt(0).toUpperCase() + project.project_type.slice(1);
+  const status = (project.status || "researching").toLowerCase().replace(/\s+/g, "_");
+  const stepIndex = TIMELINE_STEPS.indexOf(status as typeof TIMELINE_STEPS[number]);
+
+  const rules = zone
+    ? [
+        { label: "Front Setback", value: zone.setback_front },
+        { label: "Side Setback", value: zone.setback_side },
+        { label: "Rear Setback", value: zone.setback_rear },
+        { label: "Max Lot Coverage", value: zone.max_coverage },
+        { label: "Max Height", value: zone.max_height },
+        { label: "Min Lot Size", value: zone.min_lot },
+      ].filter((r) => r.value)
+    : [];
+
+  const toggleItem = (i: number) => {
+    const next = checklist.map((c, idx) => (idx === i ? { ...c, done: !c.done } : c));
+    setChecklist(next);
+    updateChecklist.mutate(next);
+  };
+
+  const completed = checklist.filter((c) => c.done).length;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -131,12 +175,12 @@ export default function ProjectDetail() {
               <Icon className="h-5 w-5 text-muted-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-primary">{project.type} Project</h1>
+              <h1 className="text-xl font-bold text-primary">{typeLabel} Project</h1>
               <p className="text-sm text-muted-foreground">{project.address}</p>
               <div className="flex items-center gap-2 mt-1">
-                <Badge variant="secondary" className="text-[10px]">{project.town}</Badge>
-                <Badge variant="outline" className="text-[10px] font-mono">Zone {project.zone}</Badge>
-                <Badge className={`text-[10px] ${project.statusColor}`}>{project.status}</Badge>
+                {project.town_slug && <Badge variant="secondary" className="text-[10px] capitalize">{project.town_slug}</Badge>}
+                {project.zone && <Badge variant="outline" className="text-[10px] font-mono">Zone {project.zone}</Badge>}
+                <Badge className="text-[10px] capitalize">{project.status}</Badge>
               </div>
             </div>
           </div>
@@ -144,32 +188,38 @@ export default function ProjectDetail() {
             <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success("Project link copied!"); }}>
               <Share2 className="h-3.5 w-3.5" /> Share
             </Button>
-            <Button variant="outline" size="sm" className="text-xs gap-1.5 text-destructive hover:text-destructive">
+            <Button variant="outline" size="sm" className="text-xs gap-1.5 text-destructive hover:text-destructive" onClick={() => {
+              if (confirm("Delete this project? This cannot be undone.")) deleteProject.mutate();
+            }}>
               <Trash2 className="h-3.5 w-3.5" /> Delete
             </Button>
           </div>
         </div>
 
-        {/* Permit Status Timeline */}
+        {/* Timeline */}
         <Card className="mb-6">
           <CardContent className="p-5">
             <h3 className="font-semibold text-sm mb-4">Permit Status</h3>
             <div className="flex items-center justify-between">
-              {project.timeline.map((step, i) => (
-                <div key={step.step} className="flex items-center flex-1">
-                  <div className="flex flex-col items-center">
-                    <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-semibold ${
-                      step.complete ? "bg-success text-success-foreground" : step.active ? "bg-accent text-accent-foreground" : "bg-secondary text-muted-foreground"
-                    }`}>
-                      {step.complete ? <CheckCircle className="h-4 w-4" /> : i + 1}
+              {TIMELINE_STEPS.map((step, i) => {
+                const complete = stepIndex > i;
+                const active = stepIndex === i;
+                return (
+                  <div key={step} className="flex items-center flex-1">
+                    <div className="flex flex-col items-center">
+                      <div className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-semibold ${
+                        complete ? "bg-success text-success-foreground" : active ? "bg-accent text-accent-foreground" : "bg-secondary text-muted-foreground"
+                      }`}>
+                        {complete ? <CheckCircle className="h-4 w-4" /> : i + 1}
+                      </div>
+                      <p className={`text-[10px] mt-1.5 text-center max-w-[80px] ${active ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{TIMELINE_LABELS[step]}</p>
                     </div>
-                    <p className={`text-[10px] mt-1.5 text-center max-w-[80px] ${step.active ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{step.step}</p>
+                    {i < TIMELINE_STEPS.length - 1 && (
+                      <div className={`flex-1 h-0.5 mx-1 mt-[-16px] ${complete ? "bg-success" : "bg-border"}`} />
+                    )}
                   </div>
-                  {i < project.timeline.length - 1 && (
-                    <div className={`flex-1 h-0.5 mx-1 mt-[-16px] ${step.complete ? "bg-success" : "bg-border"}`} />
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </CardContent>
         </Card>
@@ -177,22 +227,23 @@ export default function ProjectDetail() {
         {/* Applicable Rules */}
         <Card className="mb-6">
           <CardContent className="p-5">
-            <h3 className="font-semibold text-sm mb-4">Applicable Zoning Rules — Zone {project.zone}</h3>
-            <div className="space-y-2">
-              {project.rules.map((r) => (
-                <div key={r.label} className="flex items-center justify-between py-2 border-b last:border-0">
-                  <span className="text-sm">{r.label}</span>
-                  <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-sm mb-4">
+              Applicable Zoning Rules{project.zone ? ` — Zone ${project.zone}` : ""}
+            </h3>
+            {!project.zone || !zone ? (
+              <p className="text-sm text-muted-foreground">No zone data available for this project yet.</p>
+            ) : rules.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Zone exists but no rule values are recorded.</p>
+            ) : (
+              <div className="space-y-2">
+                {rules.map((r) => (
+                  <div key={r.label} className="flex items-center justify-between py-2 border-b last:border-0">
+                    <span className="text-sm">{r.label}</span>
                     <span className="text-sm font-medium">{r.value}</span>
-                    {r.status === "ok" ? (
-                      <CheckCircle className="h-3.5 w-3.5 text-success" />
-                    ) : (
-                      <AlertTriangle className="h-3.5 w-3.5 text-warning" />
-                    )}
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
@@ -201,31 +252,35 @@ export default function ProjectDetail() {
           <CardContent className="p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-sm">Permit Checklist</h3>
-              <span className="text-xs text-muted-foreground">{project.checklist.filter(c => c.done).length}/{project.checklist.length} complete</span>
+              <span className="text-xs text-muted-foreground">{completed}/{checklist.length} complete</span>
             </div>
-            <div className="space-y-2">
-              {project.checklist.map((c, i) => (
-                <div key={i} className="flex items-start gap-3 py-2">
-                  <Checkbox checked={c.done} className="mt-0.5" />
-                  <p className={`text-sm ${c.done ? "line-through text-muted-foreground" : ""}`}>{c.item}</p>
-                </div>
-              ))}
-            </div>
+            {checklist.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No checklist items saved with this project.</p>
+            ) : (
+              <div className="space-y-2">
+                {checklist.map((c, i) => (
+                  <div key={i} className="flex items-start gap-3 py-2">
+                    <Checkbox checked={c.done} onCheckedChange={() => toggleItem(i)} className="mt-0.5" />
+                    <p className={`text-sm ${c.done ? "line-through text-muted-foreground" : ""}`}>{c.item}</p>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
         {/* Related Changes */}
-        {project.changes.length > 0 && (
+        {drifts.length > 0 && (
           <Card className="mb-6">
             <CardContent className="p-5">
-              <h3 className="font-semibold text-sm mb-4">Related Ordinance Changes</h3>
+              <h3 className="font-semibold text-sm mb-4">Recent Ordinance Changes in {project.town_slug}</h3>
               <div className="space-y-2">
-                {project.changes.map((c, i) => (
-                  <div key={i} className="flex items-start gap-3 p-3 rounded border bg-secondary/20">
+                {drifts.map((c: any) => (
+                  <div key={c.id} className="flex items-start gap-3 p-3 rounded border bg-secondary/20">
                     <FileText className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
                     <div>
-                      <p className="text-xs text-muted-foreground">{c.date}</p>
-                      <p className="text-sm text-muted-foreground">{c.summary}</p>
+                      <p className="text-xs text-muted-foreground">{new Date(c.detected_at).toLocaleDateString()}</p>
+                      <p className="text-sm text-muted-foreground">{c.diff_summary ?? "Data updated"}</p>
                     </div>
                   </div>
                 ))}
