@@ -4,55 +4,125 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MapPin, Users, Hammer, Bell, ChevronRight, Map, Plus, Settings, ThumbsUp, Filter, UserPlus, Mail } from "lucide-react";
+import { MapPin, Plus, Loader2, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { formatDistanceToNow } from "date-fns";
 
-const serviceTowns = [
-  { name: "Ridgewood", zones: 14, activeProjects: 3 },
-  { name: "Paramus", zones: 11, activeProjects: 5 },
-  { name: "Glen Rock", zones: 8, activeProjects: 1 },
-  { name: "Fair Lawn", zones: 15, activeProjects: 2 },
-  { name: "Wyckoff", zones: 9, activeProjects: 0 },
-];
+type Zone = {
+  id: string;
+  town_slug: string;
+  code: string;
+  name: string | null;
+  setback_front: string | null;
+  setback_side: string | null;
+  setback_rear: string | null;
+  max_height: string | null;
+  max_coverage: string | null;
+  far: string | null;
+};
 
-const ruleVariations = [
-  { rule: "R-1 Front Setback", ridgewood: "40 ft", paramus: "30 ft", glenRock: "35 ft", fairLawn: "30 ft", wyckoff: "50 ft" },
-  { rule: "Max Lot Coverage", ridgewood: "25%", paramus: "30%", glenRock: "28%", fairLawn: "30%", wyckoff: "20%" },
-  { rule: "Max Height", ridgewood: "35 ft", paramus: "35 ft", glenRock: "35 ft", fairLawn: "35 ft", wyckoff: "35 ft" },
-  { rule: "Building Permit Fee", ridgewood: "$150+", paramus: "$125+", glenRock: "$175+", fairLawn: "$100+", wyckoff: "$200+" },
-  { rule: "Permit Timeline", ridgewood: "4-6 wk", paramus: "3-4 wk", glenRock: "4-5 wk", fairLawn: "3-5 wk", wyckoff: "5-7 wk" },
-];
+function useContractorWorkspace(userId: string | undefined) {
+  return useQuery({
+    queryKey: ["contractor-workspace", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const [savedRes, projectsRes] = await Promise.all([
+        supabase.from("saved_towns").select("town_slug, created_at").eq("user_id", userId!).order("created_at"),
+        supabase
+          .from("projects")
+          .select("id, address, project_type, town_slug, status, zone, updated_at")
+          .eq("user_id", userId!)
+          .order("updated_at", { ascending: false }),
+      ]);
+      const saved = (savedRes.data ?? []) as Array<{ town_slug: string }>;
+      const slugs = saved.map((s) => s.town_slug);
 
-const projects = [
-  { client: "Johnson Residence", type: "Deck", town: "Ridgewood", status: "In Progress" },
-  { client: "Smith Property", type: "Addition", town: "Paramus", status: "Permit Filed" },
-  { client: "Williams Home", type: "Fence", town: "Fair Lawn", status: "Planning" },
-  { client: "Garcia Residence", type: "Pool", town: "Paramus", status: "Complete" },
-];
+      const [townsRes, zonesRes] = await Promise.all([
+        slugs.length
+          ? supabase.from("towns").select("slug, name, county").in("slug", slugs)
+          : Promise.resolve({ data: [], error: null }),
+        slugs.length
+          ? supabase
+              .from("zones")
+              .select("id, town_slug, code, name, setback_front, setback_side, setback_rear, max_height, max_coverage, far")
+              .in("town_slug", slugs)
+              .order("code")
+          : Promise.resolve({ data: [], error: null }),
+      ]);
 
-const changes = [
-  { town: "Paramus", date: "Jan 8", summary: "New ADU ordinance — now permitted in all residential zones." },
-  { town: "Ridgewood", date: "Jan 10", summary: "Updated fence regs for corner lots in R-1 and R-2." },
-  { town: "Fair Lawn", date: "Jan 5", summary: "Permit fee schedule updated — 5% increase." },
-];
+      return {
+        savedTowns: (townsRes.data ?? []) as Array<{ slug: string; name: string; county: string | null }>,
+        projects: (projectsRes.data ?? []) as Array<{
+          id: string;
+          address: string;
+          project_type: string;
+          town_slug: string | null;
+          status: string;
+          zone: string | null;
+          updated_at: string;
+        }>,
+        zones: (zonesRes.data ?? []) as Zone[],
+      };
+    },
+  });
+}
 
-const teamMembers = [
-  { name: "John Doe", role: "Owner", initials: "JD", email: "john@buildright.com" },
-  { name: "Sarah Kim", role: "Project Manager", initials: "SK", email: "sarah@buildright.com" },
-  { name: "Mike Chen", role: "Estimator", initials: "MC", email: "mike@buildright.com" },
-];
-
-const communityNotes = [
-  { town: "Ridgewood", note: "Building dept is strict on survey accuracy — use a licensed surveyor, not a sketch.", upvotes: 24 },
-  { town: "Paramus", note: "ADU applications are being fast-tracked since the new ordinance. Expect 2-3 weeks.", upvotes: 18 },
-  { town: "Fair Lawn", note: "Inspector availability limited on Fridays — schedule early in the week.", upvotes: 12 },
+const RULE_FIELDS: Array<{ key: keyof Zone; label: string }> = [
+  { key: "setback_front", label: "Front setback" },
+  { key: "setback_side", label: "Side setback" },
+  { key: "setback_rear", label: "Rear setback" },
+  { key: "max_height", label: "Max height" },
+  { key: "max_coverage", label: "Max coverage" },
+  { key: "far", label: "FAR" },
 ];
 
 export default function ContractorDashboard() {
-  const [townFilter, setTownFilter] = useState("All");
+  const { user, loading: authLoading } = useAuth();
+  const { data, isLoading } = useContractorWorkspace(user?.id);
 
-  const filteredChanges = townFilter === "All" ? changes : changes.filter((c) => c.town === townFilter);
+  if (authLoading || isLoading) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <NavBar isLoggedIn showSearch />
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col">
+        <NavBar />
+        <div className="flex-1 flex items-center justify-center p-6">
+          <Card className="max-w-md">
+            <CardContent className="p-6 text-center space-y-3">
+              <h1 className="text-lg font-bold">Sign in required</h1>
+              <p className="text-sm text-muted-foreground">The Contractor Dashboard is for logged-in pros.</p>
+              <Link to="/auth"><Button>Sign in</Button></Link>
+            </CardContent>
+          </Card>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  const savedTowns = data?.savedTowns ?? [];
+  const projects = data?.projects ?? [];
+  const zones = data?.zones ?? [];
+
+  // Group zones by town for the rule grid (cap at 3 zones per town for readability)
+  const zonesByTown: Record<string, Zone[]> = {};
+  for (const z of zones) {
+    zonesByTown[z.town_slug] ??= [];
+    zonesByTown[z.town_slug].push(z);
+  }
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -61,40 +131,36 @@ export default function ContractorDashboard() {
         {/* Sidebar */}
         <aside className="hidden lg:flex w-64 flex-col border-r bg-card min-h-[calc(100vh-3.5rem)] p-4">
           <div className="mb-6">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="h-8 w-8 rounded bg-accent text-accent-foreground flex items-center justify-center text-xs font-bold">BD</div>
-              <div>
-                <p className="text-sm font-semibold">BuildRight Contractors</p>
-                <p className="text-xs text-muted-foreground">Pro Plan · 3 of 5 seats</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mb-6">
-            <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Team</h3>
-            {teamMembers.map((m) => (
-              <div key={m.name} className="flex items-center gap-2 px-2 py-1.5 text-sm">
-                <div className="h-6 w-6 rounded-full bg-secondary flex items-center justify-center text-xs font-medium">{m.initials}</div>
-                <div>
-                  <p className="text-xs font-medium">{m.name}</p>
-                  <p className="text-xs text-muted-foreground">{m.role}</p>
-                </div>
-              </div>
-            ))}
-            <Button variant="ghost" size="sm" className="mt-2 w-full text-xs text-accent gap-1">
-              <UserPlus className="h-3 w-3" /> Invite Member
-            </Button>
+            <p className="text-sm font-semibold">{user.email}</p>
+            <p className="text-xs text-muted-foreground">Contractor workspace</p>
           </div>
 
           <div>
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Service Area</h3>
-            {serviceTowns.map((t) => (
-              <Link key={t.name} to="/town/ridgewood" className="flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-secondary rounded transition-colors">
-                <MapPin className="h-3 w-3 text-accent" />
-                <span className="text-xs">{t.name}</span>
-                <Badge variant="secondary" className="ml-auto text-[10px] h-4">{t.activeProjects}</Badge>
-              </Link>
-            ))}
+            {savedTowns.length === 0 && (
+              <p className="text-xs text-muted-foreground">No saved towns yet.</p>
+            )}
+            {savedTowns.map((t) => {
+              const projectsHere = projects.filter((p) => p.town_slug === t.slug).length;
+              return (
+                <Link
+                  key={t.slug}
+                  to={`/town/${t.slug}`}
+                  className="flex items-center gap-2 px-2 py-1.5 text-sm hover:bg-secondary rounded transition-colors"
+                >
+                  <MapPin className="h-3 w-3 text-accent" />
+                  <span className="text-xs">{t.name}</span>
+                  {projectsHere > 0 && (
+                    <Badge variant="secondary" className="ml-auto text-[10px] h-4">{projectsHere}</Badge>
+                  )}
+                </Link>
+              );
+            })}
+            <Link to="/onboarding">
+              <Button variant="ghost" size="sm" className="mt-2 w-full text-xs text-accent gap-1">
+                <Plus className="h-3 w-3" /> Add towns
+              </Button>
+            </Link>
           </div>
         </aside>
 
@@ -104,157 +170,116 @@ export default function ContractorDashboard() {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h1 className="text-2xl font-bold text-primary">Contractor Dashboard</h1>
-                <p className="text-sm text-muted-foreground">5 towns · 11 active projects · 3 of 5 seats used</p>
+                <p className="text-sm text-muted-foreground">
+                  {savedTowns.length} saved town{savedTowns.length === 1 ? "" : "s"} · {projects.length} project{projects.length === 1 ? "" : "s"}
+                </p>
               </div>
-              <Button variant="outline" size="sm" className="gap-1.5"><Settings className="h-3.5 w-3.5" /> Manage</Button>
+              <Link to="/feasibility">
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5" /> Feasibility check
+                </Button>
+              </Link>
             </div>
 
-            {/* Team Management Card */}
-            <Card className="mb-6">
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-semibold text-sm">Team Management</h3>
-                    <p className="text-xs text-muted-foreground">3 of 5 seats used · 2 seats available</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="flex -space-x-2">
-                      {teamMembers.map((m) => (
-                        <div key={m.initials} className="h-8 w-8 rounded-full bg-secondary border-2 border-card flex items-center justify-center text-xs font-medium">{m.initials}</div>
-                      ))}
-                      <div className="h-8 w-8 rounded-full bg-secondary/50 border-2 border-card flex items-center justify-center text-xs text-muted-foreground border-dashed">+2</div>
-                    </div>
-                    <Button variant="outline" size="sm" className="text-xs gap-1.5">
-                      <Mail className="h-3 w-3" /> Invite
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Coverage Map */}
-            <Card className="mb-6">
-              <CardContent className="p-0">
-                <div className="h-48 bg-secondary flex items-center justify-center rounded-t-lg">
-                  <div className="text-center text-muted-foreground">
-                    <Map className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                    <p className="text-sm font-medium">Multi-Town Coverage Map</p>
-                    <p className="text-xs">5 municipalities in Bergen County</p>
-                  </div>
-                </div>
-                <div className="p-3 border-t flex gap-2 flex-wrap">
-                  {serviceTowns.map((t) => (
-                    <Badge key={t.name} variant="secondary" className="text-xs">{t.name}</Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Rule Variations */}
-            <Card className="mb-6">
-              <CardContent className="p-0">
-                <div className="p-4 border-b">
-                  <h2 className="font-semibold text-sm">Rule Variations Across Your Towns</h2>
-                </div>
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-secondary/50">
-                      <TableHead className="font-semibold text-xs">Rule</TableHead>
-                      {serviceTowns.map((t) => (
-                        <TableHead key={t.name} className="font-semibold text-xs">{t.name}</TableHead>
-                      ))}
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {ruleVariations.map((r, i) => (
-                      <TableRow key={r.rule} className={i % 2 === 0 ? "" : "bg-secondary/20"}>
-                        <TableCell className="text-xs font-medium">{r.rule}</TableCell>
-                        <TableCell className="text-xs">{r.ridgewood}</TableCell>
-                        <TableCell className="text-xs">{r.paramus}</TableCell>
-                        <TableCell className="text-xs">{r.glenRock}</TableCell>
-                        <TableCell className="text-xs">{r.fairLawn}</TableCell>
-                        <TableCell className="text-xs">{r.wyckoff}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </CardContent>
-            </Card>
-
-            <div className="grid lg:grid-cols-2 gap-6 mb-6">
-              {/* Projects */}
-              <Card>
-                <CardContent className="p-0">
-                  <div className="p-4 border-b flex items-center justify-between">
-                    <h2 className="font-semibold text-sm">Projects</h2>
-                    <Button variant="ghost" size="sm" className="text-xs text-accent"><Plus className="h-3 w-3 mr-1" /> New</Button>
-                  </div>
-                  {projects.map((p, i) => (
-                    <div key={i} className={`flex items-center justify-between px-4 py-3 ${i < projects.length - 1 ? "border-b" : ""}`}>
-                      <div>
-                        <p className="text-sm font-medium">{p.client}</p>
-                        <p className="text-xs text-muted-foreground">{p.type} · {p.town}</p>
-                      </div>
-                      <Badge variant={p.status === "Complete" ? "default" : "secondary"} className="text-xs">{p.status}</Badge>
-                    </div>
-                  ))}
+            {/* Empty state */}
+            {savedTowns.length === 0 && projects.length === 0 && (
+              <Card className="mb-6">
+                <CardContent className="p-6 text-center space-y-3">
+                  <h3 className="font-semibold text-sm">Set up your workspace</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Save the towns you work in. We'll pull the zoning rules side-by-side so you can compare without flipping tabs.
+                  </p>
+                  <Link to="/onboarding"><Button size="sm">Add towns</Button></Link>
                 </CardContent>
               </Card>
+            )}
 
-              {/* Recent Changes — Filterable */}
-              <Card>
+            {/* Rule Variations — real DB rows */}
+            {savedTowns.length > 0 && (
+              <Card className="mb-6">
                 <CardContent className="p-0">
-                  <div className="p-4 border-b flex items-center justify-between">
-                    <h2 className="font-semibold text-sm">Recent Ordinance Changes</h2>
-                    <div className="flex items-center gap-1">
-                      <Filter className="h-3 w-3 text-muted-foreground" />
-                      <select
-                        value={townFilter}
-                        onChange={(e) => setTownFilter(e.target.value)}
-                        className="text-xs bg-transparent border-0 text-muted-foreground focus:outline-none"
-                      >
-                        <option value="All">All Towns</option>
-                        {serviceTowns.map((t) => (
-                          <option key={t.name} value={t.name}>{t.name}</option>
-                        ))}
-                      </select>
-                    </div>
+                  <div className="p-4 border-b">
+                    <h2 className="font-semibold text-sm">Zone rules across your towns</h2>
+                    <p className="text-[11px] text-muted-foreground">Pulled from the verified zoning database. Each row is one zone.</p>
                   </div>
-                  {filteredChanges.map((c, i) => (
-                    <div key={i} className={`px-4 py-3 ${i < filteredChanges.length - 1 ? "border-b" : ""}`}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <Badge variant="secondary" className="text-[10px]">{c.town}</Badge>
-                        <span className="text-xs text-muted-foreground">{c.date}</span>
-                      </div>
-                      <p className="text-xs text-muted-foreground">{c.summary}</p>
+                  {zones.length === 0 ? (
+                    <p className="p-6 text-center text-xs text-muted-foreground">No zones loaded for your towns yet.</p>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <Table>
+                        <TableHeader>
+                          <TableRow className="bg-secondary/50">
+                            <TableHead className="font-semibold text-xs">Town · Zone</TableHead>
+                            {RULE_FIELDS.map((f) => (
+                              <TableHead key={f.key as string} className="font-semibold text-xs">{f.label}</TableHead>
+                            ))}
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {savedTowns.flatMap((t) =>
+                            (zonesByTown[t.slug] ?? []).slice(0, 5).map((z, i) => (
+                              <TableRow key={z.id} className={i % 2 === 0 ? "" : "bg-secondary/20"}>
+                                <TableCell className="text-xs font-medium whitespace-nowrap">
+                                  <Link to={`/town/${t.slug}/zoning`} className="hover:text-accent">
+                                    {t.name} · {z.code}
+                                  </Link>
+                                </TableCell>
+                                {RULE_FIELDS.map((f) => (
+                                  <TableCell key={f.key as string} className="text-xs">
+                                    {(z[f.key] as string | null) ?? <span className="text-muted-foreground">—</span>}
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
                     </div>
-                  ))}
-                  {filteredChanges.length === 0 && (
-                    <p className="text-xs text-muted-foreground text-center py-4">No changes for this town.</p>
                   )}
                 </CardContent>
               </Card>
-            </div>
+            )}
 
-            {/* Community Notes */}
-            <Card>
+            {/* Projects — real */}
+            <Card className="mb-6">
               <CardContent className="p-0">
-                <div className="p-4 border-b">
-                  <h2 className="font-semibold text-sm">Your Community Notes</h2>
-                  <p className="text-xs text-muted-foreground">Tips you've shared with the community</p>
+                <div className="p-4 border-b flex items-center justify-between">
+                  <h2 className="font-semibold text-sm">Your projects</h2>
+                  <Link to="/checklist">
+                    <Button variant="ghost" size="sm" className="text-xs text-accent gap-1">
+                      <Plus className="h-3 w-3" /> New project
+                    </Button>
+                  </Link>
                 </div>
-                {communityNotes.map((n, i) => (
-                  <div key={i} className={`px-4 py-3 flex items-start gap-3 ${i < communityNotes.length - 1 ? "border-b" : ""}`}>
-                    <div className="flex flex-col items-center gap-0.5 flex-shrink-0 pt-0.5">
-                      <ThumbsUp className="h-3 w-3 text-accent" />
-                      <span className="text-xs font-semibold">{n.upvotes}</span>
-                    </div>
-                    <div>
-                      <Badge variant="secondary" className="text-[10px] mb-1">{n.town}</Badge>
-                      <p className="text-xs text-muted-foreground">{n.note}</p>
-                    </div>
-                  </div>
-                ))}
+                {projects.length === 0 ? (
+                  <p className="p-6 text-center text-xs text-muted-foreground">
+                    No projects yet. Save one from the Permit Checklist.
+                  </p>
+                ) : (
+                  projects.map((p, i) => (
+                    <Link
+                      to={`/project/${p.id}`}
+                      key={p.id}
+                      className={`flex items-center justify-between px-4 py-3 hover:bg-secondary/30 transition-colors ${
+                        i < projects.length - 1 ? "border-b" : ""
+                      }`}
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{p.address}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {p.project_type}
+                          {p.town_slug ? ` · ${p.town_slug}` : ""}
+                          {p.zone ? ` · Zone ${p.zone}` : ""}
+                          {" · updated "}
+                          {formatDistanceToNow(new Date(p.updated_at), { addSuffix: true })}
+                        </p>
+                      </div>
+                      <Badge variant={p.status === "complete" ? "default" : "secondary"} className="text-xs capitalize">
+                        {p.status}
+                      </Badge>
+                    </Link>
+                  ))
+                )}
               </CardContent>
             </Card>
           </div>
