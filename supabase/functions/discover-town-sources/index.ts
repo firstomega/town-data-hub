@@ -37,14 +37,21 @@ const QUERIES: Record<IngestType, (town: string, county: string) => string[]> = 
 
 type SearchResult = { url: string; title?: string; description?: string };
 
-async function firecrawlSearch(query: string, limit = 5): Promise<SearchResult[]> {
+async function withTimeout<T>(p: Promise<T>, ms: number, label: string): Promise<T> {
+  return await Promise.race([
+    p,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)),
+  ]);
+}
+
+async function firecrawlSearch(query: string, limit = 4): Promise<SearchResult[]> {
   const apiKey = Deno.env.get("FIRECRAWL_API_KEY");
   if (!apiKey) throw new Error("FIRECRAWL_API_KEY is not configured");
-  const resp = await fetch("https://api.firecrawl.dev/v2/search", {
+  const resp = await withTimeout(fetch("https://api.firecrawl.dev/v2/search", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({ query, limit, country: "us", lang: "en" }),
-  });
+  }), 20_000, `Firecrawl search "${query}"`);
   const data = await resp.json();
   if (!resp.ok) throw new Error(`Firecrawl search ${resp.status}: ${JSON.stringify(data)}`);
   // v2 response shape: { success, data: { web: [...] } } or { data: [...] }
@@ -61,8 +68,9 @@ async function aiPickBest(type: IngestType, town: string, candidates: SearchResu
   if (!apiKey) throw new Error("LOVABLE_API_KEY is not configured");
   if (!candidates.length) return null;
 
-  const numbered = candidates.slice(0, 12).map((c, i) =>
-    `[${i + 1}] ${c.url}\n    title: ${c.title ?? "(none)"}\n    snippet: ${(c.description ?? "").slice(0, 200)}`
+  const trimmed = candidates.slice(0, 8);
+  const numbered = trimmed.map((c, i) =>
+    `[${i + 1}] ${c.url}\n    title: ${c.title ?? "(none)"}\n    snippet: ${(c.description ?? "").slice(0, 160)}`
   ).join("\n\n");
 
   const guidance: Record<IngestType, string> = {
@@ -72,7 +80,7 @@ async function aiPickBest(type: IngestType, town: string, candidates: SearchResu
     contacts: "the official town government contact page for the Building / Planning / Zoning departments.",
   };
 
-  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
+  const resp = await withTimeout(fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -98,7 +106,7 @@ async function aiPickBest(type: IngestType, town: string, candidates: SearchResu
       }],
       tool_choice: { type: "function", function: { name: "pick" } },
     }),
-  });
+  }), 25_000, `AI pick (${type})`);
   if (resp.status === 429) throw new Error("Lovable AI rate limit (429)");
   if (resp.status === 402) throw new Error("Lovable AI credits exhausted (402)");
   const data = await resp.json();
@@ -106,8 +114,8 @@ async function aiPickBest(type: IngestType, town: string, candidates: SearchResu
   const call = data.choices?.[0]?.message?.tool_calls?.[0];
   if (!call) return null;
   const args = JSON.parse(call.function.arguments) as { index: number; reason: string };
-  if (!args.index || args.index < 1 || args.index > candidates.length) return null;
-  return { ...candidates[args.index - 1], reason: args.reason };
+  if (!args.index || args.index < 1 || args.index > trimmed.length) return null;
+  return { ...trimmed[args.index - 1], reason: args.reason };
 }
 
 Deno.serve(async (req) => {
@@ -149,27 +157,32 @@ Deno.serve(async (req) => {
       ? requestedTypes.filter((t: string): t is IngestType => ["zones", "permits", "ordinances", "contacts"].includes(t))
       : ["zones", "permits", "ordinances", "contacts"];
 
+    // Run all types AND all queries fully in parallel — was sequential, which blew past 150s.
     const results: Record<string, { picked: { url: string; title?: string; description?: string; reason?: string } | null; candidates: SearchResult[] }> = {};
 
-    for (const t of types) {
-      const queries = QUERIES[t](town, county);
+    await Promise.all(types.map(async (t) => {
+      // Use only the first 2 query variants per type to cap Firecrawl calls.
+      const queries = QUERIES[t](town, county).slice(0, 2);
+      const searchResults = await Promise.all(
+        queries.map((q) =>
+          firecrawlSearch(q, 4).catch((e) => {
+            console.error(`Search "${q}" failed:`, e instanceof Error ? e.message : e);
+            return [] as SearchResult[];
+          })
+        )
+      );
       const seen = new Set<string>();
       const all: SearchResult[] = [];
-      for (const q of queries) {
-        try {
-          const r = await firecrawlSearch(q, 5);
-          for (const item of r) {
-            if (!seen.has(item.url)) {
-              seen.add(item.url);
-              all.push(item);
-            }
+      for (const arr of searchResults) {
+        for (const item of arr) {
+          if (!seen.has(item.url)) {
+            seen.add(item.url);
+            all.push(item);
           }
-        } catch (e) {
-          console.error(`Search "${q}" failed:`, e instanceof Error ? e.message : e);
         }
       }
       const picked = await aiPickBest(t, town, all).catch((e) => {
-        console.error("AI pick failed", e);
+        console.error(`AI pick (${t}) failed:`, e instanceof Error ? e.message : e);
         return null;
       });
       results[t] = { picked, candidates: all.slice(0, 8) };
@@ -184,7 +197,7 @@ Deno.serve(async (req) => {
           discovered_by: user.id,
         }, { onConflict: "town_slug,ingestion_type,source_url" });
       }
-    }
+    }));
 
     return new Response(JSON.stringify({ ok: true, town: town, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
