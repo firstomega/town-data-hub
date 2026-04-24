@@ -12,12 +12,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Loader2, ExternalLink, Check, X, Sparkles, RefreshCw, ShieldCheck, Clock, AlertTriangle } from "lucide-react";
+import { Loader2, ExternalLink, Check, X, Sparkles, RefreshCw, ShieldCheck, Clock, AlertTriangle, Search, Bookmark, Trash2 } from "lucide-react";
 import { useAllTowns } from "@/hooks/useTownData";
 import { Switch } from "@/components/ui/switch";
 import { formatDistanceToNow } from "date-fns";
 
 type TableName = "zones" | "permits" | "ordinances" | "contacts";
+const ALL_TYPES: TableName[] = ["zones", "permits", "ordinances", "contacts"];
 
 function useExtracted(table: TableName) {
   return useQuery({
@@ -117,6 +118,23 @@ function IngestForm() {
   const [busy, setBusy] = useState(false);
   const qc = useQueryClient();
 
+  // Auto-fill URL when a saved source exists for this town+type
+  const { data: savedSources } = useQuery({
+    queryKey: ["town-sources", townSlug],
+    enabled: !!townSlug,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("town_sources")
+        .select("*")
+        .eq("town_slug", townSlug)
+        .order("updated_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const matchingSaved = (savedSources ?? []).filter((s) => s.ingestion_type === type);
+
   const submit = async () => {
     if (!townSlug || !url) return toast.error("Pick a town and paste a source URL");
     setBusy(true);
@@ -166,6 +184,22 @@ function IngestForm() {
             </Select>
           </div>
         </div>
+        {townSlug && matchingSaved.length > 0 && (
+          <div className="rounded border bg-muted/30 p-2 space-y-1">
+            <p className="text-[10px] uppercase text-muted-foreground font-semibold">Saved sources for this town & type</p>
+            {matchingSaved.map((s) => (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => { setUrl(s.source_url); setDoc(s.source_doc ?? ""); }}
+                className="w-full text-left text-[11px] hover:bg-background rounded px-1.5 py-1 truncate flex items-center gap-1"
+              >
+                <Bookmark className="h-2.5 w-2.5 text-accent flex-shrink-0" />
+                <span className="truncate">{s.source_url}</span>
+              </button>
+            ))}
+          </div>
+        )}
         <div>
           <Label className="text-xs">Source URL</Label>
           <Input value={url} onChange={(e) => setUrl(e.target.value)} placeholder="https://ecode360.com/PA1234/laws/..." />
@@ -202,6 +236,161 @@ function RunsList() {
             </div>
           ))}
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+type DiscoverPick = { url: string; title?: string; description?: string; reason?: string };
+type DiscoverResult = { picked: DiscoverPick | null; candidates: Array<{ url: string; title?: string; description?: string }> };
+
+function DiscoverSources() {
+  const { data: towns } = useAllTowns();
+  const [townSlug, setTownSlug] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [results, setResults] = useState<Record<string, DiscoverResult> | null>(null);
+  const qc = useQueryClient();
+
+  const { data: saved } = useQuery({
+    queryKey: ["town-sources-list", townSlug],
+    enabled: !!townSlug,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("town_sources")
+        .select("*")
+        .eq("town_slug", townSlug)
+        .order("ingestion_type");
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const discover = async (save: boolean) => {
+    if (!townSlug) return toast.error("Pick a town first");
+    setBusy(true);
+    setResults(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("discover-town-sources", {
+        body: { town_slug: townSlug, save },
+      });
+      if (error) throw error;
+      const d = data as { results: Record<string, DiscoverResult> };
+      setResults(d.results);
+      if (save) {
+        toast.success("Saved best picks to town sources");
+        qc.invalidateQueries({ queryKey: ["town-sources-list", townSlug] });
+        qc.invalidateQueries({ queryKey: ["town-sources", townSlug] });
+      } else {
+        toast.success("Discovery complete");
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Discovery failed");
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const removeSaved = async (id: string) => {
+    const { error } = await supabase.from("town_sources").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Removed");
+    qc.invalidateQueries({ queryKey: ["town-sources-list", townSlug] });
+    qc.invalidateQueries({ queryKey: ["town-sources", townSlug] });
+  };
+
+  return (
+    <Card>
+      <CardContent className="p-5 space-y-3">
+        <div className="flex items-start justify-between gap-2 flex-wrap">
+          <div>
+            <h3 className="font-semibold text-sm flex items-center gap-2">
+              <Search className="h-4 w-4" /> Auto-discover official sources
+            </h3>
+            <p className="text-[11px] text-muted-foreground">
+              Web searches for the best zoning / permit / ordinance / contact URLs and asks AI to pick the official one. Save once, re-ingest with one click later.
+            </p>
+          </div>
+        </div>
+        <div className="flex items-end gap-2 flex-wrap">
+          <div className="flex-1 min-w-[180px]">
+            <Label className="text-xs">Town</Label>
+            <Select value={townSlug} onValueChange={setTownSlug}>
+              <SelectTrigger><SelectValue placeholder="Select town" /></SelectTrigger>
+              <SelectContent>
+                {(towns ?? []).map((t: { slug: string; name: string }) => (
+                  <SelectItem key={t.slug} value={t.slug}>{t.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => discover(false)} disabled={busy || !townSlug} className="gap-1">
+            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
+            Discover
+          </Button>
+          <Button size="sm" onClick={() => discover(true)} disabled={busy || !townSlug} className="gap-1">
+            <Bookmark className="h-3.5 w-3.5" /> Discover & save
+          </Button>
+        </div>
+
+        {/* Saved sources for this town */}
+        {townSlug && (saved ?? []).length > 0 && (
+          <div className="space-y-1">
+            <p className="text-[10px] uppercase text-muted-foreground font-semibold">Saved sources</p>
+            {(saved ?? []).map((s) => (
+              <div key={s.id} className="flex items-center gap-2 text-[11px] p-1.5 rounded border">
+                <Badge variant="secondary" className="text-[9px]">{s.ingestion_type}</Badge>
+                <a href={s.source_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline truncate flex-1">
+                  {s.source_url}
+                </a>
+                <Button size="sm" variant="ghost" className="h-6 w-6 p-0" onClick={() => removeSaved(s.id)}>
+                  <Trash2 className="h-3 w-3" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Discovery results */}
+        {results && (
+          <div className="space-y-2 pt-2 border-t">
+            <p className="text-[10px] uppercase text-muted-foreground font-semibold">Discovery results</p>
+            {ALL_TYPES.map((t) => {
+              const r = results[t];
+              return (
+                <div key={t} className="text-[11px] p-2 rounded border">
+                  <div className="flex items-center gap-2 mb-1">
+                    <Badge variant="outline" className="text-[9px] capitalize">{t}</Badge>
+                    {r?.picked ? (
+                      <Badge variant="default" className="text-[9px] gap-1">
+                        <Sparkles className="h-2.5 w-2.5" /> AI picked
+                      </Badge>
+                    ) : (
+                      <Badge variant="secondary" className="text-[9px]">No clear match</Badge>
+                    )}
+                  </div>
+                  {r?.picked && (
+                    <a href={r.picked.url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline truncate block">
+                      {r.picked.url}
+                    </a>
+                  )}
+                  {r?.picked?.reason && <p className="text-muted-foreground italic mt-1">{r.picked.reason}</p>}
+                  {r?.candidates?.length ? (
+                    <details className="mt-1">
+                      <summary className="cursor-pointer text-muted-foreground">{r.candidates.length} candidate(s)</summary>
+                      <ul className="mt-1 space-y-0.5 pl-4">
+                        {r.candidates.map((c, i) => (
+                          <li key={i} className="truncate">
+                            <a href={c.url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">{c.url}</a>
+                          </li>
+                        ))}
+                      </ul>
+                    </details>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -464,6 +653,9 @@ export default function AdminDataReview() {
         </div>
         <div className="grid lg:grid-cols-2 gap-6 mb-6">
           <IngestForm />
+          <DiscoverSources />
+        </div>
+        <div className="mb-6">
           <RunsList />
         </div>
         <div className="mb-6">
