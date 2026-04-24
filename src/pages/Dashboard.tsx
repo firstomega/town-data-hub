@@ -1,14 +1,17 @@
-import { Search, MapPin, Hammer, Bell, FileText, Plus, ChevronRight, Fence, Waves, ArrowRight, ListChecks, GitCompare, Loader2 } from "lucide-react";
+import { Search, MapPin, Hammer, Bell, FileText, Plus, ChevronRight, Fence, Waves, ListChecks, GitCompare, Loader2, X } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
+import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
+import HomeownerDashboard from "./HomeownerDashboard";
 
 const projectIcons: Record<string, React.ElementType> = {
   Deck: Hammer,
@@ -28,7 +31,22 @@ function statusBadgeClass(status: string) {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const { data: profile, isLoading: profileLoading } = useProfile();
+  const queryClient = useQueryClient();
   const userId = user?.id;
+
+  // Route homeowners to their dedicated dashboard; contractors keep the multi-town view.
+  if (profileLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+  if (profile?.user_type !== "contractor") {
+    return <HomeownerDashboard />;
+  }
+
   const firstName =
     (user?.user_metadata?.full_name as string | undefined)?.split(" ")[0] ||
     user?.email?.split("@")[0] ||
@@ -79,6 +97,17 @@ export default function Dashboard() {
 
   const unreadChanges = changes.length;
 
+  const unsaveTown = async (slug: string, name: string) => {
+    if (!userId) return;
+    const { error } = await supabase.from("saved_towns").delete().eq("user_id", userId).eq("town_slug", slug);
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    toast.success(`Removed ${name}`);
+    queryClient.invalidateQueries({ queryKey: ["dashboard", "saved-towns"] });
+  };
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <NavBar isLoggedIn showSearch />
@@ -94,14 +123,19 @@ export default function Dashboard() {
               <p className="text-xs text-muted-foreground px-2">No towns saved yet.</p>
             ) : (
               savedTowns.map((row: any) => (
-                <Link
-                  key={row.town_slug}
-                  to={`/town/${row.town_slug}`}
-                  className="flex items-center gap-2 px-2 py-2 rounded text-sm hover:bg-secondary transition-colors"
-                >
-                  <MapPin className="h-3.5 w-3.5 text-accent" />
-                  <span className="font-medium">{row.towns?.name ?? row.town_slug}</span>
-                </Link>
+                <div key={row.town_slug} className="group flex items-center gap-1 px-2 py-1 rounded hover:bg-secondary transition-colors">
+                  <Link to={`/town/${row.town_slug}`} className="flex items-center gap-2 text-sm flex-1 min-w-0">
+                    <MapPin className="h-3.5 w-3.5 text-accent flex-shrink-0" />
+                    <span className="font-medium truncate">{row.towns?.name ?? row.town_slug}</span>
+                  </Link>
+                  <button
+                    onClick={(e) => { e.preventDefault(); unsaveTown(row.town_slug, row.towns?.name ?? row.town_slug); }}
+                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-opacity"
+                    aria-label={`Unsave ${row.towns?.name ?? row.town_slug}`}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </div>
               ))
             )}
           </div>
@@ -211,8 +245,15 @@ export default function Dashboard() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   {savedTowns.map((row: any) => (
-                    <Link key={row.town_slug} to={`/town/${row.town_slug}`}>
-                      <Card className="hover:shadow-md transition-shadow">
+                    <Card key={row.town_slug} className="hover:shadow-md transition-shadow group relative">
+                      <button
+                        onClick={() => unsaveTown(row.town_slug, row.towns?.name ?? row.town_slug)}
+                        className="absolute top-2 right-2 p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-opacity"
+                        aria-label={`Unsave ${row.towns?.name ?? row.town_slug}`}
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                      <Link to={`/town/${row.town_slug}`}>
                         <CardContent className="p-4">
                           <div className="flex items-center gap-2 mb-2">
                             <MapPin className="h-4 w-4 text-accent" />
@@ -225,8 +266,8 @@ export default function Dashboard() {
                             Saved {formatDistanceToNow(new Date(row.created_at), { addSuffix: true })}
                           </p>
                         </CardContent>
-                      </Card>
-                    </Link>
+                      </Link>
+                    </Card>
                   ))}
                 </div>
               )}
