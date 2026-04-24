@@ -172,7 +172,8 @@ function diffRow(type: IngestType, oldRow: Record<string, unknown>, newRow: Reco
 }
 
 async function refreshSource(
-  admin: ReturnType<typeof createClient>,
+  // deno-lint-ignore no-explicit-any
+  admin: any,
   town_slug: string,
   source_url: string,
   ingestion_type: IngestType,
@@ -185,6 +186,7 @@ async function refreshSource(
     .select("id")
     .single();
   if (runErr) throw runErr;
+  const runId = (run as { id: string }).id;
 
   try {
     const markdown = await firecrawlScrape(source_url);
@@ -252,14 +254,14 @@ async function refreshSource(
       finished_at: new Date().toISOString(),
       rows_added: drifts,
       raw_response: { drifts_detected: drifts, scanned_rows: newRows.length },
-    }).eq("id", run.id);
+    }).eq("id", runId);
 
     return { drifts, scanned: newRows.length };
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     await admin.from("ingestion_runs").update({
       status: "failed", finished_at: new Date().toISOString(), error_message: msg,
-    }).eq("id", run.id);
+    }).eq("id", runId);
     throw err;
   }
 }
