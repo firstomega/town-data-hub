@@ -1,36 +1,84 @@
-import { Search, MapPin, Hammer, Bell, FileText, Plus, ChevronRight, Clock, AlertTriangle, Fence, Waves, ArrowRight, ListChecks, GitCompare } from "lucide-react";
+import { Search, MapPin, Hammer, Bell, FileText, Plus, ChevronRight, Fence, Waves, ArrowRight, ListChecks, GitCompare, Loader2 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import { NavBar } from "@/components/NavBar";
 import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-
-const savedTowns = [
-  { name: "Ridgewood", county: "Bergen", zones: 14, lastViewed: "2 hours ago" },
-  { name: "Paramus", county: "Bergen", zones: 11, lastViewed: "Yesterday" },
-  { name: "Glen Rock", county: "Bergen", zones: 8, lastViewed: "3 days ago" },
-];
+import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
+import { formatDistanceToNow } from "date-fns";
 
 const projectIcons: Record<string, React.ElementType> = {
   Deck: Hammer,
+  deck: Hammer,
   Fence: Fence,
+  fence: Fence,
   Pool: Waves,
+  pool: Waves,
 };
 
-const activeProjects = [
-  { type: "Deck", address: "123 Oak St, Ridgewood", status: "Researching" },
-  { type: "Fence", address: "456 Maple Ave, Paramus", status: "Permit Filed" },
-  { type: "Pool", address: "123 Oak St, Ridgewood", status: "Planning" },
-];
-
-const recentChanges = [
-  { town: "Ridgewood", date: "Jan 10, 2026", summary: "Updated fence height regulations for corner lots in R-1 and R-2 zones.", severity: "medium" },
-  { town: "Paramus", date: "Jan 8, 2026", summary: "New ADU ordinance adopted — accessory dwelling units now permitted in all residential zones.", severity: "high" },
-  { town: "Glen Rock", date: "Dec 22, 2025", summary: "Permit fee schedule updated. Building permit fees increased by 5%.", severity: "low" },
-];
+function statusBadgeClass(status: string) {
+  const s = status.toLowerCase();
+  if (s.includes("permit")) return "bg-warning/10 text-warning";
+  if (s.includes("research")) return "bg-accent/10 text-accent";
+  return "";
+}
 
 export default function Dashboard() {
+  const { user } = useAuth();
+  const userId = user?.id;
+  const firstName =
+    (user?.user_metadata?.full_name as string | undefined)?.split(" ")[0] ||
+    user?.email?.split("@")[0] ||
+    "there";
+
+  const { data: savedTowns = [], isLoading: loadingTowns } = useQuery({
+    queryKey: ["dashboard", "saved-towns", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("saved_towns")
+        .select("created_at, town_slug, towns(name, county, num_zones, slug)")
+        .eq("user_id", userId!)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: projects = [], isLoading: loadingProjects } = useQuery({
+    queryKey: ["dashboard", "projects", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("projects")
+        .select("id, project_type, address, status, town_slug, created_at")
+        .eq("user_id", userId!)
+        .order("created_at", { ascending: false })
+        .limit(5);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const { data: changes = [], isLoading: loadingChanges } = useQuery({
+    queryKey: ["dashboard", "drifts"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("data_drifts")
+        .select("id, town_slug, detected_at, diff_summary, change_type")
+        .eq("status", "applied")
+        .order("detected_at", { ascending: false })
+        .limit(5);
+      if (error) throw error;
+      return data ?? [];
+    },
+  });
+
+  const unreadChanges = changes.length;
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <NavBar isLoggedIn showSearch />
@@ -40,16 +88,22 @@ export default function Dashboard() {
         <aside className="hidden lg:flex w-64 flex-col border-r bg-card min-h-[calc(100vh-3.5rem)] p-4">
           <div className="mb-6">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Saved Towns</h3>
-            {savedTowns.map((t) => (
-              <Link
-                key={t.name}
-                to="/town/ridgewood"
-                className="flex items-center gap-2 px-2 py-2 rounded text-sm hover:bg-secondary transition-colors"
-              >
-                <MapPin className="h-3.5 w-3.5 text-accent" />
-                <span className="font-medium">{t.name}</span>
-              </Link>
-            ))}
+            {loadingTowns ? (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            ) : savedTowns.length === 0 ? (
+              <p className="text-xs text-muted-foreground px-2">No towns saved yet.</p>
+            ) : (
+              savedTowns.map((row: any) => (
+                <Link
+                  key={row.town_slug}
+                  to={`/town/${row.town_slug}`}
+                  className="flex items-center gap-2 px-2 py-2 rounded text-sm hover:bg-secondary transition-colors"
+                >
+                  <MapPin className="h-3.5 w-3.5 text-accent" />
+                  <span className="font-medium">{row.towns?.name ?? row.town_slug}</span>
+                </Link>
+              ))
+            )}
           </div>
           <div className="mb-6">
             <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-3">Quick Links</h3>
@@ -62,17 +116,21 @@ export default function Dashboard() {
             <Link to="/checklist" className="flex items-center justify-between px-2 py-2 rounded text-sm hover:bg-secondary transition-colors">
               <span className="flex items-center gap-2"><FileText className="h-3.5 w-3.5 text-muted-foreground" /> Permit Checklist</span>
             </Link>
-            <Link to="/town/ridgewood/ordinances" className="flex items-center justify-between px-2 py-2 rounded text-sm hover:bg-secondary transition-colors">
-              <span className="flex items-center gap-2"><Bell className="h-3.5 w-3.5 text-muted-foreground" /> Ordinance Updates</span>
-              <Badge variant="destructive" className="h-4 w-4 p-0 flex items-center justify-center text-[9px]">2</Badge>
-            </Link>
+            {savedTowns[0] && (
+              <Link to={`/town/${savedTowns[0].town_slug}/ordinances`} className="flex items-center justify-between px-2 py-2 rounded text-sm hover:bg-secondary transition-colors">
+                <span className="flex items-center gap-2"><Bell className="h-3.5 w-3.5 text-muted-foreground" /> Ordinance Updates</span>
+                {unreadChanges > 0 && (
+                  <Badge variant="destructive" className="h-4 w-4 p-0 flex items-center justify-center text-[9px]">{unreadChanges}</Badge>
+                )}
+              </Link>
+            )}
           </div>
         </aside>
 
         {/* Main */}
         <main className="flex-1 p-6">
           <div className="max-w-4xl">
-            <h1 className="text-2xl font-bold text-primary mb-1">Welcome back, John</h1>
+            <h1 className="text-2xl font-bold text-primary mb-1">Welcome back, {firstName}</h1>
             <p className="text-sm text-muted-foreground mb-4">Here's what's happening across your saved towns.</p>
 
             {/* Seasonal Tip */}
@@ -93,7 +151,7 @@ export default function Dashboard() {
             <section className="mb-8">
               <h2 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-3">Quick Actions</h2>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <Link to="/query">
+                <Link to="/search">
                   <Card className="hover:shadow-md transition-shadow hover:border-accent/30">
                     <CardContent className="p-4 flex items-center gap-3">
                       <div className="h-9 w-9 rounded bg-accent/10 flex items-center justify-center flex-shrink-0">
@@ -139,79 +197,111 @@ export default function Dashboard() {
             <section className="mb-8">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Your Towns</h2>
-                <Button variant="ghost" size="sm" className="text-accent text-xs"><Plus className="h-3 w-3 mr-1" /> Add Town</Button>
+                <Link to="/onboarding">
+                  <Button variant="ghost" size="sm" className="text-accent text-xs"><Plus className="h-3 w-3 mr-1" /> Add Town</Button>
+                </Link>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {savedTowns.map((t) => (
-                  <Link key={t.name} to="/town/ridgewood">
-                    <Card className="hover:shadow-md transition-shadow">
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-2 mb-2">
-                          <MapPin className="h-4 w-4 text-accent" />
-                          <span className="font-semibold text-sm">{t.name}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">{t.zones} zones · {t.county} County</p>
-                        <p className="text-xs text-muted-foreground mt-1">Viewed {t.lastViewed}</p>
-                      </CardContent>
-                    </Card>
-                  </Link>
-                ))}
-              </div>
+              {loadingTowns ? (
+                <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+              ) : savedTowns.length === 0 ? (
+                <Card><CardContent className="p-6 text-center">
+                  <p className="text-sm text-muted-foreground mb-3">You haven't saved any towns yet.</p>
+                  <Link to="/onboarding"><Button size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground">Add your first town</Button></Link>
+                </CardContent></Card>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {savedTowns.map((row: any) => (
+                    <Link key={row.town_slug} to={`/town/${row.town_slug}`}>
+                      <Card className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <MapPin className="h-4 w-4 text-accent" />
+                            <span className="font-semibold text-sm">{row.towns?.name ?? row.town_slug}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {row.towns?.num_zones ? `${row.towns.num_zones} zones · ` : ""}{row.towns?.county ?? "Bergen"} County
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Saved {formatDistanceToNow(new Date(row.created_at), { addSuffix: true })}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </section>
 
             {/* Active Projects */}
             <section className="mb-8">
               <h2 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-4">Active Projects</h2>
-              <Card>
-                <CardContent className="p-0">
-                  {activeProjects.map((p, i) => {
-                    const Icon = projectIcons[p.type] || Hammer;
-                    return (
-                      <Link key={i} to={`/project/${i + 1}`} className={`flex items-center justify-between px-4 py-3 hover:bg-secondary/50 transition-colors ${i < activeProjects.length - 1 ? "border-b" : ""}`}>
-                        <div className="flex items-center gap-3">
-                          <div className="h-8 w-8 rounded bg-secondary flex items-center justify-center">
-                            <Icon className="h-4 w-4 text-muted-foreground" />
+              {loadingProjects ? (
+                <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+              ) : projects.length === 0 ? (
+                <Card><CardContent className="p-6 text-center">
+                  <p className="text-sm text-muted-foreground mb-3">No projects yet. Start one with a checklist.</p>
+                  <Link to="/checklist"><Button size="sm" variant="outline">Create a checklist</Button></Link>
+                </CardContent></Card>
+              ) : (
+                <Card>
+                  <CardContent className="p-0">
+                    {projects.map((p: any, i: number) => {
+                      const Icon = projectIcons[p.project_type] || Hammer;
+                      const label = p.project_type.charAt(0).toUpperCase() + p.project_type.slice(1);
+                      return (
+                        <Link key={p.id} to={`/project/${p.id}`} className={`flex items-center justify-between px-4 py-3 hover:bg-secondary/50 transition-colors ${i < projects.length - 1 ? "border-b" : ""}`}>
+                          <div className="flex items-center gap-3">
+                            <div className="h-8 w-8 rounded bg-secondary flex items-center justify-center">
+                              <Icon className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">{label}</p>
+                              <p className="text-xs text-muted-foreground">{p.address}</p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-medium">{p.type}</p>
-                            <p className="text-xs text-muted-foreground">{p.address}</p>
-                          </div>
-                        </div>
-                        <Badge variant="secondary" className={`text-xs ${p.status === "Permit Filed" ? "bg-warning/10 text-warning" : p.status === "Researching" ? "bg-accent/10 text-accent" : ""}`}>{p.status}</Badge>
-                      </Link>
-                    );
-                  })}
-                </CardContent>
-              </Card>
+                          <Badge variant="secondary" className={`text-xs ${statusBadgeClass(p.status)}`}>{p.status}</Badge>
+                        </Link>
+                      );
+                    })}
+                  </CardContent>
+                </Card>
+              )}
             </section>
 
             {/* Recent Ordinance Changes */}
             <section>
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Recent Ordinance Changes</h2>
-                <Button variant="ghost" size="sm" className="text-accent text-xs">
-                  View All <ArrowRight className="h-3 w-3 ml-1" />
-                </Button>
               </div>
-              <div className="space-y-3">
-                {recentChanges.map((c, i) => (
-                  <Card key={i}>
-                    <CardContent className="p-4 flex items-start gap-3">
-                      <div className={`h-2 w-2 rounded-full mt-1.5 flex-shrink-0 ${
-                        c.severity === "high" ? "bg-destructive" : c.severity === "medium" ? "bg-warning" : "bg-success"
-                      }`} />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-sm font-semibold">{c.town}</span>
-                          <span className="text-xs text-muted-foreground">{c.date}</span>
+              {loadingChanges ? (
+                <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+              ) : changes.length === 0 ? (
+                <Card><CardContent className="p-6 text-center">
+                  <p className="text-sm text-muted-foreground">No ordinance changes detected yet. We refresh data weekly.</p>
+                </CardContent></Card>
+              ) : (
+                <div className="space-y-3">
+                  {changes.map((c: any) => (
+                    <Card key={c.id}>
+                      <CardContent className="p-4 flex items-start gap-3">
+                        <div className={`h-2 w-2 rounded-full mt-1.5 flex-shrink-0 ${
+                          c.change_type === "added" ? "bg-success" : c.change_type === "removed" ? "bg-destructive" : "bg-warning"
+                        }`} />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="text-sm font-semibold capitalize">{c.town_slug}</span>
+                            <span className="text-xs text-muted-foreground">{new Date(c.detected_at).toLocaleDateString()}</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{c.diff_summary ?? "Data updated."}</p>
                         </div>
-                        <p className="text-sm text-muted-foreground">{c.summary}</p>
-                      </div>
-                      <ChevronRight className="h-4 w-4 text-muted-foreground mt-0.5" />
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                        <Link to={`/town/${c.town_slug}/ordinances`}>
+                          <ChevronRight className="h-4 w-4 text-muted-foreground mt-0.5" />
+                        </Link>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </section>
           </div>
         </main>
