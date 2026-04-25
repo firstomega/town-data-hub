@@ -2,10 +2,11 @@ import { AppLayout } from "@/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, BookOpen, Loader2 } from "lucide-react";
+import { Search, BookOpen } from "lucide-react";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { LoadingState } from "@/components/states/LoadingState";
 
 export default function GlossaryPage() {
   const [search, setSearch] = useState("");
@@ -48,14 +49,12 @@ export default function GlossaryPage() {
           />
         </div>
 
-        {isLoading && (
-          <div className="py-12 text-center text-muted-foreground"><Loader2 className="h-5 w-5 animate-spin inline" /></div>
-        )}
+        {isLoading && <LoadingState />}
 
         <div className="space-y-3">
           {filtered.map((t) => (
             <Card key={t.term} id={t.term.toLowerCase().replace(/\s+/g, "-")}>
-              <CardContent className="p-5">
+              <CardContent padding="md">
                 <h3 className="font-semibold text-sm mb-1">{t.term}</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed mb-3">{t.definition}</p>
                 <div className="flex flex-wrap gap-1.5">

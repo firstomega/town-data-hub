@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import HomeownerDashboard from "./HomeownerDashboard";
+import { LoadingState } from "@/components/states/LoadingState";
 
 const projectIcons: Record<string, React.ElementType> = {
   Deck: Hammer,
@@ -38,7 +39,7 @@ export default function Dashboard() {
   if (profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        <LoadingState size="lg" />
       </div>
     );
   }
@@ -166,7 +167,7 @@ export default function Dashboard() {
 
             {/* Seasonal Tip */}
             <Card className="mb-6 border-warning/20 bg-warning/5">
-              <CardContent className="p-4 flex items-start gap-3">
+              <CardContent padding="sm" className="flex items-start gap-3">
                 <span className="text-lg">☀️</span>
                 <div>
                   <p className="text-sm font-medium">Spring Building Season</p>
@@ -184,7 +185,7 @@ export default function Dashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <Link to="/search">
                   <Card className="hover:shadow-md transition-shadow hover:border-accent/30">
-                    <CardContent className="p-4 flex items-center gap-3">
+                    <CardContent padding="sm" className="flex items-center gap-3">
                       <div className="h-9 w-9 rounded bg-accent/10 flex items-center justify-center flex-shrink-0">
                         <Search className="h-4 w-4 text-accent" />
                       </div>
@@ -197,7 +198,7 @@ export default function Dashboard() {
                 </Link>
                 <Link to="/compare">
                   <Card className="hover:shadow-md transition-shadow hover:border-accent/30">
-                    <CardContent className="p-4 flex items-center gap-3">
+                    <CardContent padding="sm" className="flex items-center gap-3">
                       <div className="h-9 w-9 rounded bg-accent/10 flex items-center justify-center flex-shrink-0">
                         <GitCompare className="h-4 w-4 text-accent" />
                       </div>
@@ -210,7 +211,7 @@ export default function Dashboard() {
                 </Link>
                 <Link to="/checklist">
                   <Card className="hover:shadow-md transition-shadow hover:border-accent/30">
-                    <CardContent className="p-4 flex items-center gap-3">
+                    <CardContent padding="sm" className="flex items-center gap-3">
                       <div className="h-9 w-9 rounded bg-accent/10 flex items-center justify-center flex-shrink-0">
                         <ListChecks className="h-4 w-4 text-accent" />
                       </div>
@@ -233,9 +234,9 @@ export default function Dashboard() {
                 </Link>
               </div>
               {loadingTowns ? (
-                <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+                <LoadingState size="sm" />
               ) : savedTowns.length === 0 ? (
-                <Card><CardContent className="p-6 text-center">
+                <Card><CardContent padding="lg" className="text-center">
                   <p className="text-sm text-muted-foreground mb-3">You haven't saved any towns yet.</p>
                   <Link to="/onboarding"><Button size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground">Add your first town</Button></Link>
                 </CardContent></Card>
@@ -251,7 +252,7 @@ export default function Dashboard() {
                         <X className="h-3.5 w-3.5" />
                       </button>
                       <Link to={`/town/${row.town_slug}`}>
-                        <CardContent className="p-4">
+                        <CardContent padding="sm">
                           <div className="flex items-center gap-2 mb-2">
                             <MapPin className="h-4 w-4 text-accent" />
                             <span className="font-semibold text-sm">{row.towns?.name ?? row.town_slug}</span>
@@ -274,15 +275,15 @@ export default function Dashboard() {
             <section className="mb-8">
               <h2 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground mb-4">Active Projects</h2>
               {loadingProjects ? (
-                <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+                <LoadingState size="sm" />
               ) : projects.length === 0 ? (
-                <Card><CardContent className="p-6 text-center">
+                <Card><CardContent padding="lg" className="text-center">
                   <p className="text-sm text-muted-foreground mb-3">No projects yet. Start one with a checklist.</p>
                   <Link to="/checklist"><Button size="sm" variant="outline">Create a checklist</Button></Link>
                 </CardContent></Card>
               ) : (
                 <Card>
-                  <CardContent className="p-0">
+                  <CardContent padding="none">
                     {projects.map((p: any, i: number) => {
                       const Icon = projectIcons[p.project_type] || Hammer;
                       const label = p.project_type.charAt(0).toUpperCase() + p.project_type.slice(1);
@@ -312,16 +313,16 @@ export default function Dashboard() {
                 <h2 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Recent Ordinance Changes</h2>
               </div>
               {loadingChanges ? (
-                <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+                <LoadingState size="sm" />
               ) : changes.length === 0 ? (
-                <Card><CardContent className="p-6 text-center">
+                <Card><CardContent padding="lg" className="text-center">
                   <p className="text-sm text-muted-foreground">No ordinance changes detected yet. We refresh data weekly.</p>
                 </CardContent></Card>
               ) : (
                 <div className="space-y-3">
                   {changes.map((c: any) => (
                     <Card key={c.id}>
-                      <CardContent className="p-4 flex items-start gap-3">
+                      <CardContent padding="sm" className="flex items-start gap-3">
                         <div className={`h-2 w-2 rounded-full mt-1.5 flex-shrink-0 ${
                           c.change_type === "added" ? "bg-success" : c.change_type === "removed" ? "bg-destructive" : "bg-warning"
                         }`} />

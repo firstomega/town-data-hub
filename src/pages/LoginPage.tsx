@@ -88,7 +88,7 @@ export default function LoginPage() {
     <AppLayout contained={false} mainClassName="items-center justify-center">
       <div className="flex-1 flex items-center justify-center py-12 w-full">
         <Card className="w-full max-w-md">
-          <CardContent className="p-8">
+          <CardContent padding="xl">
             <div className="text-center mb-6">
               <div className="flex items-center justify-center gap-2 mb-4">
                 <div className="h-8 w-8 rounded bg-accent text-accent-foreground flex items-center justify-center text-sm font-black">TC</div>

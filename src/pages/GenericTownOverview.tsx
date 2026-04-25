@@ -31,7 +31,7 @@ export default function GenericTownOverview() {
   if (!town) {
     return (
       <TownProfileLayout townSlug={slug}>
-        <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">Town not found.</CardContent></Card>
+        <Card><CardContent padding="xl" className="text-center text-sm text-muted-foreground">Town not found.</CardContent></Card>
       </TownProfileLayout>
     );
   }
@@ -62,7 +62,7 @@ export default function GenericTownOverview() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {stats.map((s) => (
             <Card key={s.label} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
+              <CardContent padding="sm">
                 <div className="flex items-center gap-2 mb-2">
                   <div className="h-8 w-8 rounded bg-accent/10 flex items-center justify-center">
                     <s.icon className="h-4 w-4 text-accent" />
@@ -78,7 +78,7 @@ export default function GenericTownOverview() {
         <div className="grid lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2 space-y-6">
             <Card>
-              <CardContent className="p-0">
+              <CardContent padding="none">
                 <div className="h-64 bg-secondary flex items-center justify-center rounded-t-lg">
                   <div className="text-center text-muted-foreground">
                     <Map className="h-10 w-10 mx-auto mb-2 opacity-40" />
@@ -93,7 +93,7 @@ export default function GenericTownOverview() {
             </Card>
 
             <Card>
-              <CardContent className="p-5">
+              <CardContent padding="md">
                 <h3 className="font-semibold text-sm mb-3">Town Character</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">{town.character ?? "Character description not yet available."}</p>
                 <DataProvenance confidence="placeholder" sourceDoc={town.source} lastVerifiedAt={town.last_verified} />
@@ -101,7 +101,7 @@ export default function GenericTownOverview() {
             </Card>
 
             <Card className="border-accent/20">
-              <CardContent className="p-5">
+              <CardContent padding="md">
                 <div className="flex items-start gap-3">
                   <div className="h-9 w-9 rounded bg-accent/10 flex items-center justify-center flex-shrink-0">
                     <Gavel className="h-4 w-4 text-accent" />
@@ -130,7 +130,7 @@ export default function GenericTownOverview() {
 
           <div className="space-y-6">
             <Card>
-              <CardContent className="p-5">
+              <CardContent padding="md">
                 <h3 className="font-semibold text-sm mb-4 flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-accent" /> Upcoming Meetings
                 </h3>

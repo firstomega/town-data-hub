@@ -2,11 +2,13 @@ import { AppLayout } from "@/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search, MapPin, Layers, FileText, ArrowRight, Loader2 } from "lucide-react";
+import { Search, MapPin, Layers, FileText, ArrowRight } from "lucide-react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { EmptyState } from "@/components/states/EmptyState";
+import { LoadingState } from "@/components/states/LoadingState";
 
 function useSearch(q: string) {
   return useQuery({
@@ -65,39 +67,34 @@ export default function SearchResultsPage() {
         </div>
 
         {!hasQuery ? (
-          <div className="text-center py-16">
-            <Search className="h-10 w-10 text-muted-foreground/30 mx-auto mb-4" />
-            <h2 className="text-lg font-semibold text-primary mb-2">Start typing to search</h2>
-            <p className="text-sm text-muted-foreground mb-6">
-              Search across Bergen County towns, zoning districts, and ordinances.
-            </p>
-            <div className="flex flex-wrap justify-center gap-2">
-              <Link to="/town/ridgewood">
-                <Badge variant="outline" className="cursor-pointer hover:bg-secondary">Ridgewood</Badge>
-              </Link>
-              <Link to="/town/paramus">
-                <Badge variant="outline" className="cursor-pointer hover:bg-secondary">Paramus</Badge>
-              </Link>
-              <Link to="/">
-                <Badge variant="outline" className="cursor-pointer hover:bg-secondary">Browse All Towns</Badge>
-              </Link>
-            </div>
-          </div>
+          <EmptyState
+            icon={Search}
+            size="lg"
+            title="Start typing to search"
+            description="Search across Bergen County towns, zoning districts, and ordinances."
+            action={
+              <div className="flex flex-wrap justify-center gap-2">
+                <Link to="/town/ridgewood">
+                  <Badge variant="outline" className="cursor-pointer hover:bg-secondary">Ridgewood</Badge>
+                </Link>
+                <Link to="/town/paramus">
+                  <Badge variant="outline" className="cursor-pointer hover:bg-secondary">Paramus</Badge>
+                </Link>
+                <Link to="/">
+                  <Badge variant="outline" className="cursor-pointer hover:bg-secondary">Browse All Towns</Badge>
+                </Link>
+              </div>
+            }
+          />
         ) : isLoading ? (
-          <div className="flex items-center justify-center py-16 text-muted-foreground gap-2 text-sm">
-            <Loader2 className="h-4 w-4 animate-spin" /> Searching…
-          </div>
+          <LoadingState size="lg" label="Searching…" />
         ) : totalHits === 0 ? (
-          <div className="text-center py-16">
-            <Search className="h-10 w-10 text-muted-foreground/30 mx-auto mb-4" />
-            <h2 className="text-lg font-semibold text-primary mb-2">No results found</h2>
-            <p className="text-sm text-muted-foreground mb-2">
-              Nothing matched "<span className="text-foreground">{query}</span>".
-            </p>
-            <p className="text-xs text-muted-foreground mb-6">
-              Verified zoning and ordinance content is still being added — try a town name.
-            </p>
-          </div>
+          <EmptyState
+            icon={Search}
+            size="lg"
+            title="No results found"
+            description={`Nothing matched "${query}". Verified zoning and ordinance content is still being added — try a town name.`}
+          />
         ) : (
           <>
             {data!.towns.length > 0 && (
@@ -111,7 +108,7 @@ export default function SearchResultsPage() {
                   {data!.towns.map((t) => (
                     <Link key={t.slug} to={`/town/${t.slug}`}>
                       <Card className="hover:shadow-md transition-shadow">
-                        <CardContent className="p-4 flex items-start justify-between">
+                        <CardContent padding="sm" className="flex items-start justify-between">
                           <div>
                             <div className="flex items-center gap-2 mb-1">
                               <span className="font-semibold text-sm">{t.name}</span>
@@ -144,7 +141,7 @@ export default function SearchResultsPage() {
                   {data!.zones.map((z) => (
                     <Link key={`${z.town_slug}-${z.code}`} to={`/town/${z.town_slug}/zoning`}>
                       <Card className="hover:shadow-md transition-shadow">
-                        <CardContent className="p-4">
+                        <CardContent padding="sm">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-semibold text-sm">{z.code} — {z.name}</span>
                           </div>
@@ -171,7 +168,7 @@ export default function SearchResultsPage() {
                   {data!.ordinances.map((o, i) => (
                     <Link key={`${o.town_slug}-${i}`} to={`/town/${o.town_slug}/ordinances`}>
                       <Card className="hover:shadow-md transition-shadow">
-                        <CardContent className="p-4">
+                        <CardContent padding="sm">
                           <div className="flex items-center gap-2 mb-1">
                             <span className="font-semibold text-sm">{o.title}</span>
                           </div>

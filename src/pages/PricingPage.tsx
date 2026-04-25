@@ -86,7 +86,7 @@ export default function PricingPage() {
               className={`px-4 py-2 rounded text-sm font-medium transition-colors flex items-center gap-2 ${annual ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"}`}
             >
               Annual
-              <Badge className="bg-success/10 text-success border-0 text-micro">Save 20%</Badge>
+              <Badge variant="success" className="text-micro">Save 20%</Badge>
             </button>
           </div>
         </div>
@@ -97,10 +97,10 @@ export default function PricingPage() {
             <Card key={tier.name} className={`relative ${tier.highlight ? "border-accent shadow-md" : ""}`}>
               {tier.highlight && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <Badge className="bg-accent text-accent-foreground border-0 text-xs">Most Popular</Badge>
+                  <Badge variant="accentSolid" className="text-xs">Most Popular</Badge>
                 </div>
               )}
-              <CardContent className="p-6">
+              <CardContent padding="lg">
                 <h3 className="font-bold text-lg mb-1">{tier.name}</h3>
                 <p className="text-xs text-muted-foreground mb-4">{tier.description}</p>
 
@@ -187,7 +187,7 @@ export default function PricingPage() {
               { q: "Is my data secure?", a: "Yes. We use industry-standard encryption and never share your personal information with third parties." },
             ].map((faq) => (
               <Card key={faq.q}>
-                <CardContent className="p-4">
+                <CardContent padding="sm">
                   <h3 className="font-semibold text-sm mb-1">{faq.q}</h3>
                   <p className="text-sm text-muted-foreground">{faq.a}</p>
                 </CardContent>

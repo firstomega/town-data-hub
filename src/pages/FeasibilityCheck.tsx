@@ -11,6 +11,7 @@ import {
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useAllTowns, useTownZones, useTownPermits } from "@/hooks/useTownData";
+import { LoadingState } from "@/components/states/LoadingState";
 
 const projectTypes = [
   { value: "deck",     label: "Deck",                        icon: Hammer,     keywords: ["deck"] },
@@ -159,7 +160,7 @@ export default function FeasibilityCheck() {
   return (
     <AppLayout showSearch contained={false}>
       <div className="container py-6 max-w-3xl">
-        <Badge className="mb-2 bg-accent/10 text-accent border-0 text-xs">Quick Check</Badge>
+        <Badge variant="accent" className="mb-2 text-xs">Quick Check</Badge>
         <h1 className="text-2xl font-bold text-primary mb-1">Project Feasibility Check</h1>
         <p className="text-sm text-muted-foreground mb-6">
           Real zoning rules from the verified database. Find out if your project is permissible before calling a contractor.
@@ -270,14 +271,12 @@ export default function FeasibilityCheck() {
         {step === 3 && (
           <div>
             {!evaluation || !selectedZone ? (
-              <div className="py-12 text-center">
-                <Loader2 className="h-5 w-5 animate-spin inline text-muted-foreground" />
-              </div>
+              <LoadingState />
             ) : (
               <>
                 {/* Verdict */}
                 <Card className={`mb-6 ${evaluation.permitted ? "border-success/30" : "border-destructive/30"}`}>
-                  <CardContent className="p-5 flex items-start gap-4">
+                  <CardContent padding="md" className="flex items-start gap-4">
                     {evaluation.permitted ? (
                       <CheckCircle className="h-8 w-8 text-success flex-shrink-0" />
                     ) : (
@@ -307,7 +306,7 @@ export default function FeasibilityCheck() {
 
                 {/* Rules */}
                 <Card className="mb-6">
-                  <CardContent className="p-5">
+                  <CardContent padding="md">
                     <h3 className="font-semibold text-sm mb-4">Zoning Rule Check</h3>
                     <div className="space-y-3">
                       {evaluation.rules.map((r) => (
@@ -333,7 +332,7 @@ export default function FeasibilityCheck() {
                 {/* Matching Permits */}
                 {matchingPermits.length > 0 && (
                   <Card className="mb-6">
-                    <CardContent className="p-5">
+                    <CardContent padding="md">
                       <h3 className="font-semibold text-sm mb-3">Permits you'll likely need</h3>
                       <ul className="space-y-2">
                         {matchingPermits.map((p) => (

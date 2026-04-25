@@ -39,7 +39,7 @@ export default function GenericTownPermits() {
       <div className="animate-fade-in">
         {town && <PlaceholderBanner townName={town.name} status={(town.data_status as "partial" | "placeholder") ?? "placeholder"} />}
         <Card className="mb-6 border-accent/30 bg-accent/5">
-          <CardContent className="p-5">
+          <CardContent padding="md">
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="font-semibold mb-1">Permit Checklist Generator</h3>
@@ -57,12 +57,12 @@ export default function GenericTownPermits() {
 
         <h2 className="text-lg font-bold mb-4">Permit Types & Requirements</h2>
         {list.length === 0 && (
-          <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">No permit data has been verified yet for this town.</CardContent></Card>
+          <Card><CardContent padding="xl" className="text-center text-sm text-muted-foreground">No permit data has been verified yet for this town.</CardContent></Card>
         )}
         <div className="grid md:grid-cols-2 gap-4">
           {list.map((p) => (
             <Card key={p.name} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-5">
+              <CardContent padding="md">
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-semibold text-sm">{p.name}</h3>
                   {p.source_url && (

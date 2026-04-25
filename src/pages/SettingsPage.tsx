@@ -13,6 +13,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 import { useAllTowns } from "@/hooks/useTownData";
+import { LoadingState } from "@/components/states/LoadingState";
 
 export default function SettingsPage() {
   const { user, signOut } = useAuth();
@@ -122,13 +123,13 @@ export default function SettingsPage() {
 
         {/* Profile */}
         <Card className="mb-6">
-          <CardContent className="p-5">
+          <CardContent padding="md">
             <div className="flex items-center gap-2 mb-4">
               <User className="h-4 w-4 text-accent" />
               <h2 className="font-semibold text-sm">Profile</h2>
             </div>
             {loadingProfile ? (
-              <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+              <LoadingState size="sm" />
             ) : (
               <div className="grid gap-4">
                 <div className="grid sm:grid-cols-2 gap-4">
@@ -163,7 +164,7 @@ export default function SettingsPage() {
 
         {/* Your Home */}
         <Card className="mb-6">
-          <CardContent className="p-5">
+          <CardContent padding="md">
             <div className="flex items-center gap-2 mb-4">
               <Home className="h-4 w-4 text-accent" />
               <h2 className="font-semibold text-sm">Your Home</h2>
@@ -214,13 +215,13 @@ export default function SettingsPage() {
 
         {/* Saved Towns */}
         <Card className="mb-6">
-          <CardContent className="p-5">
+          <CardContent padding="md">
             <div className="flex items-center gap-2 mb-4">
               <MapPin className="h-4 w-4 text-accent" />
               <h2 className="font-semibold text-sm">Saved Towns</h2>
             </div>
             {loadingTowns ? (
-              <div className="flex justify-center py-6"><Loader2 className="h-5 w-5 animate-spin text-muted-foreground" /></div>
+              <LoadingState size="sm" />
             ) : savedTowns.length === 0 ? (
               <p className="text-sm text-muted-foreground">You haven't saved any towns yet.</p>
             ) : (
@@ -251,7 +252,7 @@ export default function SettingsPage() {
 
         {/* Danger Zone */}
         <Card className="border-destructive/30">
-          <CardContent className="p-5">
+          <CardContent padding="md">
             <div className="flex items-center gap-2 mb-2">
               <Trash2 className="h-4 w-4 text-destructive" />
               <h2 className="font-semibold text-sm text-destructive">Delete Account</h2>

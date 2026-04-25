@@ -63,7 +63,7 @@ export default function ResetPasswordPage() {
     <AppLayout contained={false}>
       <div className="flex-1 flex items-center justify-center py-12 w-full">
         <Card className="w-full max-w-md">
-          <CardContent className="p-8">
+          <CardContent padding="xl">
             <h1 className="text-xl font-bold text-primary mb-2">Set a new password</h1>
             <p className="text-sm text-muted-foreground mb-6">
               {recoveryReady

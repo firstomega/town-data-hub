@@ -1,10 +1,11 @@
 import { AppLayout } from "@/layouts/AppLayout";
 import { Badge } from "@/components/ui/badge";
-import { ChevronRight, Clock, ArrowLeft, Loader2 } from "lucide-react";
+import { ChevronRight, Clock, ArrowLeft } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import NotFound from "./NotFound";
+import { LoadingState } from "@/components/states/LoadingState";
 
 export default function GuidePage() {
   const { slug } = useParams<{ slug: string }>();
@@ -25,9 +26,7 @@ export default function GuidePage() {
   if (isLoading) {
     return (
       <AppLayout contained={false}>
-        <div className="container py-12 text-center text-muted-foreground">
-          <Loader2 className="h-5 w-5 animate-spin inline" />
-        </div>
+        <LoadingState />
       </AppLayout>
     );
   }

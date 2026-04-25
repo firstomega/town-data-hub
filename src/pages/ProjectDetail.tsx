@@ -3,13 +3,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { Hammer, Fence, Waves, ArrowLeft, Trash2, Share2, CheckCircle, Loader2, FileText } from "lucide-react";
+import { Hammer, Fence, Waves, ArrowLeft, Trash2, Share2, CheckCircle, FileText } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useState, useEffect } from "react";
+import { LoadingState } from "@/components/states/LoadingState";
 
 const projectIcons: Record<string, React.ElementType> = {
   deck: Hammer,
@@ -113,9 +114,7 @@ export default function ProjectDetail() {
   if (isLoading) {
     return (
       <AppLayout showSearch contained={false}>
-        <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
+        <LoadingState fill size="lg" />
       </AppLayout>
     );
   }
@@ -192,7 +191,7 @@ export default function ProjectDetail() {
 
         {/* Timeline */}
         <Card className="mb-6">
-          <CardContent className="p-5">
+          <CardContent padding="md">
             <h3 className="font-semibold text-sm mb-4">Permit Status</h3>
             <div className="flex items-center justify-between">
               {TIMELINE_STEPS.map((step, i) => {
@@ -220,7 +219,7 @@ export default function ProjectDetail() {
 
         {/* Applicable Rules */}
         <Card className="mb-6">
-          <CardContent className="p-5">
+          <CardContent padding="md">
             <h3 className="font-semibold text-sm mb-4">
               Applicable Zoning Rules{project.zone ? ` — Zone ${project.zone}` : ""}
             </h3>
@@ -243,7 +242,7 @@ export default function ProjectDetail() {
 
         {/* Checklist */}
         <Card className="mb-6">
-          <CardContent className="p-5">
+          <CardContent padding="md">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-sm">Permit Checklist</h3>
               <span className="text-xs text-muted-foreground">{completed}/{checklist.length} complete</span>
@@ -266,7 +265,7 @@ export default function ProjectDetail() {
         {/* Related Changes */}
         {drifts.length > 0 && (
           <Card className="mb-6">
-            <CardContent className="p-5">
+            <CardContent padding="md">
               <h3 className="font-semibold text-sm mb-4">Recent Ordinance Changes in {project.town_slug}</h3>
               <div className="space-y-2">
                 {drifts.map((c: any) => (

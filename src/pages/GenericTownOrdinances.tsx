@@ -55,7 +55,7 @@ export default function GenericTownOrdinances() {
         <div className="space-y-3">
           {filtered.map((o) => (
             <Card key={o.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-4">
+              <CardContent padding="sm">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
                     {o.code && <Badge variant="secondary" className="text-micro font-mono">{o.code}</Badge>}

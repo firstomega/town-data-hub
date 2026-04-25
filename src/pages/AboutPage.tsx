@@ -22,7 +22,7 @@ export default function AboutPage() {
 
         {/* What We Do */}
         <Card className="mb-6">
-          <CardContent className="p-6">
+          <CardContent padding="lg">
             <h2 className="font-bold text-lg mb-3">What We Do</h2>
             <p className="text-sm text-muted-foreground leading-relaxed mb-4">
               TownCenter is a platform that organizes local zoning ordinances, permit requirements, and municipal
@@ -49,7 +49,7 @@ export default function AboutPage() {
 
         {/* Data Sourcing */}
         <Card className="mb-6">
-          <CardContent className="p-6">
+          <CardContent padding="lg">
             <div className="flex items-center gap-2 mb-3">
               <Database className="h-5 w-5 text-accent" />
               <h2 className="font-bold text-lg">Our Data</h2>
@@ -65,7 +65,7 @@ export default function AboutPage() {
 
         {/* Coverage */}
         <Card className="mb-6">
-          <CardContent className="p-6">
+          <CardContent padding="lg">
             <div className="flex items-center gap-2 mb-3">
               <Shield className="h-5 w-5 text-accent" />
               <h2 className="font-bold text-lg">Our Commitment</h2>
@@ -81,7 +81,7 @@ export default function AboutPage() {
 
         {/* Contact */}
         <Card>
-          <CardContent className="p-6">
+          <CardContent padding="lg">
             <div className="flex items-center gap-2 mb-3">
               <Mail className="h-5 w-5 text-accent" />
               <h2 className="font-bold text-lg">Contact Us</h2>

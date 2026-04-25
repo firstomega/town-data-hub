@@ -1,10 +1,12 @@
 import { AppLayout } from "@/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Clock, ArrowRight, Loader2 } from "lucide-react";
+import { Clock, ArrowRight, BookOpen } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { LoadingState } from "@/components/states/LoadingState";
+import { EmptyState } from "@/components/states/EmptyState";
 
 export default function GuidesPage() {
   const { data: guides, isLoading } = useQuery({
@@ -30,17 +32,15 @@ export default function GuidesPage() {
         </div>
 
         {isLoading ? (
-          <div className="py-12 text-center text-muted-foreground">
-            <Loader2 className="h-5 w-5 animate-spin inline" />
-          </div>
+          <LoadingState />
         ) : !guides?.length ? (
-          <p className="py-12 text-center text-sm text-muted-foreground">No guides published yet.</p>
+          <EmptyState icon={BookOpen} title="No guides published yet." />
         ) : (
         <div className="grid md:grid-cols-2 gap-4">
           {guides.map((guide) => (
             <Link key={guide.slug} to={`/guides/${guide.slug}`}>
               <Card className="hover:shadow-md transition-shadow h-full">
-                <CardContent className="p-5 flex flex-col h-full">
+                <CardContent padding="md" className="flex flex-col h-full">
                   <div className="flex items-center gap-2 mb-3">
                     {guide.category && <Badge variant="secondary" className="text-micro">{guide.category}</Badge>}
                     {guide.read_time && (

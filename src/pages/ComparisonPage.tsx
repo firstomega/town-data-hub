@@ -4,10 +4,11 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Layers } from "lucide-react";
+import { Layers } from "lucide-react";
 import { useMemo, useState, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useAllTowns, useTownZones } from "@/hooks/useTownData";
+import { LoadingState } from "@/components/states/LoadingState";
 
 type ZoneRow = { code: string; name: string; min_lot: string | null; setback_front: string | null; setback_side: string | null; setback_rear: string | null; max_height: string | null; max_coverage: string | null; far: string | null; confidence: string };
 
@@ -81,11 +82,9 @@ export default function ComparisonPage() {
         </p>
 
         {townsLoading ? (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground py-12 justify-center">
-            <Loader2 className="h-4 w-4 animate-spin" /> Loading towns…
-          </div>
+          <LoadingState label="Loading towns…" />
         ) : verifiedTowns.length < 2 ? (
-          <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">
+          <Card><CardContent padding="xl" className="text-center text-sm text-muted-foreground">
             At least two towns with verified data are required to compare. Check back soon.
           </CardContent></Card>
         ) : (
@@ -123,16 +122,14 @@ export default function ComparisonPage() {
             </div>
 
             {(aLoading || bLoading) ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground py-12 justify-center">
-                <Loader2 className="h-4 w-4 animate-spin" /> Loading zoning…
-              </div>
+              <LoadingState label="Loading zoning…" />
             ) : sharedCodes.length === 0 ? (
-              <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">
+              <Card><CardContent padding="xl" className="text-center text-sm text-muted-foreground">
                 These two towns don't share a zone code in our verified data yet, so we can't render a fair side-by-side.
               </CardContent></Card>
             ) : (
               <Card>
-                <CardContent className="p-0">
+                <CardContent padding="none">
                   <Table>
                     <TableHeader>
                       <TableRow className="bg-secondary/50">

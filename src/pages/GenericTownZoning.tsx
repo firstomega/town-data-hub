@@ -48,7 +48,7 @@ export default function GenericTownZoning() {
         </div>
 
         <Card className="hidden lg:block">
-          <CardContent className="p-0">
+          <CardContent padding="none">
             <Table>
               <TableHeader>
                 <TableRow className="bg-secondary/50">
@@ -108,7 +108,7 @@ export default function GenericTownZoning() {
         <div className="lg:hidden space-y-3">
           {list.map((z) => (
             <Card key={z.code}>
-              <CardContent className="p-4">
+              <CardContent padding="sm">
                 <div className="flex items-center gap-2 mb-3">
                   <Badge variant="default" className="font-mono text-xs">{z.code}</Badge>
                   <span className="text-sm font-semibold">{z.name}</span>

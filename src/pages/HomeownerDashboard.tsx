@@ -137,7 +137,7 @@ export default function HomeownerDashboard() {
       <AppLayout showSearch contained={false} mainClassName="items-center justify-center">
         <div className="flex-1 flex items-center justify-center p-6 w-full">
           <Card className="max-w-md w-full">
-            <CardContent className="p-8 text-center">
+            <CardContent padding="xl" className="text-center">
               <div className="h-12 w-12 rounded-lg bg-accent/10 flex items-center justify-center mx-auto mb-4">
                 <Home className="h-6 w-6 text-accent" />
               </div>
@@ -169,7 +169,7 @@ export default function HomeownerDashboard() {
           <p className="text-sm text-muted-foreground mb-4">Everything below is specific to your home.</p>
 
           <Card className="mb-6 border-accent/20 bg-gradient-to-br from-accent/5 to-transparent">
-            <CardContent className="p-5">
+            <CardContent padding="md">
               <div className="flex items-start justify-between gap-4 flex-wrap">
                 <div className="flex items-start gap-3 min-w-0">
                   <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
@@ -227,7 +227,7 @@ export default function HomeownerDashboard() {
               <div className="space-y-2">
                 {alerts.map((a: any) => (
                   <Card key={a.id}>
-                    <CardContent className="p-3 flex items-start gap-3">
+                    <CardContent padding="xs" className="flex items-start gap-3">
                       <Bell className="h-4 w-4 text-warning mt-0.5 flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm">{a.diff_summary ?? `${a.table_name} updated`}</p>
@@ -256,7 +256,7 @@ export default function HomeownerDashboard() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {services.map((s) => (
                 <Card key={s.key}>
-                  <CardContent className="p-4">
+                  <CardContent padding="sm">
                     <p className="text-xs text-muted-foreground mb-1">{s.label}</p>
                     {s.contact ? (
                       <>
@@ -286,7 +286,7 @@ export default function HomeownerDashboard() {
               </Link>
             </div>
             {qol.length === 0 ? (
-              <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">
+              <Card><CardContent padding="lg" className="text-center text-sm text-muted-foreground">
                 No categorized ordinances on file for {town?.name ?? "your town"} yet. Check back as we ingest more data.
               </CardContent></Card>
             ) : (
@@ -295,7 +295,7 @@ export default function HomeownerDashboard() {
                   const Icon = cat.icon;
                   return (
                     <Card key={cat.key}>
-                      <CardContent className="p-4">
+                      <CardContent padding="sm">
                         <div className="flex items-center gap-2 mb-2">
                           <Icon className="h-4 w-4 text-accent" />
                           <p className="text-sm font-semibold">{cat.label}</p>
@@ -323,14 +323,14 @@ export default function HomeownerDashboard() {
               <h2 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Upcoming meetings</h2>
             </div>
             {events.length === 0 ? (
-              <Card><CardContent className="p-6 text-center text-sm text-muted-foreground">
+              <Card><CardContent padding="lg" className="text-center text-sm text-muted-foreground">
                 No upcoming meetings on file. We're working on syncing each town's calendar.
               </CardContent></Card>
             ) : (
               <div className="space-y-2">
                 {events.map((e: any) => (
                   <Card key={e.id}>
-                    <CardContent className="p-3 flex items-center gap-3">
+                    <CardContent padding="xs" className="flex items-center gap-3">
                       <div className="flex flex-col items-center justify-center w-12 h-12 rounded bg-secondary text-center flex-shrink-0">
                         <span className="text-micro uppercase text-muted-foreground">{format(new Date(e.starts_at), "MMM")}</span>
                         <span className="text-base font-bold">{format(new Date(e.starts_at), "d")}</span>
@@ -369,7 +369,7 @@ function QuickAction({ to, icon: Icon, title, subtitle }: { to: string; icon: Re
   return (
     <Link to={to}>
       <Card className="hover:shadow-md transition-shadow hover:border-accent/30">
-        <CardContent className="p-4 flex items-center gap-3">
+        <CardContent padding="sm" className="flex items-center gap-3">
           <div className="h-9 w-9 rounded bg-accent/10 flex items-center justify-center flex-shrink-0">
             <Icon className="h-4 w-4 text-accent" />
           </div>

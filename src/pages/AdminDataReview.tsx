@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Loader2, ExternalLink, Check, X, Sparkles, RefreshCw, ShieldCheck, Clock, AlertTriangle, Search, Bookmark, Trash2 } from "lucide-react";
 import { useAllTowns } from "@/hooks/useTownData";
 import { Switch } from "@/components/ui/switch";
+import { LoadingState } from "@/components/states/LoadingState";
 import { formatDistanceToNow } from "date-fns";
 import { AppLayout } from "@/layouts/AppLayout";
 
@@ -72,14 +73,14 @@ function ReviewList({ table }: { table: TableName }) {
     refetch();
   };
 
-  if (isLoading) return <div className="py-12 text-center"><Loader2 className="h-5 w-5 animate-spin inline" /></div>;
+  if (isLoading) return <LoadingState />;
   if (!data?.length) return <p className="py-12 text-center text-sm text-muted-foreground">No AI-extracted {table} pending review.</p>;
 
   return (
     <div className="space-y-3">
       {data.map((row: Record<string, unknown>) => (
         <Card key={row.id as string}>
-          <CardContent className="p-4">
+          <CardContent padding="sm">
             <div className="flex items-start justify-between gap-4 mb-2">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 mb-1">
@@ -157,7 +158,7 @@ function IngestForm() {
 
   return (
     <Card>
-      <CardContent className="p-5 space-y-3">
+      <CardContent padding="md" className="space-y-3">
         <h3 className="font-semibold text-sm">Ingest from official source</h3>
         <p className="text-xs text-muted-foreground">Paste a municipal code chapter URL (eCode360, Municode, town PDF). Firecrawl scrapes it, Lovable AI extracts structured rows for review.</p>
         <div className="grid sm:grid-cols-2 gap-3">
@@ -219,7 +220,7 @@ function RunsList() {
   const { data } = useRecentRuns();
   return (
     <Card>
-      <CardContent className="p-4">
+      <CardContent padding="sm">
         <h3 className="font-semibold text-sm mb-3">Recent ingestion runs</h3>
         {!data?.length && <p className="text-xs text-muted-foreground">No runs yet.</p>}
         <div className="space-y-2">
@@ -299,7 +300,7 @@ function DiscoverSources() {
 
   return (
     <Card>
-      <CardContent className="p-5 space-y-3">
+      <CardContent padding="md" className="space-y-3">
         <div className="flex items-start justify-between gap-2 flex-wrap">
           <div>
             <h3 className="font-semibold text-sm flex items-center gap-2">
@@ -467,7 +468,7 @@ function DriftReview() {
     refetch();
   };
 
-  if (isLoading) return <div className="py-12 text-center"><Loader2 className="h-5 w-5 animate-spin inline" /></div>;
+  if (isLoading) return <LoadingState />;
   if (!data?.length) return (
     <p className="py-12 text-center text-sm text-muted-foreground">
       No upstream changes detected. The weekly refresh will flag any drift here.
@@ -478,7 +479,7 @@ function DriftReview() {
     <div className="space-y-3">
       {data.map((d: Record<string, unknown>) => (
         <Card key={d.id as string}>
-          <CardContent className="p-4">
+          <CardContent padding="sm">
             <div className="flex items-start justify-between gap-4 mb-2">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
@@ -578,7 +579,7 @@ function FreshnessControls() {
 
   return (
     <Card>
-      <CardContent className="p-4">
+      <CardContent padding="sm">
         <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
           <div>
             <h3 className="font-semibold text-sm flex items-center gap-2">

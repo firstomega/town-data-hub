@@ -33,11 +33,11 @@ export default function GenericTownContacts() {
         </div>
         <div className="space-y-4">
           {list.length === 0 && (
-            <Card><CardContent className="p-8 text-center text-sm text-muted-foreground">No contacts have been verified yet for this town.</CardContent></Card>
+            <Card><CardContent padding="xl" className="text-center text-sm text-muted-foreground">No contacts have been verified yet for this town.</CardContent></Card>
           )}
           {list.map((dept) => (
             <Card key={dept.id} className="hover:shadow-md transition-shadow">
-              <CardContent className="p-5">
+              <CardContent padding="md">
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h3 className="font-semibold text-base mb-1">{dept.dept}</h3>

@@ -10,11 +10,11 @@ export default function QueryResults() {
     <AppLayout showSearch contained={false}>
       <div className="container py-12 max-w-2xl">
         <Card className="border-accent/30">
-          <CardContent className="p-8 text-center">
+          <CardContent padding="xl" className="text-center">
             <div className="h-12 w-12 rounded-lg bg-accent/10 flex items-center justify-center mx-auto mb-4">
               <Sparkles className="h-6 w-6 text-accent" />
             </div>
-            <Badge className="mb-3 bg-accent/10 text-accent border-0">Coming soon</Badge>
+            <Badge variant="accent" className="mb-3">Coming soon</Badge>
             <h1 className="text-2xl font-bold text-primary mb-3">Ask a zoning question</h1>
             <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
               Natural-language Q&amp;A grounded in each town's official ordinances is in development.

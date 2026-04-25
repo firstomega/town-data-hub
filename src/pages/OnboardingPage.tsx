@@ -12,6 +12,7 @@ import { useProfile } from "@/hooks/useProfile";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useQueryClient } from "@tanstack/react-query";
+import { LoadingState } from "@/components/states/LoadingState";
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
@@ -81,7 +82,7 @@ export default function OnboardingPage() {
     <AppLayout contained={false} mainClassName="items-center justify-center px-4">
       <div className="w-full py-12 flex items-center justify-center">
         <Card className="w-full max-w-lg">
-          <CardContent className="p-8">
+          <CardContent padding="xl">
             {/* Progress */}
             <div className="flex items-center gap-2 mb-8">
               {Array.from({ length: totalSteps }).map((_, i) => (
@@ -113,9 +114,7 @@ export default function OnboardingPage() {
                 <div className="mb-4">
                   <Label className="text-xs">Your town</Label>
                   {isLoading ? (
-                    <div className="flex justify-center py-8">
-                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                    </div>
+                    <LoadingState size="md" />
                   ) : towns.length === 0 ? (
                     <p className="text-sm text-muted-foreground text-center py-8">No towns available yet.</p>
                   ) : (
@@ -168,9 +167,7 @@ export default function OnboardingPage() {
                 </div>
 
                 {isLoading ? (
-                  <div className="flex justify-center py-8">
-                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                  </div>
+                  <LoadingState size="md" />
                 ) : towns.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-8">No towns available yet.</p>
                 ) : (

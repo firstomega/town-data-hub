@@ -3,12 +3,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { MapPin, Plus, Loader2, Sparkles } from "lucide-react";
+import { MapPin, Plus, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDistanceToNow } from "date-fns";
+import { LoadingState } from "@/components/states/LoadingState";
 
 type Zone = {
   id: string;
@@ -85,9 +86,7 @@ export default function ContractorDashboard() {
   if (authLoading || isLoading) {
     return (
       <AppLayout showSearch contained={false}>
-        <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
+        <LoadingState fill size="lg" />
       </AppLayout>
     );
   }
@@ -97,7 +96,7 @@ export default function ContractorDashboard() {
       <AppLayout contained={false}>
         <div className="flex-1 flex items-center justify-center p-6">
           <Card className="max-w-md">
-            <CardContent className="p-6 text-center space-y-3">
+            <CardContent padding="lg" className="text-center space-y-3">
               <h1 className="text-lg font-bold">Sign in required</h1>
               <p className="text-sm text-muted-foreground">The Contractor Dashboard is for logged-in pros.</p>
               <Link to="/auth"><Button>Sign in</Button></Link>
@@ -178,7 +177,7 @@ export default function ContractorDashboard() {
             {/* Empty state */}
             {savedTowns.length === 0 && projects.length === 0 && (
               <Card className="mb-6">
-                <CardContent className="p-6 text-center space-y-3">
+                <CardContent padding="lg" className="text-center space-y-3">
                   <h3 className="font-semibold text-sm">Set up your workspace</h3>
                   <p className="text-xs text-muted-foreground">
                     Save the towns you work in. We'll pull the zoning rules side-by-side so you can compare without flipping tabs.
@@ -191,7 +190,7 @@ export default function ContractorDashboard() {
             {/* Rule Variations — real DB rows */}
             {savedTowns.length > 0 && (
               <Card className="mb-6">
-                <CardContent className="p-0">
+                <CardContent padding="none">
                   <div className="p-4 border-b">
                     <h2 className="font-semibold text-sm">Zone rules across your towns</h2>
                     <p className="text-caption text-muted-foreground">Pulled from the verified zoning database. Each row is one zone.</p>
@@ -236,7 +235,7 @@ export default function ContractorDashboard() {
 
             {/* Projects — real */}
             <Card className="mb-6">
-              <CardContent className="p-0">
+              <CardContent padding="none">
                 <div className="p-4 border-b flex items-center justify-between">
                   <h2 className="font-semibold text-sm">Your projects</h2>
                   <Link to="/checklist">

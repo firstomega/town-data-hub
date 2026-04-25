@@ -109,7 +109,7 @@ export default function HomePage() {
             {featuredTowns.map((town) => (
               <Link key={town.slug} to={`/town/${town.slug}`}>
                 <Card className="hover:shadow-md transition-all hover:-translate-y-0.5 cursor-pointer border h-full">
-                  <CardContent className="p-4">
+                  <CardContent padding="sm">
                     <div className="flex items-center gap-2 mb-3">
                       <div className="h-8 w-8 rounded bg-secondary flex items-center justify-center">
                         <MapPin className="h-4 w-4 text-accent" />
@@ -159,7 +159,7 @@ export default function HomePage() {
         <div className="grid md:grid-cols-3 gap-6">
           {valueProps.map((vp) => (
             <Card key={vp.title}>
-              <CardContent className="p-5 text-center">
+              <CardContent padding="md" className="text-center">
                 <div className="h-10 w-10 rounded-lg bg-accent/10 flex items-center justify-center mx-auto mb-3">
                   <vp.icon className="h-5 w-5 text-accent" />
                 </div>
@@ -174,7 +174,7 @@ export default function HomePage() {
       {/* CTA */}
       <section className="container pb-12 text-center">
         <Card className="border-accent/20 bg-accent/5">
-          <CardContent className="p-8">
+          <CardContent padding="xl">
             <h3 className="text-lg font-semibold text-primary mb-2">Don't see your town?</h3>
             <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
               We're onboarding Bergen County town-by-town. Verified rows go live as our team confirms each source.

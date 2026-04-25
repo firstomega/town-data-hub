@@ -126,7 +126,7 @@ export default function AdminDashboard() {
 
         <Link to="/admin/data-review">
           <Card className="mb-6 hover:shadow-md transition-shadow cursor-pointer border-accent/40">
-            <CardContent className="p-4 flex items-center justify-between">
+            <CardContent padding="sm" className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Database className="h-5 w-5 text-accent" />
                 <div>
@@ -153,7 +153,7 @@ export default function AdminDashboard() {
             { label: "Pending drift alerts", value: stats?.pendingDrifts ?? 0, icon: AlertTriangle },
           ].map((s) => (
             <Card key={s.label}>
-              <CardContent className="p-4">
+              <CardContent padding="sm">
                 <s.icon className="h-4 w-4 text-muted-foreground mb-2" />
                 <p className="text-2xl font-bold">{loadingStats ? <Loader2 className="h-5 w-5 animate-spin inline" /> : s.value.toLocaleString()}</p>
                 <p className="text-xs text-muted-foreground">{s.label}</p>
@@ -166,7 +166,7 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {(["zones", "permits", "ordinances", "contacts"] as const).map((tbl) => (
             <Card key={tbl}>
-              <CardContent className="p-4">
+              <CardContent padding="sm">
                 <Activity className="h-4 w-4 text-muted-foreground mb-2" />
                 <p className="text-lg font-bold">
                   {loadingPending ? <Loader2 className="h-4 w-4 animate-spin inline" /> : (pending?.[tbl] ?? 0)}
@@ -179,7 +179,7 @@ export default function AdminDashboard() {
 
         {/* Data Completeness */}
         <Card className="mb-6">
-          <CardContent className="p-0">
+          <CardContent padding="none">
             <div className="p-4 border-b">
               <h2 className="font-semibold text-sm">Data Completeness</h2>
               <p className="text-caption text-muted-foreground">Live from the towns table. % = verified rows ÷ total rows across all four sections.</p>
@@ -249,7 +249,7 @@ export default function AdminDashboard() {
 
         {/* Recent ingestion runs */}
         <Card className="mb-6">
-          <CardContent className="p-0">
+          <CardContent padding="none">
             <div className="p-4 border-b">
               <h2 className="font-semibold text-sm">Recent Ingestion Activity</h2>
               <p className="text-caption text-muted-foreground">Last 10 source pulls. Manage and review them in Data Review.</p>

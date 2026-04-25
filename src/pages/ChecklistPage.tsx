@@ -13,6 +13,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAllTowns, useTownPermits, useTownContacts } from "@/hooks/useTownData";
 import { useAuth } from "@/hooks/useAuth";
+import { LoadingState } from "@/components/states/LoadingState";
 import { toast } from "sonner";
 
 const PROJECT_TYPES = [
@@ -103,7 +104,7 @@ export default function ChecklistPage() {
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div>
-            <Badge className="mb-2 bg-accent/10 text-accent border-0 text-xs">Before You Call</Badge>
+            <Badge variant="accent" className="mb-2 text-xs">Before You Call</Badge>
             <h1 className="text-2xl font-bold text-primary mb-1">
               Permit Checklist{typeLabel ? `: ${typeLabel}` : ""}
             </h1>
@@ -115,7 +116,7 @@ export default function ChecklistPage() {
 
         {/* Inputs */}
         <Card className="mb-6">
-          <CardContent className="p-4 grid sm:grid-cols-3 gap-3">
+          <CardContent padding="sm" className="grid sm:grid-cols-3 gap-3">
             <div>
               <Label className="text-xs">Town</Label>
               <Select value={townSlug} onValueChange={(v) => setParam("town", v)}>
@@ -166,7 +167,7 @@ export default function ChecklistPage() {
 
         {!townSlug || !projectType ? (
           <Card>
-            <CardContent className="p-6 text-center">
+            <CardContent padding="lg" className="text-center">
               <p className="text-sm text-muted-foreground">Select a town and project type to see required permits.</p>
             </CardContent>
           </Card>
@@ -174,10 +175,10 @@ export default function ChecklistPage() {
           <>
             {/* Required Permits */}
             <Card className="mb-6">
-              <CardContent className="p-5">
+              <CardContent padding="md">
                 <h3 className="font-semibold text-sm mb-4">Required Permits</h3>
                 {loadingPermits ? (
-                  <div className="flex justify-center py-4"><Loader2 className="h-4 w-4 animate-spin text-muted-foreground" /></div>
+                  <LoadingState size="sm" />
                 ) : filteredPermits.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No permit data on file for {townLabel} yet.</p>
                 ) : (
@@ -202,7 +203,7 @@ export default function ChecklistPage() {
 
             {/* Documents */}
             <Card className="mb-6">
-              <CardContent className="p-5">
+              <CardContent padding="md">
                 <h3 className="font-semibold text-sm mb-4">Documents to Prepare</h3>
                 <div className="space-y-2">
                   {STANDARD_DOCS.map((d, i) => (
@@ -218,7 +219,7 @@ export default function ChecklistPage() {
             <div className="grid md:grid-cols-2 gap-4 mb-6">
               {/* Timeline & Fees aggregated */}
               <Card>
-                <CardContent className="p-5">
+                <CardContent padding="md">
                   <h3 className="font-semibold text-sm mb-4">Estimated Timeline & Fees</h3>
                   <div className="space-y-3">
                     <div className="flex items-center gap-3">
@@ -245,7 +246,7 @@ export default function ChecklistPage() {
 
               {/* Municipal Contact */}
               <Card>
-                <CardContent className="p-5">
+                <CardContent padding="md">
                   <h3 className="font-semibold text-sm mb-4">Municipal Contact</h3>
                   {!buildingContact ? (
                     <p className="text-xs text-muted-foreground">No contact recorded for {townLabel} yet.</p>
@@ -297,7 +298,7 @@ export default function ChecklistPage() {
 
         {!user && (
           <Card className="border-accent/30">
-            <CardContent className="p-4 text-sm">
+            <CardContent padding="sm" className="text-sm">
               <Link to="/login" className="text-accent hover:underline">Sign in</Link> to save this checklist as a project.
             </CardContent>
           </Card>
