@@ -1,5 +1,4 @@
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
+import { AppLayout } from "@/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -68,9 +67,8 @@ export default function PricingPage() {
   const [seats, setSeats] = useState(3);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <NavBar />
-      <div className="container py-12 max-w-5xl flex-1">
+    <AppLayout contained={false}>
+      <div className="container py-12 max-w-5xl">
         <div className="text-center mb-10">
           <h1 className="text-3xl font-bold text-primary mb-2">Simple, Transparent Pricing</h1>
           <p className="text-muted-foreground mb-6">Start free. Upgrade when you need more.</p>
@@ -88,7 +86,7 @@ export default function PricingPage() {
               className={`px-4 py-2 rounded text-sm font-medium transition-colors flex items-center gap-2 ${annual ? "bg-card shadow-sm text-foreground" : "text-muted-foreground"}`}
             >
               Annual
-              <Badge className="bg-success/10 text-success border-0 text-[10px]">Save 20%</Badge>
+              <Badge className="bg-success/10 text-success border-0 text-micro">Save 20%</Badge>
             </button>
           </div>
         </div>
@@ -201,7 +199,6 @@ export default function PricingPage() {
           </p>
         </div>
       </div>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }

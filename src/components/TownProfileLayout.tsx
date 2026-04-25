@@ -1,7 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
-import { NavBar } from "./NavBar";
-import { Footer } from "./Footer";
 import { ChevronRight, Clock } from "lucide-react";
+import { AppLayout } from "@/layouts/AppLayout";
 import { useTown } from "@/hooks/useTownData";
 import { DataStatusBadge } from "./DataStatusBadge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -24,9 +23,8 @@ export function TownProfileLayout({ children, townSlug = "ridgewood" }: TownProf
   ];
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <NavBar isLoggedIn showSearch />
-      <div className="container py-4 flex-1">
+    <AppLayout showSearch contained={false}>
+      <div className="container py-4">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1.5 text-sm text-muted-foreground mb-4">
           <Link to="/" className="hover:text-foreground">NJ</Link>
@@ -89,7 +87,6 @@ export function TownProfileLayout({ children, townSlug = "ridgewood" }: TownProf
 
         {children}
       </div>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }

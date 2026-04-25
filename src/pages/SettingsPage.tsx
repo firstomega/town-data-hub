@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
+import { AppLayout } from "@/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -116,9 +115,8 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <NavBar isLoggedIn showSearch />
-      <div className="container py-6 max-w-2xl flex-1">
+    <AppLayout showSearch contained={false}>
+      <div className="container py-6 max-w-2xl">
         <h1 className="text-2xl font-bold text-primary mb-1">Account Settings</h1>
         <p className="text-sm text-muted-foreground mb-6">Manage your profile and saved towns.</p>
 
@@ -272,7 +270,6 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
       </div>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }

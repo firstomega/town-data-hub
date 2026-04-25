@@ -1,5 +1,4 @@
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
+import { AppLayout } from "@/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Clock, ArrowRight, Loader2 } from "lucide-react";
@@ -21,9 +20,8 @@ export default function GuidesPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <NavBar />
-      <div className="container py-8 max-w-4xl flex-1">
+    <AppLayout contained={false}>
+      <div className="container py-8 max-w-4xl">
         <div className="text-center mb-10">
           <h1 className="text-3xl font-bold text-primary mb-2">Guides & Resources</h1>
           <p className="text-muted-foreground">
@@ -44,9 +42,9 @@ export default function GuidesPage() {
               <Card className="hover:shadow-md transition-shadow h-full">
                 <CardContent className="p-5 flex flex-col h-full">
                   <div className="flex items-center gap-2 mb-3">
-                    {guide.category && <Badge variant="secondary" className="text-[10px]">{guide.category}</Badge>}
+                    {guide.category && <Badge variant="secondary" className="text-micro">{guide.category}</Badge>}
                     {guide.read_time && (
-                      <div className="flex items-center gap-1 text-[10px] text-muted-foreground ml-auto">
+                      <div className="flex items-center gap-1 text-micro text-muted-foreground ml-auto">
                         <Clock className="h-3 w-3" />
                         {guide.read_time}
                       </div>
@@ -64,7 +62,6 @@ export default function GuidesPage() {
         </div>
         )}
       </div>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }

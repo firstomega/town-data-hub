@@ -2,8 +2,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { Home, MapPin, Phone, Calendar, Bell, ListChecks, GitCompare, Search, Loader2, ArrowRight, Check, Volume2, Trees, Fence, Waves, Car, Dog, ChevronRight } from "lucide-react";
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
+import { AppLayout } from "@/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -135,9 +134,8 @@ export default function HomeownerDashboard() {
   // No primary home set yet → onboarding nudge
   if (!profileLoading && !profile?.primary_town_slug) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <NavBar isLoggedIn showSearch />
-        <main className="flex-1 flex items-center justify-center p-6">
+      <AppLayout showSearch contained={false} mainClassName="items-center justify-center">
+        <div className="flex-1 flex items-center justify-center p-6 w-full">
           <Card className="max-w-md w-full">
             <CardContent className="p-8 text-center">
               <div className="h-12 w-12 rounded-lg bg-accent/10 flex items-center justify-center mx-auto mb-4">
@@ -154,16 +152,14 @@ export default function HomeownerDashboard() {
               </Link>
             </CardContent>
           </Card>
-        </main>
-        <Footer />
-      </div>
+        </div>
+      </AppLayout>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <NavBar isLoggedIn showSearch />
-      <main className="flex-1 p-6">
+    <AppLayout showSearch contained={false}>
+      <div className="flex-1 p-6">
         <div className="max-w-4xl mx-auto">
           {/* Hero: your home */}
           <div className="mb-2 flex items-center justify-between">
@@ -303,7 +299,7 @@ export default function HomeownerDashboard() {
                         <div className="flex items-center gap-2 mb-2">
                           <Icon className="h-4 w-4 text-accent" />
                           <p className="text-sm font-semibold">{cat.label}</p>
-                          <Badge variant="secondary" className="text-[10px] ml-auto">{cat.items.length}</Badge>
+                          <Badge variant="secondary" className="text-micro ml-auto">{cat.items.length}</Badge>
                         </div>
                         <ul className="space-y-1">
                           {cat.items.slice(0, 3).map((o: any) => (
@@ -336,7 +332,7 @@ export default function HomeownerDashboard() {
                   <Card key={e.id}>
                     <CardContent className="p-3 flex items-center gap-3">
                       <div className="flex flex-col items-center justify-center w-12 h-12 rounded bg-secondary text-center flex-shrink-0">
-                        <span className="text-[10px] uppercase text-muted-foreground">{format(new Date(e.starts_at), "MMM")}</span>
+                        <span className="text-micro uppercase text-muted-foreground">{format(new Date(e.starts_at), "MMM")}</span>
                         <span className="text-base font-bold">{format(new Date(e.starts_at), "d")}</span>
                       </div>
                       <div className="flex-1 min-w-0">
@@ -347,7 +343,7 @@ export default function HomeownerDashboard() {
                           {e.location ? ` · ${e.location}` : ""}
                         </p>
                       </div>
-                      <Badge variant="secondary" className="text-[10px] capitalize">{e.kind}</Badge>
+                      <Badge variant="secondary" className="text-micro capitalize">{e.kind}</Badge>
                     </CardContent>
                   </Card>
                 ))}
@@ -355,16 +351,15 @@ export default function HomeownerDashboard() {
             )}
           </section>
         </div>
-      </main>
-      <Footer />
-    </div>
+      </div>
+    </AppLayout>
   );
 }
 
 function Stat({ label, value }: { label: string; value: string | null | undefined }) {
   return (
     <div>
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</p>
+      <p className="text-micro uppercase tracking-wider text-muted-foreground">{label}</p>
       <p className="text-sm font-semibold mt-0.5">{value ?? "—"}</p>
     </div>
   );

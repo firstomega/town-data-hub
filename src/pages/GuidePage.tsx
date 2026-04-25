@@ -1,5 +1,4 @@
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
+import { AppLayout } from "@/layouts/AppLayout";
 import { Badge } from "@/components/ui/badge";
 import { ChevronRight, Clock, ArrowLeft, Loader2 } from "lucide-react";
 import { Link, useParams } from "react-router-dom";
@@ -25,13 +24,11 @@ export default function GuidePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <NavBar />
-        <div className="container py-12 flex-1 text-center text-muted-foreground">
+      <AppLayout contained={false}>
+        <div className="container py-12 text-center text-muted-foreground">
           <Loader2 className="h-5 w-5 animate-spin inline" />
         </div>
-        <Footer />
-      </div>
+      </AppLayout>
     );
   }
 
@@ -61,9 +58,8 @@ export default function GuidePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <NavBar />
-      <div className="container py-6 max-w-3xl flex-1">
+    <AppLayout contained={false}>
+      <div className="container py-6 max-w-3xl">
         {/* Breadcrumb */}
         <nav className="flex items-center gap-1.5 text-sm text-muted-foreground mb-6">
           <Link to="/guides" className="hover:text-foreground flex items-center gap-1">
@@ -81,7 +77,7 @@ export default function GuidePage() {
 
         {/* Article Header */}
         <div className="mb-8">
-          {guide.category && <Badge variant="secondary" className="text-[10px] mb-3">{guide.category}</Badge>}
+          {guide.category && <Badge variant="secondary" className="text-micro mb-3">{guide.category}</Badge>}
           <h1 className="text-2xl font-bold text-primary mb-3">{guide.title}</h1>
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             <span>By {guide.author ?? "TownCenter Team"}</span>
@@ -99,7 +95,6 @@ export default function GuidePage() {
           {renderBody(guide.body ?? "")}
         </article>
       </div>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }

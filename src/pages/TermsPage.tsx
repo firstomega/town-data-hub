@@ -1,11 +1,9 @@
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
+import { AppLayout } from "@/layouts/AppLayout";
 
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <NavBar />
-      <div className="container py-8 max-w-3xl flex-1">
+    <AppLayout contained={false}>
+      <div className="container py-8 max-w-3xl">
         <h1 className="text-2xl font-bold text-primary mb-2">Terms of Service</h1>
         <p className="text-sm text-muted-foreground mb-8">Last updated: March 1, 2026</p>
 
@@ -66,7 +64,6 @@ export default function TermsPage() {
           </section>
         </div>
       </div>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }

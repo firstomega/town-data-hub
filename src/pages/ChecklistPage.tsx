@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { useSearchParams, Link, useNavigate } from "react-router-dom";
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
+import { AppLayout } from "@/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -99,9 +98,8 @@ export default function ChecklistPage() {
   });
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <NavBar isLoggedIn showSearch />
-      <div className="container py-6 max-w-3xl flex-1">
+    <AppLayout showSearch contained={false}>
+      <div className="container py-6 max-w-3xl">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div>
@@ -190,7 +188,7 @@ export default function ChecklistPage() {
                         <div className="flex-1">
                           <p className="text-sm font-medium">{p.name}</p>
                           {p.description && <p className="text-xs text-muted-foreground">{p.description}</p>}
-                          <div className="flex gap-3 mt-1 text-[11px] text-muted-foreground">
+                          <div className="flex gap-3 mt-1 text-caption text-muted-foreground">
                             {p.timeline && <span>⏱ {p.timeline}</span>}
                             {p.fee && <span>💵 {p.fee}</span>}
                           </div>
@@ -305,7 +303,6 @@ export default function ChecklistPage() {
           </Card>
         )}
       </div>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }

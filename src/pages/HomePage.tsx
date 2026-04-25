@@ -1,7 +1,6 @@
 import { Search, ArrowRight, MapPin, Clock, Shield, RefreshCw, Layers } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
+import { AppLayout } from "@/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -47,9 +46,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <NavBar />
-
+    <AppLayout contained={false}>
       {/* Hero */}
       <section className="bg-primary text-primary-foreground">
         <div className="container py-20 text-center">
@@ -191,7 +188,6 @@ export default function HomePage() {
         </Card>
       </section>
 
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }

@@ -74,7 +74,7 @@ export default function GenericTownZoning() {
                       <TableCell className="text-sm">{z.max_height ?? "—"}</TableCell>
                       <TableCell className="text-sm font-semibold">{z.max_coverage ?? "—"}</TableCell>
                       <TableCell className="text-sm font-mono">{z.far ?? "—"}</TableCell>
-                      <TableCell><Badge variant="outline" className="text-[10px] font-mono">{variance(z) === "c" ? '"c" bulk' : '"d" use'}</Badge></TableCell>
+                      <TableCell><Badge variant="outline" className="text-micro font-mono">{variance(z) === "c" ? '"c" bulk' : '"d" use'}</Badge></TableCell>
                       <TableCell>{expandedZone === z.code ? <ChevronUp className="h-3.5 w-3.5 text-muted-foreground" /> : <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />}</TableCell>
                     </TableRow>
                     {expandedZone === z.code && (
@@ -112,7 +112,7 @@ export default function GenericTownZoning() {
                 <div className="flex items-center gap-2 mb-3">
                   <Badge variant="default" className="font-mono text-xs">{z.code}</Badge>
                   <span className="text-sm font-semibold">{z.name}</span>
-                  <Badge variant="outline" className="text-[10px] font-mono ml-auto">{variance(z) === "c" ? '"c"' : '"d"'}</Badge>
+                  <Badge variant="outline" className="text-micro font-mono ml-auto">{variance(z) === "c" ? '"c"' : '"d"'}</Badge>
                 </div>
                 <p className="text-xs text-muted-foreground mb-3">{z.description}</p>
                 <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-xs">

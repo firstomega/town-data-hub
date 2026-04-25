@@ -1,13 +1,11 @@
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
+import { AppLayout } from "@/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Shield, Database, Users, Mail } from "lucide-react";
 
 export default function AboutPage() {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <NavBar />
-      <div className="container py-12 max-w-3xl flex-1">
+    <AppLayout contained={false}>
+      <div className="container py-12 max-w-3xl">
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-2 mb-4">
             <div className="h-10 w-10 rounded bg-accent text-accent-foreground flex items-center justify-center text-sm font-black">TC</div>
@@ -98,7 +96,6 @@ export default function AboutPage() {
           </CardContent>
         </Card>
       </div>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }

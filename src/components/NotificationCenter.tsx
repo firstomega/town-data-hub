@@ -97,7 +97,7 @@ export function NotificationCenter() {
                   {n.unread && <div className="h-2 w-2 rounded-full bg-accent flex-shrink-0 mt-1" />}
                 </div>
                 <p className="text-xs text-muted-foreground line-clamp-2">{n.desc}</p>
-                <p className="text-[10px] text-muted-foreground mt-1">{n.time}</p>
+                <p className="text-micro text-muted-foreground mt-1">{n.time}</p>
               </div>
             </div>
           ))}

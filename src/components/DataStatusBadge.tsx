@@ -7,20 +7,20 @@ export function DataStatusBadge({ status }: { status: Status }) {
   if (!status) return null;
   if (status === "verified") {
     return (
-      <Badge variant="secondary" className="text-[10px] bg-success/10 text-success border-0 gap-1">
+      <Badge variant="secondary" className="text-micro bg-success/10 text-success border-0 gap-1">
         <ShieldCheck className="h-3 w-3" /> Verified
       </Badge>
     );
   }
   if (status === "partial") {
     return (
-      <Badge variant="secondary" className="text-[10px] bg-warning/10 text-warning border-0 gap-1">
+      <Badge variant="secondary" className="text-micro bg-warning/10 text-warning border-0 gap-1">
         <Clock className="h-3 w-3" /> Partial
       </Badge>
     );
   }
   return (
-    <Badge variant="secondary" className="text-[10px] bg-warning/10 text-warning border-0 gap-1">
+    <Badge variant="secondary" className="text-micro bg-warning/10 text-warning border-0 gap-1">
       <AlertTriangle className="h-3 w-3" /> Placeholder
     </Badge>
   );

@@ -79,6 +79,22 @@ export default {
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
       },
+      spacing: {
+        // Vertical rhythm for page sections (top/bottom padding on <main>)
+        "section-sm": "1.5rem",  // 24px — dense admin pages
+        section: "2rem",          // 32px — default page padding
+        "section-lg": "3rem",     // 48px — marketing/hero pages
+        // Vertical rhythm between blocks within a page
+        "stack-sm": "1rem",       // 16px
+        "stack-md": "1.5rem",     // 24px
+        "stack-lg": "2rem",       // 32px
+        "stack-xl": "3rem",       // 48px
+      },
+      fontSize: {
+        // Replaces ad-hoc text-[10px]/text-[11px] usage
+        micro: ["0.625rem", { lineHeight: "0.875rem" }],   // 10px / 14px
+        caption: ["0.6875rem", { lineHeight: "1rem" }],    // 11px / 16px
+      },
       keyframes: {
         "accordion-down": {
           from: { height: "0" },

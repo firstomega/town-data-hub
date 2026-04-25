@@ -1,5 +1,4 @@
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
+import { AppLayout } from "@/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -74,9 +73,8 @@ export default function ComparisonPage() {
   const townBName = towns?.find((t) => t.slug === townB)?.name ?? "—";
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <NavBar isLoggedIn showSearch />
-      <div className="container py-6 flex-1">
+    <AppLayout showSearch contained={false}>
+      <div className="container py-6">
         <h1 className="text-2xl font-bold text-primary mb-1">Town Comparison</h1>
         <p className="text-sm text-muted-foreground mb-6">
           Side-by-side zoning rules pulled from each town's verified district records.
@@ -172,7 +170,6 @@ export default function ComparisonPage() {
           </>
         )}
       </div>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }

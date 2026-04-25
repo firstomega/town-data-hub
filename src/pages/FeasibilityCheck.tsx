@@ -1,5 +1,4 @@
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
+import { AppLayout } from "@/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -158,9 +157,8 @@ export default function FeasibilityCheck() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <NavBar isLoggedIn showSearch />
-      <div className="container py-6 max-w-3xl flex-1">
+    <AppLayout showSearch contained={false}>
+      <div className="container py-6 max-w-3xl">
         <Badge className="mb-2 bg-accent/10 text-accent border-0 text-xs">Quick Check</Badge>
         <h1 className="text-2xl font-bold text-primary mb-1">Project Feasibility Check</h1>
         <p className="text-sm text-muted-foreground mb-6">
@@ -299,7 +297,7 @@ export default function FeasibilityCheck() {
                         {address ? ` · ${address}` : ""}
                       </p>
                       {selectedZone.confidence !== "verified" && (
-                        <Badge variant="secondary" className="mt-2 text-[10px]">
+                        <Badge variant="secondary" className="mt-2 text-micro">
                           ⚠ Source data is {selectedZone.confidence} — confirm with the Zoning Officer
                         </Badge>
                       )}
@@ -325,7 +323,7 @@ export default function FeasibilityCheck() {
                       ))}
                     </div>
                     {selectedZone.source_url && (
-                      <a href={selectedZone.source_url} target="_blank" rel="noopener noreferrer" className="text-[11px] text-accent hover:underline mt-3 inline-block">
+                      <a href={selectedZone.source_url} target="_blank" rel="noopener noreferrer" className="text-caption text-accent hover:underline mt-3 inline-block">
                         View official source →
                       </a>
                     )}
@@ -366,7 +364,6 @@ export default function FeasibilityCheck() {
           </div>
         )}
       </div>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }

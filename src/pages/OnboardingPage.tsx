@@ -1,5 +1,4 @@
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
+import { AppLayout } from "@/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -79,9 +78,8 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <NavBar />
-      <div className="flex-1 flex items-center justify-center py-12 px-4">
+    <AppLayout contained={false} mainClassName="items-center justify-center px-4">
+      <div className="w-full py-12 flex items-center justify-center">
         <Card className="w-full max-w-lg">
           <CardContent className="p-8">
             {/* Progress */}
@@ -241,7 +239,6 @@ export default function OnboardingPage() {
           </CardContent>
         </Card>
       </div>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }

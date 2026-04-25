@@ -1,5 +1,4 @@
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
+import { AppLayout } from "@/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -53,9 +52,8 @@ export default function SearchResultsPage() {
     (data?.towns.length ?? 0) + (data?.zones.length ?? 0) + (data?.ordinances.length ?? 0);
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <NavBar isLoggedIn showSearch />
-      <div className="container py-6 max-w-3xl flex-1">
+    <AppLayout showSearch contained={false}>
+      <div className="container py-6 max-w-3xl">
         <div className="relative mb-8">
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
           <Input
@@ -107,7 +105,7 @@ export default function SearchResultsPage() {
                 <div className="flex items-center gap-2 mb-3">
                   <MapPin className="h-4 w-4 text-accent" />
                   <h2 className="font-semibold text-sm">Towns</h2>
-                  <Badge variant="secondary" className="text-[10px]">{data!.towns.length}</Badge>
+                  <Badge variant="secondary" className="text-micro">{data!.towns.length}</Badge>
                 </div>
                 <div className="space-y-2">
                   {data!.towns.map((t) => (
@@ -117,9 +115,9 @@ export default function SearchResultsPage() {
                           <div>
                             <div className="flex items-center gap-2 mb-1">
                               <span className="font-semibold text-sm">{t.name}</span>
-                              <Badge variant="secondary" className="text-[10px]">{t.county} County</Badge>
+                              <Badge variant="secondary" className="text-micro">{t.county} County</Badge>
                               {t.data_status === "placeholder" && (
-                                <Badge variant="outline" className="text-[10px]">Coming soon</Badge>
+                                <Badge variant="outline" className="text-micro">Coming soon</Badge>
                               )}
                             </div>
                             <p className="text-xs text-muted-foreground">
@@ -140,7 +138,7 @@ export default function SearchResultsPage() {
                 <div className="flex items-center gap-2 mb-3">
                   <Layers className="h-4 w-4 text-accent" />
                   <h2 className="font-semibold text-sm">Zoning Districts</h2>
-                  <Badge variant="secondary" className="text-[10px]">{data!.zones.length}</Badge>
+                  <Badge variant="secondary" className="text-micro">{data!.zones.length}</Badge>
                 </div>
                 <div className="space-y-2">
                   {data!.zones.map((z) => (
@@ -153,7 +151,7 @@ export default function SearchResultsPage() {
                           {z.description && (
                             <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{z.description}</p>
                           )}
-                          <Badge variant="outline" className="text-[10px] capitalize">{z.town_slug}</Badge>
+                          <Badge variant="outline" className="text-micro capitalize">{z.town_slug}</Badge>
                         </CardContent>
                       </Card>
                     </Link>
@@ -167,7 +165,7 @@ export default function SearchResultsPage() {
                 <div className="flex items-center gap-2 mb-3">
                   <FileText className="h-4 w-4 text-accent" />
                   <h2 className="font-semibold text-sm">Ordinances</h2>
-                  <Badge variant="secondary" className="text-[10px]">{data!.ordinances.length}</Badge>
+                  <Badge variant="secondary" className="text-micro">{data!.ordinances.length}</Badge>
                 </div>
                 <div className="space-y-2">
                   {data!.ordinances.map((o, i) => (
@@ -181,8 +179,8 @@ export default function SearchResultsPage() {
                             <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{o.summary}</p>
                           )}
                           <div className="flex gap-1.5">
-                            <Badge variant="outline" className="text-[10px] capitalize">{o.town_slug}</Badge>
-                            <Badge variant="secondary" className="text-[10px]">{o.category}</Badge>
+                            <Badge variant="outline" className="text-micro capitalize">{o.town_slug}</Badge>
+                            <Badge variant="secondary" className="text-micro">{o.category}</Badge>
                           </div>
                         </CardContent>
                       </Card>
@@ -194,7 +192,6 @@ export default function SearchResultsPage() {
           </>
         )}
       </div>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }

@@ -1,6 +1,4 @@
 import { useState } from "react";
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +14,7 @@ import { Loader2, ExternalLink, Check, X, Sparkles, RefreshCw, ShieldCheck, Cloc
 import { useAllTowns } from "@/hooks/useTownData";
 import { Switch } from "@/components/ui/switch";
 import { formatDistanceToNow } from "date-fns";
+import { AppLayout } from "@/layouts/AppLayout";
 
 type TableName = "zones" | "permits" | "ordinances" | "contacts";
 const ALL_TYPES: TableName[] = ["zones", "permits", "ordinances", "contacts"];
@@ -84,15 +83,15 @@ function ReviewList({ table }: { table: TableName }) {
             <div className="flex items-start justify-between gap-4 mb-2">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <Badge variant="secondary" className="text-[10px]">{row.town_slug as string}</Badge>
-                  <Badge variant="outline" className="text-[10px] gap-1"><Sparkles className="h-2.5 w-2.5" /> AI-extracted</Badge>
+                  <Badge variant="secondary" className="text-micro">{row.town_slug as string}</Badge>
+                  <Badge variant="outline" className="text-micro gap-1"><Sparkles className="h-2.5 w-2.5" /> AI-extracted</Badge>
                 </div>
                 <p className="font-semibold text-sm">
                   {(row.code as string) || (row.name as string) || (row.title as string) || (row.dept as string)}
                 </p>
-                <pre className="mt-2 text-[10px] bg-muted/30 p-2 rounded overflow-x-auto max-h-40">{JSON.stringify(row, null, 2)}</pre>
+                <pre className="mt-2 text-micro bg-muted/30 p-2 rounded overflow-x-auto max-h-40">{JSON.stringify(row, null, 2)}</pre>
                 {row.source_url ? (
-                  <a href={row.source_url as string} target="_blank" rel="noopener noreferrer" className="text-[11px] text-accent hover:underline inline-flex items-center gap-1 mt-1">
+                  <a href={row.source_url as string} target="_blank" rel="noopener noreferrer" className="text-caption text-accent hover:underline inline-flex items-center gap-1 mt-1">
                     Source <ExternalLink className="h-2.5 w-2.5" />
                   </a>
                 ) : null}
@@ -186,13 +185,13 @@ function IngestForm() {
         </div>
         {townSlug && matchingSaved.length > 0 && (
           <div className="rounded border bg-muted/30 p-2 space-y-1">
-            <p className="text-[10px] uppercase text-muted-foreground font-semibold">Saved sources for this town & type</p>
+            <p className="text-micro uppercase text-muted-foreground font-semibold">Saved sources for this town & type</p>
             {matchingSaved.map((s) => (
               <button
                 key={s.id}
                 type="button"
                 onClick={() => { setUrl(s.source_url); setDoc(s.source_doc ?? ""); }}
-                className="w-full text-left text-[11px] hover:bg-background rounded px-1.5 py-1 truncate flex items-center gap-1"
+                className="w-full text-left text-caption hover:bg-background rounded px-1.5 py-1 truncate flex items-center gap-1"
               >
                 <Bookmark className="h-2.5 w-2.5 text-accent flex-shrink-0" />
                 <span className="truncate">{s.source_url}</span>
@@ -230,7 +229,7 @@ function RunsList() {
                 <span className="font-mono">{r.town_slug as string}</span> · {r.ingestion_type as string} · <a href={r.source_url as string} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">{r.source_url as string}</a>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <Badge variant={r.status === "completed" ? "default" : r.status === "failed" ? "destructive" : "secondary"} className="text-[10px]">{r.status as string}</Badge>
+                <Badge variant={r.status === "completed" ? "default" : r.status === "failed" ? "destructive" : "secondary"} className="text-micro">{r.status as string}</Badge>
                 {(r.rows_added as number) > 0 && <span className="text-muted-foreground">+{r.rows_added as number}</span>}
               </div>
             </div>
@@ -306,7 +305,7 @@ function DiscoverSources() {
             <h3 className="font-semibold text-sm flex items-center gap-2">
               <Search className="h-4 w-4" /> Auto-discover official sources
             </h3>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-caption text-muted-foreground">
               Web searches for the best zoning / permit / ordinance / contact URLs and asks AI to pick the official one. Save once, re-ingest with one click later.
             </p>
           </div>
@@ -335,9 +334,9 @@ function DiscoverSources() {
         {/* Saved sources for this town */}
         {townSlug && (saved ?? []).length > 0 && (
           <div className="space-y-1">
-            <p className="text-[10px] uppercase text-muted-foreground font-semibold">Saved sources</p>
+            <p className="text-micro uppercase text-muted-foreground font-semibold">Saved sources</p>
             {(saved ?? []).map((s) => (
-              <div key={s.id} className="flex items-center gap-2 text-[11px] p-1.5 rounded border">
+              <div key={s.id} className="flex items-center gap-2 text-caption p-1.5 rounded border">
                 <Badge variant="secondary" className="text-[9px]">{s.ingestion_type}</Badge>
                 <a href={s.source_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline truncate flex-1">
                   {s.source_url}
@@ -353,11 +352,11 @@ function DiscoverSources() {
         {/* Discovery results */}
         {results && (
           <div className="space-y-2 pt-2 border-t">
-            <p className="text-[10px] uppercase text-muted-foreground font-semibold">Discovery results</p>
+            <p className="text-micro uppercase text-muted-foreground font-semibold">Discovery results</p>
             {ALL_TYPES.map((t) => {
               const r = results[t];
               return (
-                <div key={t} className="text-[11px] p-2 rounded border">
+                <div key={t} className="text-caption p-2 rounded border">
                   <div className="flex items-center gap-2 mb-1">
                     <Badge variant="outline" className="text-[9px] capitalize">{t}</Badge>
                     {r?.picked ? (
@@ -483,35 +482,35 @@ function DriftReview() {
             <div className="flex items-start justify-between gap-4 mb-2">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
-                  <Badge variant="secondary" className="text-[10px]">{d.town_slug as string}</Badge>
-                  <Badge variant="outline" className="text-[10px]">{d.table_name as string}</Badge>
+                  <Badge variant="secondary" className="text-micro">{d.town_slug as string}</Badge>
+                  <Badge variant="outline" className="text-micro">{d.table_name as string}</Badge>
                   <Badge
                     variant={d.change_type === "removed" ? "destructive" : d.change_type === "added" ? "default" : "secondary"}
-                    className="text-[10px] gap-1"
+                    className="text-micro gap-1"
                   >
                     <AlertTriangle className="h-2.5 w-2.5" /> {d.change_type as string}
                   </Badge>
-                  <span className="text-[10px] text-muted-foreground">
+                  <span className="text-micro text-muted-foreground">
                     {d.detected_at ? formatDistanceToNow(new Date(d.detected_at as string), { addSuffix: true }) : ""}
                   </span>
                 </div>
                 <p className="text-sm font-medium mb-2">{d.diff_summary as string}</p>
                 {d.source_url ? (
-                  <a href={d.source_url as string} target="_blank" rel="noopener noreferrer" className="text-[11px] text-accent hover:underline inline-flex items-center gap-1">
+                  <a href={d.source_url as string} target="_blank" rel="noopener noreferrer" className="text-caption text-accent hover:underline inline-flex items-center gap-1">
                     Source <ExternalLink className="h-2.5 w-2.5" />
                   </a>
                 ) : null}
                 <div className="grid sm:grid-cols-2 gap-2 mt-2">
                   {d.old_snapshot ? (
                     <div>
-                      <p className="text-[10px] uppercase text-muted-foreground mb-1">Current (kept)</p>
-                      <pre className="text-[10px] bg-destructive/5 p-2 rounded overflow-x-auto max-h-40">{JSON.stringify(d.old_snapshot, null, 2)}</pre>
+                      <p className="text-micro uppercase text-muted-foreground mb-1">Current (kept)</p>
+                      <pre className="text-micro bg-destructive/5 p-2 rounded overflow-x-auto max-h-40">{JSON.stringify(d.old_snapshot, null, 2)}</pre>
                     </div>
                   ) : null}
                   {d.new_snapshot ? (
                     <div>
-                      <p className="text-[10px] uppercase text-muted-foreground mb-1">Upstream (proposed)</p>
-                      <pre className="text-[10px] bg-primary/5 p-2 rounded overflow-x-auto max-h-40">{JSON.stringify(d.new_snapshot, null, 2)}</pre>
+                      <p className="text-micro uppercase text-muted-foreground mb-1">Upstream (proposed)</p>
+                      <pre className="text-micro bg-primary/5 p-2 rounded overflow-x-auto max-h-40">{JSON.stringify(d.new_snapshot, null, 2)}</pre>
                     </div>
                   ) : null}
                 </div>
@@ -585,7 +584,7 @@ function FreshnessControls() {
             <h3 className="font-semibold text-sm flex items-center gap-2">
               <Clock className="h-4 w-4" /> Freshness controls
             </h3>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-caption text-muted-foreground">
               Auto-refresh runs every Sunday 03:00 UTC. Diffs are queued in the Drift queue — never overwritten silently.
             </p>
           </div>
@@ -607,7 +606,7 @@ function FreshnessControls() {
                     {t.data_status ?? "placeholder"}
                   </Badge>
                 </div>
-                <p className="text-[10px] text-muted-foreground">
+                <p className="text-micro text-muted-foreground">
                   {t.last_verified
                     ? `Last verified ${formatDistanceToNow(new Date(t.last_verified), { addSuffix: true })}`
                     : "Never verified"}
@@ -620,10 +619,10 @@ function FreshnessControls() {
                     checked={t.auto_refresh_enabled !== false}
                     onCheckedChange={(v) => toggleAuto(t.slug, v)}
                   />
-                  <span className="text-[10px] text-muted-foreground">auto</span>
+                  <span className="text-micro text-muted-foreground">auto</span>
                 </div>
                 <Button
-                  size="sm" variant="outline" className="gap-1 h-7 text-[11px]"
+                  size="sm" variant="outline" className="gap-1 h-7 text-caption"
                   disabled={busySlug === t.slug}
                   onClick={() => refreshNow(t.slug)}
                 >
@@ -641,9 +640,8 @@ function FreshnessControls() {
 
 export default function AdminDataReview() {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <NavBar isLoggedIn showSearch />
-      <div className="container py-6 flex-1 max-w-6xl">
+    <AppLayout showSearch contained={false}>
+      <div className="container py-6 max-w-6xl">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-primary">Data Review</h1>
@@ -678,7 +676,6 @@ export default function AdminDataReview() {
           <TabsContent value="contacts" className="mt-4"><ReviewList table="contacts" /></TabsContent>
         </Tabs>
       </div>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }

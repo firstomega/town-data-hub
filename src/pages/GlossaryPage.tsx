@@ -1,5 +1,4 @@
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
+import { AppLayout } from "@/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -29,9 +28,8 @@ export default function GlossaryPage() {
   );
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <NavBar isLoggedIn showSearch />
-      <div className="container py-6 max-w-3xl flex-1">
+    <AppLayout showSearch contained={false}>
+      <div className="container py-6 max-w-3xl">
         <div className="flex items-center gap-3 mb-1">
           <BookOpen className="h-6 w-6 text-accent" />
           <h1 className="text-2xl font-bold text-primary">Zoning Glossary</h1>
@@ -83,7 +81,6 @@ export default function GlossaryPage() {
           )}
         </div>
       </div>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }

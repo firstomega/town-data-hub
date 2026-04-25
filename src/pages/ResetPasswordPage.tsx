@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { supabase } from "@/integrations/supabase/client";
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
+import { AppLayout } from "@/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -61,9 +60,8 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <NavBar />
-      <div className="flex-1 flex items-center justify-center py-12">
+    <AppLayout contained={false}>
+      <div className="flex-1 flex items-center justify-center py-12 w-full">
         <Card className="w-full max-w-md">
           <CardContent className="p-8">
             <h1 className="text-xl font-bold text-primary mb-2">Set a new password</h1>
@@ -113,7 +111,6 @@ export default function ResetPasswordPage() {
           </CardContent>
         </Card>
       </div>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }

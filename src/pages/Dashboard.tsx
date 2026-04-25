@@ -1,8 +1,7 @@
 import { Search, MapPin, Hammer, Bell, FileText, Plus, ChevronRight, Fence, Waves, ListChecks, GitCompare, Loader2, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
+import { AppLayout } from "@/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -109,9 +108,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <NavBar isLoggedIn showSearch />
-
+    <AppLayout showSearch contained={false}>
       <div className="flex flex-1">
         {/* Sidebar */}
         <aside className="hidden lg:flex w-64 flex-col border-r bg-card min-h-[calc(100vh-3.5rem)] p-4">
@@ -162,7 +159,7 @@ export default function Dashboard() {
         </aside>
 
         {/* Main */}
-        <main className="flex-1 p-6">
+        <div className="flex-1 p-6">
           <div className="max-w-4xl">
             <h1 className="text-2xl font-bold text-primary mb-1">Welcome back, {firstName}</h1>
             <p className="text-sm text-muted-foreground mb-4">Here's what's happening across your saved towns.</p>
@@ -345,9 +342,8 @@ export default function Dashboard() {
               )}
             </section>
           </div>
-        </main>
+        </div>
       </div>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }

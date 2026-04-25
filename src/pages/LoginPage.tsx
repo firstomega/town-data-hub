@@ -1,5 +1,4 @@
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
+import { AppLayout } from "@/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -86,9 +85,8 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <NavBar />
-      <div className="flex-1 flex items-center justify-center py-12">
+    <AppLayout contained={false} mainClassName="items-center justify-center">
+      <div className="flex-1 flex items-center justify-center py-12 w-full">
         <Card className="w-full max-w-md">
           <CardContent className="p-8">
             <div className="text-center mb-6">
@@ -210,7 +208,6 @@ export default function LoginPage() {
           </CardContent>
         </Card>
       </div>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }

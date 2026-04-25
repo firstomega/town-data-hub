@@ -1,5 +1,4 @@
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
+import { AppLayout } from "@/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Search, Layers, FileText } from "lucide-react";
@@ -8,9 +7,8 @@ import { Link } from "react-router-dom";
 
 export default function QueryResults() {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <NavBar isLoggedIn showSearch />
-      <div className="container py-12 max-w-2xl flex-1">
+    <AppLayout showSearch contained={false}>
+      <div className="container py-12 max-w-2xl">
         <Card className="border-accent/30">
           <CardContent className="p-8 text-center">
             <div className="h-12 w-12 rounded-lg bg-accent/10 flex items-center justify-center mx-auto mb-4">
@@ -46,7 +44,6 @@ export default function QueryResults() {
           </CardContent>
         </Card>
       </div>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }

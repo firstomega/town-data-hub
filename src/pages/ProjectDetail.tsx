@@ -1,5 +1,4 @@
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
+import { AppLayout } from "@/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -113,26 +112,22 @@ export default function ProjectDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <NavBar isLoggedIn showSearch />
+      <AppLayout showSearch contained={false}>
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-        <Footer />
-      </div>
+      </AppLayout>
     );
   }
 
   if (error || !project) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <NavBar isLoggedIn showSearch />
+      <AppLayout showSearch contained={false}>
         <div className="flex-1 flex flex-col items-center justify-center gap-3">
           <p className="text-sm text-muted-foreground">Project not found.</p>
           <Link to="/dashboard"><Button size="sm" variant="outline">Back to Dashboard</Button></Link>
         </div>
-        <Footer />
-      </div>
+      </AppLayout>
     );
   }
 
@@ -161,9 +156,8 @@ export default function ProjectDetail() {
   const completed = checklist.filter((c) => c.done).length;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <NavBar isLoggedIn showSearch />
-      <div className="container py-6 max-w-3xl flex-1">
+    <AppLayout showSearch contained={false}>
+      <div className="container py-6 max-w-3xl">
         <Link to="/dashboard" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
           <ArrowLeft className="h-3.5 w-3.5" /> Back to Dashboard
         </Link>
@@ -178,9 +172,9 @@ export default function ProjectDetail() {
               <h1 className="text-xl font-bold text-primary">{typeLabel} Project</h1>
               <p className="text-sm text-muted-foreground">{project.address}</p>
               <div className="flex items-center gap-2 mt-1">
-                {project.town_slug && <Badge variant="secondary" className="text-[10px] capitalize">{project.town_slug}</Badge>}
-                {project.zone && <Badge variant="outline" className="text-[10px] font-mono">Zone {project.zone}</Badge>}
-                <Badge className="text-[10px] capitalize">{project.status}</Badge>
+                {project.town_slug && <Badge variant="secondary" className="text-micro capitalize">{project.town_slug}</Badge>}
+                {project.zone && <Badge variant="outline" className="text-micro font-mono">Zone {project.zone}</Badge>}
+                <Badge className="text-micro capitalize">{project.status}</Badge>
               </div>
             </div>
           </div>
@@ -212,7 +206,7 @@ export default function ProjectDetail() {
                       }`}>
                         {complete ? <CheckCircle className="h-4 w-4" /> : i + 1}
                       </div>
-                      <p className={`text-[10px] mt-1.5 text-center max-w-[80px] ${active ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{TIMELINE_LABELS[step]}</p>
+                      <p className={`text-micro mt-1.5 text-center max-w-[80px] ${active ? "font-semibold text-foreground" : "text-muted-foreground"}`}>{TIMELINE_LABELS[step]}</p>
                     </div>
                     {i < TIMELINE_STEPS.length - 1 && (
                       <div className={`flex-1 h-0.5 mx-1 mt-[-16px] ${complete ? "bg-success" : "bg-border"}`} />
@@ -289,7 +283,6 @@ export default function ProjectDetail() {
           </Card>
         )}
       </div>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }

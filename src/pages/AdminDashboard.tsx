@@ -1,5 +1,4 @@
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
+import { AppLayout } from "@/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -115,9 +114,8 @@ export default function AdminDashboard() {
   const totalPending = pending ? Object.values(pending).reduce((a, b) => a + b, 0) : 0;
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <NavBar isLoggedIn showSearch />
-      <div className="container py-6 flex-1">
+    <AppLayout showSearch contained={false}>
+      <div className="container py-6">
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-primary">Admin Dashboard</h1>
@@ -184,7 +182,7 @@ export default function AdminDashboard() {
           <CardContent className="p-0">
             <div className="p-4 border-b">
               <h2 className="font-semibold text-sm">Data Completeness</h2>
-              <p className="text-[11px] text-muted-foreground">Live from the towns table. % = verified rows ÷ total rows across all four sections.</p>
+              <p className="text-caption text-muted-foreground">Live from the towns table. % = verified rows ÷ total rows across all four sections.</p>
             </div>
             <Table>
               <TableHeader>
@@ -212,7 +210,7 @@ export default function AdminDashboard() {
                     <TableCell>
                       <Badge
                         variant={t.data_status === "verified" ? "default" : t.data_status === "partial" ? "secondary" : "outline"}
-                        className="text-[10px]"
+                        className="text-micro"
                       >
                         {t.data_status}
                       </Badge>
@@ -232,7 +230,7 @@ export default function AdminDashboard() {
                           ) : sec.verified ? (
                             <Check className="h-4 w-4 text-success mx-auto" />
                           ) : (
-                            <span className="text-[10px] text-warning">unverified</span>
+                            <span className="text-micro text-warning">unverified</span>
                           )}
                         </TableCell>
                       );
@@ -254,7 +252,7 @@ export default function AdminDashboard() {
           <CardContent className="p-0">
             <div className="p-4 border-b">
               <h2 className="font-semibold text-sm">Recent Ingestion Activity</h2>
-              <p className="text-[11px] text-muted-foreground">Last 10 source pulls. Manage and review them in Data Review.</p>
+              <p className="text-caption text-muted-foreground">Last 10 source pulls. Manage and review them in Data Review.</p>
             </div>
             <div className="divide-y">
               {loadingRuns && <div className="p-6 text-center"><Loader2 className="h-5 w-5 animate-spin inline" /></div>}
@@ -272,7 +270,7 @@ export default function AdminDashboard() {
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <Badge
                       variant={r.status === "completed" ? "default" : r.status === "failed" ? "destructive" : "secondary"}
-                      className="text-[10px]"
+                      className="text-micro"
                     >
                       {r.status}
                     </Badge>
@@ -287,7 +285,6 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }

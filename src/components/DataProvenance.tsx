@@ -29,7 +29,7 @@ export function DataProvenance({
     : null;
 
   return (
-    <div className={cn("flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground pt-3 mt-3 border-t", className)}>
+    <div className={cn("flex flex-wrap items-center gap-2 text-caption text-muted-foreground pt-3 mt-3 border-t", className)}>
       {confidence === "verified" && (
         <span className="inline-flex items-center gap-1 text-success font-medium">
           <ShieldCheck className="h-3 w-3" /> Verified

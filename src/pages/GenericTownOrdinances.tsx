@@ -58,8 +58,8 @@ export default function GenericTownOrdinances() {
               <CardContent className="p-4">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    {o.code && <Badge variant="secondary" className="text-[10px] font-mono">{o.code}</Badge>}
-                    <Badge variant="outline" className="text-[10px]">{o.category}</Badge>
+                    {o.code && <Badge variant="secondary" className="text-micro font-mono">{o.code}</Badge>}
+                    <Badge variant="outline" className="text-micro">{o.category}</Badge>
                   </div>
                 </div>
                 <h3 className="font-semibold text-sm mb-1">{o.title}</h3>

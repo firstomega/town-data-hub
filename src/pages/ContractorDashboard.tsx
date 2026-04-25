@@ -1,5 +1,4 @@
-import { NavBar } from "@/components/NavBar";
-import { Footer } from "@/components/Footer";
+import { AppLayout } from "@/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -85,20 +84,17 @@ export default function ContractorDashboard() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <NavBar isLoggedIn showSearch />
+      <AppLayout showSearch contained={false}>
         <div className="flex-1 flex items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-        <Footer />
-      </div>
+      </AppLayout>
     );
   }
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-background flex flex-col">
-        <NavBar />
+      <AppLayout contained={false}>
         <div className="flex-1 flex items-center justify-center p-6">
           <Card className="max-w-md">
             <CardContent className="p-6 text-center space-y-3">
@@ -108,8 +104,7 @@ export default function ContractorDashboard() {
             </CardContent>
           </Card>
         </div>
-        <Footer />
-      </div>
+      </AppLayout>
     );
   }
 
@@ -125,8 +120,7 @@ export default function ContractorDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <NavBar isLoggedIn showSearch />
+    <AppLayout showSearch contained={false}>
       <div className="flex flex-1">
         {/* Sidebar */}
         <aside className="hidden lg:flex w-64 flex-col border-r bg-card min-h-[calc(100vh-3.5rem)] p-4">
@@ -151,7 +145,7 @@ export default function ContractorDashboard() {
                   <MapPin className="h-3 w-3 text-accent" />
                   <span className="text-xs">{t.name}</span>
                   {projectsHere > 0 && (
-                    <Badge variant="secondary" className="ml-auto text-[10px] h-4">{projectsHere}</Badge>
+                    <Badge variant="secondary" className="ml-auto text-micro h-4">{projectsHere}</Badge>
                   )}
                 </Link>
               );
@@ -165,7 +159,7 @@ export default function ContractorDashboard() {
         </aside>
 
         {/* Main */}
-        <main className="flex-1 p-6">
+        <div className="flex-1 p-6">
           <div className="max-w-5xl">
             <div className="flex items-center justify-between mb-6">
               <div>
@@ -200,7 +194,7 @@ export default function ContractorDashboard() {
                 <CardContent className="p-0">
                   <div className="p-4 border-b">
                     <h2 className="font-semibold text-sm">Zone rules across your towns</h2>
-                    <p className="text-[11px] text-muted-foreground">Pulled from the verified zoning database. Each row is one zone.</p>
+                    <p className="text-caption text-muted-foreground">Pulled from the verified zoning database. Each row is one zone.</p>
                   </div>
                   {zones.length === 0 ? (
                     <p className="p-6 text-center text-xs text-muted-foreground">No zones loaded for your towns yet.</p>
@@ -283,9 +277,8 @@ export default function ContractorDashboard() {
               </CardContent>
             </Card>
           </div>
-        </main>
+        </div>
       </div>
-      <Footer />
-    </div>
+    </AppLayout>
   );
 }
