@@ -92,7 +92,7 @@ export default function ProjectDetail() {
     mutationFn: async (next: ChecklistItem[]) => {
       const { error } = await supabase
         .from("projects")
-        .update({ checklist: next as unknown as any })
+        .update({ checklist: next as unknown as never })
         .eq("id", id!);
       if (error) throw error;
     },
@@ -108,7 +108,7 @@ export default function ProjectDetail() {
       toast.success("Project deleted");
       navigate("/dashboard");
     },
-    onError: (e: any) => toast.error(e.message ?? "Could not delete project"),
+    onError: (e: Error) => toast.error(e.message ?? "Could not delete project"),
   });
 
   if (isLoading) {
@@ -268,7 +268,7 @@ export default function ProjectDetail() {
             <CardContent padding="md">
               <h3 className="font-semibold text-sm mb-4">Recent Ordinance Changes in {project.town_slug}</h3>
               <div className="space-y-2">
-                {drifts.map((c: any) => (
+                {drifts.map((c) => (
                   <div key={c.id} className="flex items-start gap-3 p-3 rounded border bg-secondary/20">
                     <FileText className="h-4 w-4 text-warning flex-shrink-0 mt-0.5" />
                     <div>

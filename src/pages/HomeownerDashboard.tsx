@@ -119,14 +119,14 @@ export default function HomeownerDashboard() {
   const services = useMemo(() => {
     return SERVICE_DEPTS.map((s) => ({
       ...s,
-      contact: contacts.find((c: any) => s.match(c.dept ?? "")),
+      contact: contacts.find((c) => s.match(c.dept ?? "")),
     }));
   }, [contacts]);
 
   // Group quality-of-life ordinances
   const qol = useMemo(() => {
     return QOL_CATEGORIES.map((cat) => {
-      const items = ordinances.filter((o: any) => o.category && cat.match(String(o.category).toLowerCase()));
+      const items = ordinances.filter((o) => o.category && cat.match(String(o.category).toLowerCase()));
       return { ...cat, items };
     }).filter((c) => c.items.length > 0);
   }, [ordinances]);
@@ -225,7 +225,7 @@ export default function HomeownerDashboard() {
                 <Badge variant="secondary" className="text-xs">{alerts.length}</Badge>
               </div>
               <div className="space-y-2">
-                {alerts.map((a: any) => (
+                {alerts.map((a) => (
                   <Card key={a.id}>
                     <CardContent padding="xs" className="flex items-start gap-3">
                       <Bell className="h-4 w-4 text-warning mt-0.5 flex-shrink-0" />
@@ -302,7 +302,7 @@ export default function HomeownerDashboard() {
                           <Badge variant="secondary" className="text-micro ml-auto">{cat.items.length}</Badge>
                         </div>
                         <ul className="space-y-1">
-                          {cat.items.slice(0, 3).map((o: any) => (
+                          {cat.items.slice(0, 3).map((o) => (
                             <li key={o.id} className="text-xs text-muted-foreground line-clamp-1">
                               <span className="font-medium text-foreground">{o.code ? `§${o.code} ` : ""}</span>
                               {o.title}
@@ -328,7 +328,7 @@ export default function HomeownerDashboard() {
               </CardContent></Card>
             ) : (
               <div className="space-y-2">
-                {events.map((e: any) => (
+                {events.map((e) => (
                   <Card key={e.id}>
                     <CardContent padding="xs" className="flex items-center gap-3">
                       <div className="flex flex-col items-center justify-center w-12 h-12 rounded bg-secondary text-center flex-shrink-0">

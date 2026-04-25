@@ -28,7 +28,7 @@ export function EmptyState({
   const s = sizeMap[size];
   return (
     <div className={cn("text-center", s.padding, className)}>
-      {Icon && <Icon className={cn(s.icon, "text-muted-foreground/30 mx-auto mb-4")} />}
+      {Icon && <Icon className={cn(s.icon, "text-foreground-subtle mx-auto mb-4")} />}
       <h2 className={cn(s.title, "font-semibold text-primary mb-2")}>{title}</h2>
       {description && (
         <p className={cn(s.description, "text-muted-foreground mb-6 max-w-md mx-auto")}>

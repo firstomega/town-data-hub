@@ -152,7 +152,7 @@ export default function Dashboard() {
               <Link to={`/town/${savedTowns[0].town_slug}/ordinances`} className="flex items-center justify-between px-2 py-2 rounded text-sm hover:bg-secondary transition-colors">
                 <span className="flex items-center gap-2"><Bell className="h-3.5 w-3.5 text-muted-foreground" /> Ordinance Updates</span>
                 {unreadChanges > 0 && (
-                  <Badge variant="destructive" className="h-4 w-4 p-0 flex items-center justify-center text-[9px]">{unreadChanges}</Badge>
+                  <Badge variant="destructive" className="h-4 w-4 p-0 flex items-center justify-center text-micro">{unreadChanges}</Badge>
                 )}
               </Link>
             )}

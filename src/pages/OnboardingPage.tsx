@@ -48,8 +48,8 @@ export default function OnboardingPage() {
       queryClient.invalidateQueries({ queryKey: ["profile"] });
       toast.success("Home saved");
       setStep(isContractor ? 2 : totalSteps);
-    } catch (e: any) {
-      toast.error(e.message ?? "Could not save home");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not save home");
     } finally {
       setSaving(false);
     }
@@ -71,8 +71,8 @@ export default function OnboardingPage() {
       if (error) throw error;
       toast.success(`Saved ${selectedTowns.length} town${selectedTowns.length > 1 ? "s" : ""}`);
       setStep(totalSteps);
-    } catch (e: any) {
-      toast.error(e.message ?? "Could not save towns");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not save towns");
     } finally {
       setSaving(false);
     }

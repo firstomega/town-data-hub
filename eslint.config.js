@@ -21,6 +21,19 @@ export default tseslint.config(
       ...reactHooks.configs.recommended.rules,
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
       "@typescript-eslint/no-unused-vars": "off",
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: "Literal[value=/text-\\[\\d+(?:\\.\\d+)?px\\]/]",
+          message:
+            "Use a font-size token (text-micro, text-caption, text-xs, etc.) instead of arbitrary px values. See docs/typography.md.",
+        },
+        {
+          selector: "Literal[value=/(?:^|\\s)p[xytrbl]?-\\[\\d+(?:\\.\\d+)?px\\]/]",
+          message:
+            "Use Tailwind's spacing scale (p-1..p-12) or a Card `padding` variant instead of arbitrary px values.",
+        },
+      ],
     },
   },
 );

@@ -84,7 +84,7 @@ export default function ChecklistPage() {
           project_type: projectType,
           address: address.trim(),
           status: "researching",
-          checklist: checklist as unknown as any,
+          checklist: checklist as unknown as never,
         })
         .select("id")
         .single();
@@ -95,7 +95,7 @@ export default function ChecklistPage() {
       toast.success("Project saved");
       navigate(`/project/${data.id}`);
     },
-    onError: (e: any) => toast.error(e.message ?? "Could not save project"),
+    onError: (e: Error) => toast.error(e.message ?? "Could not save project"),
   });
 
   return (

@@ -24,7 +24,9 @@ const ScrollBar = React.forwardRef<
     orientation={orientation}
     className={cn(
       "flex touch-none select-none transition-colors",
+      // eslint-disable-next-line no-restricted-syntax -- 1px hairline is deliberate for scrollbar gutter
       orientation === "vertical" && "h-full w-2.5 border-l border-l-transparent p-[1px]",
+      // eslint-disable-next-line no-restricted-syntax -- 1px hairline is deliberate for scrollbar gutter
       orientation === "horizontal" && "h-2.5 flex-col border-t border-t-transparent p-[1px]",
       className,
     )}

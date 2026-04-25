@@ -338,7 +338,7 @@ function DiscoverSources() {
             <p className="text-micro uppercase text-muted-foreground font-semibold">Saved sources</p>
             {(saved ?? []).map((s) => (
               <div key={s.id} className="flex items-center gap-2 text-caption p-1.5 rounded border">
-                <Badge variant="secondary" className="text-[9px]">{s.ingestion_type}</Badge>
+                <Badge variant="secondary" className="text-micro">{s.ingestion_type}</Badge>
                 <a href={s.source_url} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline truncate flex-1">
                   {s.source_url}
                 </a>
@@ -359,13 +359,13 @@ function DiscoverSources() {
               return (
                 <div key={t} className="text-caption p-2 rounded border">
                   <div className="flex items-center gap-2 mb-1">
-                    <Badge variant="outline" className="text-[9px] capitalize">{t}</Badge>
+                    <Badge variant="outline" className="text-micro capitalize">{t}</Badge>
                     {r?.picked ? (
-                      <Badge variant="default" className="text-[9px] gap-1">
+                      <Badge variant="default" className="text-micro gap-1">
                         <Sparkles className="h-2.5 w-2.5" /> AI picked
                       </Badge>
                     ) : (
-                      <Badge variant="secondary" className="text-[9px]">No clear match</Badge>
+                      <Badge variant="secondary" className="text-micro">No clear match</Badge>
                     )}
                   </div>
                   {r?.picked && (
@@ -602,7 +602,7 @@ function FreshnessControls() {
                   <span className="font-medium">{t.name}</span>
                   <Badge
                     variant={t.data_status === "verified" ? "default" : t.data_status === "partial" ? "secondary" : "outline"}
-                    className="text-[9px]"
+                    className="text-micro"
                   >
                     {t.data_status ?? "placeholder"}
                   </Badge>

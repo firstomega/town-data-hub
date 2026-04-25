@@ -75,7 +75,7 @@ export default function SettingsPage() {
       toast.success("Home updated");
       qc.invalidateQueries({ queryKey: ["profile"] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Could not save home"),
+    onError: (e: Error) => toast.error(e.message ?? "Could not save home"),
   });
 
   const saveProfile = useMutation({
@@ -90,7 +90,7 @@ export default function SettingsPage() {
       toast.success("Profile updated");
       qc.invalidateQueries({ queryKey: ["profile", userId] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Could not save profile"),
+    onError: (e: Error) => toast.error(e.message ?? "Could not save profile"),
   });
 
   const removeTown = useMutation({
@@ -102,7 +102,7 @@ export default function SettingsPage() {
       toast.success("Town removed");
       qc.invalidateQueries({ queryKey: ["settings", "saved-towns", userId] });
     },
-    onError: (e: any) => toast.error(e.message ?? "Could not remove town"),
+    onError: (e: Error) => toast.error(e.message ?? "Could not remove town"),
   });
 
   const handleDeleteAccount = async () => {
@@ -182,7 +182,7 @@ export default function SettingsPage() {
               <div>
                 <Label className="text-xs">Town</Label>
                 <div className="flex flex-wrap gap-2 mt-2 max-h-40 overflow-y-auto">
-                  {allTowns.map((t: any) => {
+                  {allTowns.map((t) => {
                     const selected = homeSlug === t.slug;
                     return (
                       <button
@@ -226,7 +226,7 @@ export default function SettingsPage() {
               <p className="text-sm text-muted-foreground">You haven't saved any towns yet.</p>
             ) : (
               <div className="space-y-2">
-                {savedTowns.map((t: any) => (
+                {savedTowns.map((t) => (
                   <div key={t.id} className="flex items-center justify-between p-3 rounded border">
                     <div>
                       <p className="text-sm font-medium">{t.towns?.name ?? t.town_slug}</p>
