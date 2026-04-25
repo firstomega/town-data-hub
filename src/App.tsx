@@ -35,6 +35,7 @@ const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdminDataReview = lazy(() => import("./pages/AdminDataReview"));
+const AdminSources = lazy(() => import("./pages/AdminSources"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -77,6 +78,7 @@ const App = () => (
               <Route path="/terms" element={<TermsPage />} />
               <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
               <Route path="/admin/data-review" element={<ProtectedRoute><AdminDataReview /></ProtectedRoute>} />
+              <Route path="/admin/sources" element={<ProtectedRoute><AdminSources /></ProtectedRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>

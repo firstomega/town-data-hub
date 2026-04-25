@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Check, X, Users, Activity, AlertTriangle, Database, Loader2, MapPin, FileText } from "lucide-react";
+import { Check, X, Users, Activity, AlertTriangle, Database, Loader2, MapPin, FileText, Link2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -124,25 +124,44 @@ export default function AdminDashboard() {
           <Badge variant="destructive" className="text-xs">Admin Only</Badge>
         </div>
 
-        <Link to="/admin/data-review">
-          <Card className="mb-6 hover:shadow-md transition-shadow cursor-pointer border-accent/40">
-            <CardContent padding="sm" className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Database className="h-5 w-5 text-accent" />
-                <div>
-                  <p className="font-semibold text-sm">Data Ingestion & Review</p>
-                  <p className="text-xs text-muted-foreground">
-                    {totalPending > 0
-                      ? `${totalPending} AI-extracted row${totalPending === 1 ? "" : "s"} pending review`
-                      : "Pull from official sources, review AI-extracted rows, approve into the verified dataset."}
-                    {stats && stats.pendingDrifts > 0 ? ` · ${stats.pendingDrifts} drift alert${stats.pendingDrifts === 1 ? "" : "s"}` : ""}
-                  </p>
+        <div className="grid sm:grid-cols-2 gap-4 mb-6">
+          <Link to="/admin/sources">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer border-accent/40 h-full">
+              <CardContent padding="sm" className="flex items-center justify-between h-full">
+                <div className="flex items-center gap-3">
+                  <Link2 className="h-5 w-5 text-accent" />
+                  <div>
+                    <p className="font-semibold text-sm">Town Sources</p>
+                    <p className="text-xs text-muted-foreground">
+                      Discover or edit the eCode360 / Municode URLs each town pulls from.
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <Button size="sm" variant="outline">Open</Button>
-            </CardContent>
-          </Card>
-        </Link>
+                <Button size="sm" variant="outline">Open</Button>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link to="/admin/data-review">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer border-accent/40 h-full">
+              <CardContent padding="sm" className="flex items-center justify-between h-full">
+                <div className="flex items-center gap-3">
+                  <Database className="h-5 w-5 text-accent" />
+                  <div>
+                    <p className="font-semibold text-sm">Data Ingestion & Review</p>
+                    <p className="text-xs text-muted-foreground">
+                      {totalPending > 0
+                        ? `${totalPending} AI-extracted row${totalPending === 1 ? "" : "s"} pending review`
+                        : "Scrape sources, review AI-extracted rows, approve into the verified dataset."}
+                      {stats && stats.pendingDrifts > 0 ? ` · ${stats.pendingDrifts} drift alert${stats.pendingDrifts === 1 ? "" : "s"}` : ""}
+                    </p>
+                  </div>
+                </div>
+                <Button size="sm" variant="outline">Open</Button>
+              </CardContent>
+            </Card>
+          </Link>
+        </div>
 
         {/* Live counts */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
