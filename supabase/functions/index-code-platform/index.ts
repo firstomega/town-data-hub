@@ -28,10 +28,15 @@ type Platform = "ecode360" | "municode" | "generalcode";
 // State-level directory URL per platform. The full state name is needed
 // for some platforms; the USPS code for others. We pass both to the URL
 // builder so each platform can pick.
+//
+// NOTE: For eCode360, the canonical public directory of every town is
+// General Code's text-library page (General Code is the company that
+// operates eCode360). It's a single static HTML page listing every state,
+// with each town linking to its `https://ecode360.com/<CUSTOMER_ID>` root.
+// We deterministically parse the NJ (or any state) section instead of
+// trying to scrape ecode360.com directly (which has no state index).
 const PLATFORM_DIRECTORY_URL: Record<Platform, (stateCode: string, stateName: string) => string> = {
-  // eCode360 lists every NJ town at a state path. Confirmed pattern via
-  // their public site map; the page lists town names linking to /<CODE>.
-  ecode360: (stateCode) => `https://ecode360.com/${stateCode}`,
+  ecode360: () => `https://www.generalcode.com/text-library/`,
   // Municode's library is organized by state name (lowercase, hyphenated).
   municode: (_stateCode, stateName) =>
     `https://library.municode.com/${stateName.toLowerCase().replace(/\s+/g, "-")}`,
@@ -91,6 +96,57 @@ async function firecrawlScrape(url: string): Promise<string> {
   const md = data.data?.markdown ?? data.markdown;
   if (!md) throw new Error("Firecrawl returned no markdown");
   return md as string;
+}
+
+// Direct fetch (no Firecrawl) for static HTML pages we can parse ourselves.
+async function rawFetchHtml(url: string): Promise<string> {
+  const resp = await withTimeout(
+    fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (compatible; TownCenterIndexer/1.0; +https://towncenter.lovable.app)",
+        Accept: "text/html,application/xhtml+xml",
+      },
+    }),
+    30_000,
+    `raw fetch ${url}`,
+  );
+  if (!resp.ok) {
+    const body = await resp.text().catch(() => "");
+    throw new Error(`raw fetch ${url} -> ${resp.status}: ${body.slice(0, 200)}`);
+  }
+  return await resp.text();
+}
+
+// Deterministically parse General Code's text-library HTML for a single state.
+// Structure (verified 2026-04): a `<div class="state XX">` block per state,
+// followed by `<div class="listItem">` entries each containing
+//   <a class="codeLink" href="https://ecode360.com/<CUSTOMER_ID>" ...>
+//     <town name with prefix>
+//   </a>
+//   <div class="codeCounty">(<county> County)</div>
+function parseGeneralCodeTextLibrary(html: string, stateCode: string): ExtractedTown[] {
+  // Slice out just the requested state's block to keep regex anchored.
+  const stateBlockRe = new RegExp(
+    `<div class="state ${stateCode}">[\\s\\S]*?(?=<div class="state [A-Z]{2}">|<\\/section>|<footer)`,
+    "i",
+  );
+  const blockMatch = html.match(stateBlockRe);
+  if (!blockMatch) return [];
+  const block = blockMatch[0];
+
+  const itemRe =
+    /<a class="codeLink"\s+href="(https?:\/\/ecode360\.com\/[^"]+)"[^>]*>\s*([^<]+?)\s*<\/a>/g;
+  const out: ExtractedTown[] = [];
+  for (const m of block.matchAll(itemRe)) {
+    const baseUrl = m[1].trim();
+    const townName = m[2].replace(/\s+/g, " ").trim();
+    if (!townName || !baseUrl) continue;
+    // Customer ID is the last path segment of the eCode360 URL.
+    const customerId = baseUrl.split("/").filter(Boolean).pop() ?? null;
+    out.push({ town_name: townName, customer_id: customerId, base_url: baseUrl });
+  }
+  return out;
 }
 
 type ExtractedTown = {
