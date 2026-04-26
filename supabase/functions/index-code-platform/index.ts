@@ -404,6 +404,7 @@ Deno.serve(async (req) => {
         indexed: rows.length,
         method: extractionMethod,
         directory_url: directoryUrl,
+        dropped_duplicates: droppedDuplicates,
         sample: rows.slice(0, 5).map((r) => ({
           town_name: r.town_name,
           town_name_normalized: r.town_name_normalized,
