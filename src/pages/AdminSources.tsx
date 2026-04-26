@@ -6,13 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { ExternalLink, Loader2, Search, Trash2, Plus, RefreshCw } from "lucide-react";
+import { ExternalLink, Loader2, Search, Trash2, Plus, Inbox } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAllTowns } from "@/hooks/useTownData";
 import { LoadingState } from "@/components/states/LoadingState";
 import { EmptyState } from "@/components/states/EmptyState";
+import { ConfidenceBadge } from "@/components/admin/ConfidenceBadge";
 import { toast } from "sonner";
 import { formatDistanceToNow } from "date-fns";
 
@@ -28,6 +29,10 @@ type SourceRow = {
   notes: string | null;
   last_used_at: string | null;
   updated_at: string;
+  discovery_confidence: number | null;
+  discovery_method: "platform_directory" | "ai_ranked" | "manual" | null;
+  discovery_reasoning: string | null;
+  verified_at: string | null;
 };
 
 function useTownSources(townSlug: string | null) {
@@ -37,7 +42,7 @@ function useTownSources(townSlug: string | null) {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("town_sources")
-        .select("id, town_slug, ingestion_type, source_url, source_label, notes, last_used_at, updated_at")
+        .select("id, town_slug, ingestion_type, source_url, source_label, notes, last_used_at, updated_at, discovery_confidence, discovery_method, discovery_reasoning, verified_at")
         .eq("town_slug", townSlug!)
         .order("ingestion_type");
       if (error) throw error;
@@ -225,6 +230,7 @@ export default function AdminSources() {
                       <TableHeader>
                         <TableRow className="bg-secondary/50">
                           <TableHead className="font-semibold">URL</TableHead>
+                          <TableHead className="font-semibold">Confidence</TableHead>
                           <TableHead className="font-semibold">Label</TableHead>
                           <TableHead className="font-semibold">Last used</TableHead>
                           <TableHead className="w-24"></TableHead>
@@ -251,6 +257,7 @@ export default function AdminSources() {
                                 autoFocus
                               />
                             </TableCell>
+                            <TableCell></TableCell>
                             <TableCell>
                               <Input
                                 value={newLabel}
@@ -292,15 +299,22 @@ export default function AdminSources() {
             <Card className="bg-muted/20">
               <CardContent padding="md">
                 <div className="flex items-start gap-3">
-                  <RefreshCw className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
-                  <div className="text-xs text-muted-foreground">
-                    <p className="font-semibold text-foreground mb-1">Next step: ingest</p>
+                  <Inbox className="h-4 w-4 text-muted-foreground mt-0.5 flex-shrink-0" />
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <p className="font-semibold text-foreground">Working at scale?</p>
                     <p>
-                      Once URLs look right, head to{" "}
+                      Skip per-town review and use the{" "}
+                      <Link to="/admin/review-queue" className="text-accent hover:underline">
+                        Review Queue
+                      </Link>{" "}
+                      to triage every low-confidence source across all towns at once.
+                    </p>
+                    <p className="pt-1">
+                      Or jump to{" "}
                       <Link to="/admin/data-review" className="text-accent hover:underline">
                         Data Review & Ingest
                       </Link>{" "}
-                      to scrape and extract rows for review.
+                      to scrape and extract rows from these URLs.
                     </p>
                   </div>
                 </div>
@@ -336,6 +350,13 @@ function SourceRowItem({
             onChange={(e) => setDraft(e.target.value)}
             className="h-8 text-xs"
             autoFocus
+          />
+        </TableCell>
+        <TableCell>
+          <ConfidenceBadge
+            confidence={row.discovery_confidence}
+            method={row.discovery_method}
+            reasoning={row.discovery_reasoning}
           />
         </TableCell>
         <TableCell className="text-xs text-muted-foreground">{row.source_label ?? "—"}</TableCell>
@@ -383,6 +404,13 @@ function SourceRowItem({
         >
           {row.source_url} <ExternalLink className="h-3 w-3 flex-shrink-0" />
         </a>
+      </TableCell>
+      <TableCell>
+        <ConfidenceBadge
+          confidence={row.discovery_confidence}
+          method={row.discovery_method}
+          reasoning={row.discovery_reasoning}
+        />
       </TableCell>
       <TableCell className="text-xs text-muted-foreground">{row.source_label ?? "—"}</TableCell>
       <TableCell className="text-xs text-muted-foreground">

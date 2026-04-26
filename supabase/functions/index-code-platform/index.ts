@@ -141,16 +141,40 @@ function parseGeneralCodeTextLibrary(html: string, stateCode: string): Extracted
   const endIdx = nextMatch ? nextMatch.index : html.length;
   const block = html.slice(startIdx, endIdx);
 
-  const itemRe =
+  // Step 1: find every codeLink and its position so we can do a
+  // bounded lookahead for the codeCounty that follows it.
+  const linkRe =
     /<a class="codeLink"\s+href="(https?:\/\/ecode360\.com\/[^"]+)"[^>]*>\s*([^<]+?)\s*<\/a>/g;
+  const countyRe =
+    /<div class="codeCounty">\s*\(?\s*([A-Za-z][A-Za-z\s.'-]*?)(?:\s+County)?\s*\)?\s*<\/div>/i;
+
   const out: ExtractedTown[] = [];
-  for (const m of block.matchAll(itemRe)) {
+  let m: RegExpExecArray | null;
+  while ((m = linkRe.exec(block)) !== null) {
     const baseUrl = m[1].trim();
     const townName = m[2].replace(/\s+/g, " ").trim();
     if (!townName || !baseUrl) continue;
     // Customer ID is the last path segment of the eCode360 URL.
     const customerId = baseUrl.split("/").filter(Boolean).pop() ?? null;
-    out.push({ town_name: townName, customer_id: customerId, base_url: baseUrl });
+
+    // Look for the codeCounty within the next ~400 chars after the link.
+    // The General Code page emits codeCounty immediately after each codeLink.
+    const lookaheadStart = m.index + m[0].length;
+    const lookaheadEnd = Math.min(lookaheadStart + 400, block.length);
+    const window = block.slice(lookaheadStart, lookaheadEnd);
+    const cMatch = window.match(countyRe);
+    const county = cMatch ? cMatch[1].trim() : null;
+
+    const { bare_name, designator } = splitTownName(townName);
+
+    out.push({
+      town_name: townName,
+      customer_id: customerId,
+      base_url: baseUrl,
+      county,
+      bare_name,
+      designator,
+    });
   }
   return out;
 }
@@ -159,7 +183,40 @@ type ExtractedTown = {
   town_name: string;
   customer_id: string | null;
   base_url: string;
+  county?: string | null;
+  bare_name?: string | null;
+  designator?: string | null;
 };
+
+// Split "Township of Washington" or "Washington Borough" into:
+//   { bare_name: "washington", designator: "township" | "borough" }
+// Used both at index time (parser) and when discover-town-sources
+// looks up a town slug — the towns.slug for Bergen's Paramus is just
+// "paramus" but the platform-index entry's bare_name is also "paramus",
+// so a (state, county, bare_name) lookup matches.
+function splitTownName(name: string): { bare_name: string; designator: string | null } {
+  const lower = name.toLowerCase().trim();
+  const slugify = (s: string) =>
+    s.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+  // "Township of Washington" / "The Borough of Washington"
+  const prefixMatch = lower.match(
+    /^(?:the\s+)?(borough|township|city|village|town)\s+of\s+(.+)$/i,
+  );
+  if (prefixMatch) {
+    return { designator: prefixMatch[1], bare_name: slugify(prefixMatch[2]) };
+  }
+
+  // "Washington Township" / "Bergenfield Borough"
+  const suffixMatch = lower.match(
+    /^(.+?)\s+(borough|township|city|village|town)$/i,
+  );
+  if (suffixMatch) {
+    return { designator: suffixMatch[2], bare_name: slugify(suffixMatch[1]) };
+  }
+
+  return { designator: null, bare_name: slugify(lower) };
+}
 
 async function aiExtractDirectory(
   platform: Platform,
@@ -239,36 +296,8 @@ async function aiExtractDirectory(
 }
 
 function normalizeTownName(name: string): string {
-  // Extract the municipal-type designator (borough/township/city/etc.) and
-  // the bare name separately, then recombine as "<name>-<designator>".
-  // This is critical in NJ where many bare names collide across types
-  // (e.g. Washington Township vs. Washington Borough vs. Town of Washington).
-  const lower = name.toLowerCase().trim();
-
-  // "Township of Washington" / "The Borough of Washington"
-  const prefixMatch = lower.match(
-    /^(?:the\s+)?(borough|township|city|village|town)\s+of\s+(.+)$/i,
-  );
-  // "Washington Township" / "Bergenfield Borough"
-  const suffixMatch = lower.match(
-    /^(.+?)\s+(borough|township|city|village|town)$/i,
-  );
-
-  let designator: string | null = null;
-  let bare = lower;
-  if (prefixMatch) {
-    designator = prefixMatch[1];
-    bare = prefixMatch[2];
-  } else if (suffixMatch) {
-    designator = suffixMatch[2];
-    bare = suffixMatch[1];
-  }
-
-  const slugify = (s: string) =>
-    s.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
-
-  const bareSlug = slugify(bare);
-  return designator ? `${bareSlug}-${designator}` : bareSlug;
+  const { bare_name, designator } = splitTownName(name);
+  return designator ? `${bare_name}-${designator}` : bare_name;
 }
 
 Deno.serve(async (req) => {
@@ -360,37 +389,48 @@ Deno.serve(async (req) => {
 
     // Upsert into code_platform_index
     const rawRows = towns
-      .filter((t) => t.town_name && t.base_url)
-      .map((t) => ({
-        state,
-        platform,
-        town_name: t.town_name.trim(),
-        town_name_normalized: normalizeTownName(t.town_name),
-        customer_id: t.customer_id?.trim() || null,
-        base_url: t.base_url.trim(),
-        last_indexed_at: new Date().toISOString(),
-      }))
-      .filter((r) => r.town_name_normalized.length > 0);
+      .filter((t) => t.town_name && t.base_url && t.customer_id)
+      .map((t) => {
+        // For ai/municode/generalcode entries we may not have these fields
+        // populated by the parser — derive from town_name as a fallback.
+        const split = (t.bare_name && t.designator !== undefined)
+          ? { bare_name: t.bare_name, designator: t.designator ?? null }
+          : splitTownName(t.town_name);
+        return {
+          state,
+          platform,
+          town_name: t.town_name.trim(),
+          town_name_normalized: normalizeTownName(t.town_name),
+          bare_name: split.bare_name,
+          designator: split.designator,
+          county: t.county?.trim() || null,
+          customer_id: t.customer_id!.trim(),
+          base_url: t.base_url.trim(),
+          last_indexed_at: new Date().toISOString(),
+        };
+      })
+      .filter((r) => r.town_name_normalized.length > 0 && r.customer_id.length > 0);
 
-    // De-dupe within the batch — Postgres rejects a single upsert that
-    // tries to touch the same conflict-target row twice. Last writer wins.
+    // De-dupe within the batch on the new conflict target (state, platform,
+    // customer_id). Postgres rejects a single upsert that touches the same
+    // conflict-target row twice. Last writer wins.
     const dedupedMap = new Map<string, typeof rawRows[number]>();
     for (const r of rawRows) {
-      dedupedMap.set(`${r.state}|${r.platform}|${r.town_name_normalized}`, r);
+      dedupedMap.set(`${r.state}|${r.platform}|${r.customer_id}`, r);
     }
     const rows = Array.from(dedupedMap.values());
     const droppedDuplicates = rawRows.length - rows.length;
 
     if (!rows.length) {
       return new Response(
-        JSON.stringify({ ok: true, state, platform, indexed: 0, message: "All extracted rows failed normalization." }),
+        JSON.stringify({ ok: true, state, platform, indexed: 0, message: "All extracted rows failed normalization (likely missing customer_id)." }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     const { error: upsertError } = await admin
       .from("code_platform_index")
-      .upsert(rows, { onConflict: "state,platform,town_name_normalized" });
+      .upsert(rows, { onConflict: "state,platform,customer_id" });
 
     if (upsertError) throw upsertError;
 
@@ -407,7 +447,9 @@ Deno.serve(async (req) => {
         dropped_duplicates: droppedDuplicates,
         sample: rows.slice(0, 5).map((r) => ({
           town_name: r.town_name,
-          town_name_normalized: r.town_name_normalized,
+          bare_name: r.bare_name,
+          designator: r.designator,
+          county: r.county,
           customer_id: r.customer_id,
           base_url: r.base_url,
         })),

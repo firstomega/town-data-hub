@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Check, X, Users, Activity, AlertTriangle, Database, Loader2, MapPin, FileText, Link2 } from "lucide-react";
+import { Check, X, Users, Activity, AlertTriangle, Database, Loader2, MapPin, FileText, Link2, Inbox } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,12 +14,18 @@ function useAdminStats() {
   return useQuery({
     queryKey: ["admin-stats"],
     queryFn: async () => {
-      const [profiles, projects, savedTowns, drifts, runs] = await Promise.all([
+      const [profiles, projects, savedTowns, drifts, runs, reviewQueue] = await Promise.all([
         supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("projects").select("id", { count: "exact", head: true }),
         supabase.from("saved_towns").select("id", { count: "exact", head: true }),
         supabase.from("data_drifts").select("id", { count: "exact", head: true }).eq("status", "pending"),
         supabase.from("ingestion_runs").select("id", { count: "exact", head: true }),
+        // Sources awaiting human attention: unverified AND below the high-confidence cutoff.
+        supabase
+          .from("town_sources")
+          .select("id", { count: "exact", head: true })
+          .is("verified_at", null)
+          .or("discovery_confidence.lt.0.85,discovery_confidence.is.null"),
       ]);
       return {
         users: profiles.count ?? 0,
@@ -27,6 +33,7 @@ function useAdminStats() {
         savedTowns: savedTowns.count ?? 0,
         pendingDrifts: drifts.count ?? 0,
         totalRuns: runs.count ?? 0,
+        reviewQueue: reviewQueue.count ?? 0,
       };
     },
   });
@@ -124,7 +131,7 @@ export default function AdminDashboard() {
           <Badge variant="destructive" className="text-xs">Admin Only</Badge>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-4 mb-6">
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
           <Link to="/admin/sources">
             <Card className="hover:shadow-md transition-shadow cursor-pointer border-accent/40 h-full">
               <CardContent padding="sm" className="flex items-center justify-between h-full">
@@ -134,6 +141,25 @@ export default function AdminDashboard() {
                     <p className="font-semibold text-sm">Town Sources</p>
                     <p className="text-xs text-muted-foreground">
                       Discover or edit the eCode360 / Municode URLs each town pulls from.
+                    </p>
+                  </div>
+                </div>
+                <Button size="sm" variant="outline">Open</Button>
+              </CardContent>
+            </Card>
+          </Link>
+
+          <Link to="/admin/review-queue">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer border-accent/40 h-full">
+              <CardContent padding="sm" className="flex items-center justify-between h-full">
+                <div className="flex items-center gap-3">
+                  <Inbox className="h-5 w-5 text-accent" />
+                  <div>
+                    <p className="font-semibold text-sm">Review Queue</p>
+                    <p className="text-xs text-muted-foreground">
+                      {stats && stats.reviewQueue > 0
+                        ? `${stats.reviewQueue} low-confidence source${stats.reviewQueue === 1 ? "" : "s"} need human review`
+                        : "Triage low-confidence auto-discovered URLs across every town in one place."}
                     </p>
                   </div>
                 </div>

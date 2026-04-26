@@ -86,21 +86,22 @@ async function aiPickBest(type: IngestType, town: string, candidates: SearchResu
     body: JSON.stringify({
       model: "google/gemini-2.5-flash-lite",
       messages: [
-        { role: "system", content: `You pick the single best official municipal source URL. You are looking for ${guidance[type]}` },
-        { role: "user", content: `Town: ${town}, NJ\nData type: ${type}\n\nCandidates:\n\n${numbered}\n\nReturn the index of the single best candidate, or 0 if none look like a real official source.` },
+        { role: "system", content: `You pick the single best official municipal source URL. You are looking for ${guidance[type]}. Score your confidence honestly: 0.95+ means the URL is unambiguously the right official source for the right town. 0.7–0.95 means probable but not certain. Below 0.7 means uncertain and a human should review.` },
+        { role: "user", content: `Town: ${town}, NJ\nData type: ${type}\n\nCandidates:\n\n${numbered}\n\nPick the single best candidate (or 0 if none qualify) AND give a 0.0–1.0 confidence score plus a one-sentence reason.` },
       ],
       tools: [{
         type: "function",
         function: {
           name: "pick",
-          description: "Pick the best candidate",
+          description: "Pick the best candidate with a confidence score.",
           parameters: {
             type: "object",
             properties: {
               index: { type: "number", description: "1-based index of the best candidate, or 0 if none qualify" },
+              confidence: { type: "number", description: "0.0–1.0 honest confidence that this URL is the right official source for the right town and the right data type" },
               reason: { type: "string", description: "One short sentence explaining the choice" },
             },
-            required: ["index", "reason"],
+            required: ["index", "confidence", "reason"],
           },
         },
       }],
@@ -113,9 +114,70 @@ async function aiPickBest(type: IngestType, town: string, candidates: SearchResu
   if (!resp.ok) throw new Error(`Lovable AI ${resp.status}: ${JSON.stringify(data)}`);
   const call = data.choices?.[0]?.message?.tool_calls?.[0];
   if (!call) return null;
-  const args = JSON.parse(call.function.arguments) as { index: number; reason: string };
+  const args = JSON.parse(call.function.arguments) as { index: number; confidence?: number; reason: string };
   if (!args.index || args.index < 1 || args.index > trimmed.length) return null;
-  return { ...trimmed[args.index - 1], reason: args.reason };
+  const conf = typeof args.confidence === "number" ? Math.max(0, Math.min(1, args.confidence)) : 0.5;
+  return { ...trimmed[args.index - 1], reason: args.reason, confidence: conf };
+}
+
+// =========================================================
+// Platform-index lookup — the "deterministic" path
+// =========================================================
+// For zones and ordinances (both served from a town's eCode360 root URL),
+// we first look up the town in code_platform_index. On hit, no Firecrawl
+// or AI needed — we know with 100% confidence what the URL is.
+//
+// Lookup logic mirrors how towns are seeded:
+//   towns.slug = "paramus" (no designator)        → bare='paramus', designator=null
+//   towns.slug = "washington-township"             → bare='washington', designator='township'
+//   towns.slug = "ridgefield-park"                 → bare='ridgefield-park', designator=null
+// We try (state, county, bare_name [+ designator if known]). If multiple
+// rows match (e.g. bare='washington' across township and borough in same
+// county), we abstain and let the AI path handle it.
+
+const PLATFORM_TYPES: ReadonlySet<IngestType> = new Set(["zones", "ordinances"]);
+
+type PlatformHit = {
+  platform: "ecode360" | "municode" | "generalcode";
+  customer_id: string | null;
+  base_url: string;
+  county: string | null;
+};
+
+function splitTownSlug(slug: string): { bare: string; designator: string | null } {
+  const m = slug.match(/^(.+)-(borough|township|city|village|town)$/);
+  if (m) return { bare: m[1], designator: m[2] };
+  return { bare: slug, designator: null };
+}
+
+async function platformIndexLookup(
+  admin: ReturnType<typeof createClient>,
+  type: IngestType,
+  state: string,
+  county: string,
+  townSlug: string,
+): Promise<PlatformHit | null> {
+  if (!PLATFORM_TYPES.has(type)) return null;
+  if (!state || !county) return null;
+
+  const { bare, designator } = splitTownSlug(townSlug);
+
+  let q = admin
+    .from("code_platform_index")
+    .select("platform, customer_id, base_url, county, designator")
+    .eq("state", state)
+    .eq("county", county)
+    .eq("bare_name", bare);
+  if (designator) q = q.eq("designator", designator);
+
+  const { data, error } = await q.limit(2);
+  if (error) {
+    console.error(`platformIndexLookup error for ${state}/${county}/${townSlug}:`, error.message);
+    return null;
+  }
+  // Ambiguous (multiple matches with no way to disambiguate) — let the AI path try.
+  if (!data || data.length !== 1) return null;
+  return data[0] as PlatformHit;
 }
 
 Deno.serve(async (req) => {
@@ -157,10 +219,54 @@ Deno.serve(async (req) => {
       ? requestedTypes.filter((t: string): t is IngestType => ["zones", "permits", "ordinances", "contacts"].includes(t))
       : ["zones", "permits", "ordinances", "contacts"];
 
-    // Run all types AND all queries fully in parallel — was sequential, which blew past 150s.
-    const results: Record<string, { picked: { url: string; title?: string; description?: string; reason?: string } | null; candidates: SearchResult[] }> = {};
+    // For NJ-only seed today; future migration may add `state` to towns.
+    const state = "NJ";
+
+    type ResultEntry = {
+      picked: {
+        url: string;
+        title?: string;
+        description?: string;
+        reason?: string;
+        confidence: number;
+        method: "platform_directory" | "ai_ranked";
+      } | null;
+      candidates: SearchResult[];
+    };
+    const results: Record<string, ResultEntry> = {};
 
     await Promise.all(types.map(async (t) => {
+      // Step 1 — try the deterministic platform-index lookup first
+      // (only meaningful for zones/ordinances). On hit, skip Firecrawl
+      // and AI entirely — we know what the URL is with 100% confidence.
+      const platformHit = await platformIndexLookup(admin, t, state, county, town_slug);
+      if (platformHit) {
+        const picked = {
+          url: platformHit.base_url,
+          title: `eCode360 ${platformHit.customer_id ?? ""}`.trim(),
+          reason: `Matched ${platformHit.platform} directory (${platformHit.county ?? "unknown county"}, customer ID ${platformHit.customer_id ?? "n/a"})`,
+          confidence: 1.0,
+          method: "platform_directory" as const,
+        };
+        results[t] = { picked, candidates: [] };
+
+        if (save) {
+          await admin.from("town_sources").upsert({
+            town_slug,
+            ingestion_type: t,
+            source_url: picked.url,
+            source_doc: picked.title,
+            source_label: `Auto-discovered (platform directory)`,
+            discovered_by: user.id,
+            discovery_confidence: picked.confidence,
+            discovery_method: picked.method,
+            discovery_reasoning: picked.reason,
+          }, { onConflict: "town_slug,ingestion_type,source_url" });
+        }
+        return;
+      }
+
+      // Step 2 — fall through to Firecrawl Search + AI rank.
       // Use only the first 2 query variants per type to cap Firecrawl calls.
       const queries = QUERIES[t](town, county).slice(0, 2);
       const searchResults = await Promise.all(
@@ -181,10 +287,13 @@ Deno.serve(async (req) => {
           }
         }
       }
-      const picked = await aiPickBest(t, town, all).catch((e) => {
+      const aiPick = await aiPickBest(t, town, all).catch((e) => {
         console.error(`AI pick (${t}) failed:`, e instanceof Error ? e.message : e);
         return null;
       });
+      const picked = aiPick
+        ? { ...aiPick, method: "ai_ranked" as const }
+        : null;
       results[t] = { picked, candidates: all.slice(0, 8) };
 
       if (save && picked) {
@@ -193,8 +302,11 @@ Deno.serve(async (req) => {
           ingestion_type: t,
           source_url: picked.url,
           source_doc: picked.title ?? null,
-          source_label: `Auto-discovered: ${picked.reason ?? ""}`.slice(0, 200),
+          source_label: `Auto-discovered (AI ranked)`,
           discovered_by: user.id,
+          discovery_confidence: picked.confidence,
+          discovery_method: picked.method,
+          discovery_reasoning: picked.reason ?? null,
         }, { onConflict: "town_slug,ingestion_type,source_url" });
       }
     }));
