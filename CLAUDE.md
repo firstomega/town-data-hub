@@ -90,3 +90,84 @@ Solo-operated. No employees planned. Long-term ambition is a moat built on struc
 - **Memory files (local only):** `C:\Users\balad\.claude\projects\C--Users-balad-Projects-town-data-hub\memory\`
 - **GitHub repo:** github.com/firstomega/town-data-hub
 - **Recent commits** are the best source of "what shipped recently" — `git log --oneline -20` tells the story.
+
+---
+
+## Phone-friendly backlog (50 ideas)
+
+These are pre-vetted as appropriate for cross-device sessions: small-to-medium scope, mostly frontend, no Lovable coordination needed unless noted. The user can pick any and prompt with just "do #N from the backlog" or describe the task.
+
+### SEO
+1. JSON-LD structured data (`Organization`, `Place`) on town profile pages
+2. Dynamic `sitemap.xml` covering all 70 town slugs + subpages
+3. Per-town `<title>` / `<meta description>` pulled from `town.character` / zoning summary
+4. `robots.txt` with sitemap reference; allow `/town/*`, `/guides/*`; block `/admin/*`
+5. Canonical URL tags on every public page
+6. OpenGraph image generator edge function — town summary share card (NOTE: needs Lovable to deploy edge function)
+
+### Engagement & retention
+7. "Recently viewed towns" widget on homepage (localStorage)
+8. "Email me when this town updates" capture (works pre-auth)
+9. Sticky table-of-contents on long town profile pages
+10. "Share this page" button with copy-link + Twitter/LinkedIn pre-fill
+11. "Helpful?" thumbs widget on every data row → stores feedback
+12. "What's New" changelog page in `/about` showing recent ordinance changes
+
+### Profile & settings
+13. Avatar upload to `/settings` (Supabase storage bucket)
+14. Granular email notification toggles (drift, weekly digest, comments)
+15. Pinned towns (up to 5, separate from saved)
+16. "Reset onboarding" link in settings
+17. Typed-confirm account deletion flow (type your email)
+18. "Member since" badge on profile
+
+### Automated content / blog
+19. New `/blog` route + `blog_posts` table (admin write, public read) (NOTE: schema = Lovable migration)
+20. Edge function every 3 days drafts an article from recent drift (NOTE: needs Lovable to deploy)
+21. Anti-AI prompt rules: no em-dashes, no "delve/leverage/comprehensive", varied sentence length, specific numbers, occasional first-person opinions
+22. Article templates: "What changed in Bergen zoning this week", "5 towns adding ADUs", etc.
+23. Byline = "The Town Center editorial team" — never reveal AI authorship
+24. Auto-post new articles via webhook (Buffer / Twitter / LinkedIn)
+
+### Pricing page & conversion
+25. **Update PricingPage to new tier model** (Free / Project Pack $19 / Contractor $29/seat / +$15 per state). Current page still has $3 homeowner. **High priority.**
+26. Feature × tier comparison matrix at bottom of PricingPage
+27. FAQ section on PricingPage
+28. State picker on Contractor tier (shows price as user adds states)
+29. "Most Popular" text badge on Contractor tier
+
+### Consistency & polish
+30. Page-title audit — enforce `Town Center | <Page>` format everywhere
+31. Empty-state audit — grep for bespoke "no results" divs; migrate to `<EmptyState>`
+32. Loading-spinner audit — migrate standalone `<Loader2>` instances to `<LoadingState>`
+33. Button text capitalization sweep — pick one convention, enforce
+34. Heading hierarchy audit — one `<h1>` per page, semantic `<h2>`/`<h3>`
+
+### Competitor-inspired features
+35. Free permit-cost-estimator widget on homepage
+36. "Find a contractor" directory (start with empty state + waitlist)
+37. "Compare us to BuildZoom / Procore / Zonda" comparison page
+38. "Permit difficulty score" A/B/C/D rating per town with methodology link
+
+### Data scope expansion (beyond zoning/ordinances)
+39. Property tax rates per town (NJ Treasury data) (NOTE: needs Lovable for new edge fn + table)
+40. School ratings per town (NJ DOE / GreatSchools)
+41. Recent home sales per town (Zillow/Realtor scrape)
+42. Crime statistics per town (FBI UCR annual data)
+43. Town events calendar (iCal aggregation)
+
+### Trust & social proof
+44. "Last verified by admin" timestamp publicly on every data row
+45. "Dispute this data" button on every public row → admin review queue
+46. "Powered by official sources" footer with publisher logos
+47. Testimonials section on homepage (placeholder copy initially)
+
+### Mobile & accessibility
+48. Admin mobile audit — `/admin` was desktop-first; tables overflow on small screens
+49. Keyboard navigation pass — tab order, focus traps in modals, `:focus-visible` styles
+50. Screen reader labels — audit icon-only buttons in admin for missing `aria-label`s
+
+**Notes for picking up an item:**
+- Items marked `(NOTE: …Lovable…)` need backend deploy through Lovable — write the code, commit, then the user prompts Lovable to apply.
+- All others are pure-frontend and ship via the standard `git push origin main` → Vercel pipeline.
+- Verify before pushing: `npm run build` clean + lint count ≤ baseline (11 errors / 9 warnings as of `0dd9e53`).
