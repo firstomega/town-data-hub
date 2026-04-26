@@ -151,7 +151,7 @@ function splitTownSlug(slug: string): { bare: string; designator: string | null 
 }
 
 async function platformIndexLookup(
-  admin: ReturnType<typeof createClient>,
+  admin: any,
   type: IngestType,
   state: string,
   county: string,
