@@ -147,7 +147,7 @@ export default function HomeownerDashboard() {
               </p>
               <Link to="/onboarding">
                 <Button className="w-full bg-accent hover:bg-accent/90 text-accent-foreground h-11">
-                  Set my home <ArrowRight className="h-4 w-4 ml-2" />
+                  Set My Home <ArrowRight className="h-4 w-4 ml-2" />
                 </Button>
               </Link>
             </CardContent>
@@ -164,7 +164,7 @@ export default function HomeownerDashboard() {
           {/* Hero: your home */}
           <div className="mb-2 flex items-center justify-between">
             <h1 className="text-2xl font-bold text-primary">Welcome back, {firstName}</h1>
-            <Link to="/settings"><Button variant="ghost" size="sm" className="text-xs">Edit home</Button></Link>
+            <Link to="/settings"><Button variant="ghost" size="sm" className="text-xs">Edit Home</Button></Link>
           </div>
           <p className="text-sm text-muted-foreground mb-4">Everything below is specific to your home.</p>
 
@@ -187,11 +187,11 @@ export default function HomeownerDashboard() {
                 </div>
                 <div className="flex gap-2">
                   <Link to={`/town/${homeSlug}`}>
-                    <Button variant="outline" size="sm" className="text-xs">Town profile</Button>
+                    <Button variant="outline" size="sm" className="text-xs">Town Profile</Button>
                   </Link>
                   <Link to="/feasibility">
                     <Button size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground text-xs">
-                      Check a project
+                      Check a Project
                     </Button>
                   </Link>
                 </div>
@@ -250,7 +250,7 @@ export default function HomeownerDashboard() {
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Local services</h2>
               <Link to={`/town/${homeSlug}/contacts`}>
-                <Button variant="ghost" size="sm" className="text-xs text-accent">View all</Button>
+                <Button variant="ghost" size="sm" className="text-xs text-accent">View All</Button>
               </Link>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -282,7 +282,7 @@ export default function HomeownerDashboard() {
             <div className="flex items-center justify-between mb-3">
               <h2 className="font-semibold text-sm uppercase tracking-wider text-muted-foreground">Quality-of-life rules</h2>
               <Link to={`/town/${homeSlug}/ordinances`}>
-                <Button variant="ghost" size="sm" className="text-xs text-accent">All ordinances</Button>
+                <Button variant="ghost" size="sm" className="text-xs text-accent">All Ordinances</Button>
               </Link>
             </div>
             {qol.length === 0 ? (

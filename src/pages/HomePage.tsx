@@ -181,7 +181,7 @@ export default function HomePage() {
             </p>
             <Link to="/about">
               <Button variant="outline" size="sm" className="gap-1.5">
-                Learn more <ArrowRight className="h-3.5 w-3.5" />
+                Learn More <ArrowRight className="h-3.5 w-3.5" />
               </Button>
             </Link>
           </CardContent>

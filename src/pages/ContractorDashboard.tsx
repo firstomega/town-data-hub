@@ -99,7 +99,7 @@ export default function ContractorDashboard() {
             <CardContent padding="lg" className="text-center space-y-3">
               <h1 className="text-lg font-bold">Sign in required</h1>
               <p className="text-sm text-muted-foreground">The Contractor Dashboard is for logged-in pros.</p>
-              <Link to="/auth"><Button>Sign in</Button></Link>
+              <Link to="/auth"><Button>Sign In</Button></Link>
             </CardContent>
           </Card>
         </div>
@@ -182,7 +182,7 @@ export default function ContractorDashboard() {
                   <p className="text-xs text-muted-foreground">
                     Save the towns you work in. We'll pull the zoning rules side-by-side so you can compare without flipping tabs.
                   </p>
-                  <Link to="/onboarding"><Button size="sm">Add towns</Button></Link>
+                  <Link to="/onboarding"><Button size="sm">Add Towns</Button></Link>
                 </CardContent>
               </Card>
             )}
