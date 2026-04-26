@@ -88,9 +88,12 @@ export type Database = {
       }
       code_platform_index: {
         Row: {
+          bare_name: string | null
           base_url: string
+          county: string | null
           created_at: string
           customer_id: string | null
+          designator: string | null
           id: string
           last_indexed_at: string
           platform: string
@@ -99,9 +102,12 @@ export type Database = {
           town_name_normalized: string
         }
         Insert: {
+          bare_name?: string | null
           base_url: string
+          county?: string | null
           created_at?: string
           customer_id?: string | null
+          designator?: string | null
           id?: string
           last_indexed_at?: string
           platform: string
@@ -110,9 +116,12 @@ export type Database = {
           town_name_normalized: string
         }
         Update: {
+          bare_name?: string | null
           base_url?: string
+          county?: string | null
           created_at?: string
           customer_id?: string | null
+          designator?: string | null
           id?: string
           last_indexed_at?: string
           platform?: string
