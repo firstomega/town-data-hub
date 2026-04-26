@@ -239,14 +239,36 @@ async function aiExtractDirectory(
 }
 
 function normalizeTownName(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    // Strip common prefixes/suffixes the publisher may include
-    .replace(/^(the\s+)?(borough|township|city|village|town)\s+of\s+/i, "")
-    .replace(/\s+(borough|township|city|village|town)$/i, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+  // Extract the municipal-type designator (borough/township/city/etc.) and
+  // the bare name separately, then recombine as "<name>-<designator>".
+  // This is critical in NJ where many bare names collide across types
+  // (e.g. Washington Township vs. Washington Borough vs. Town of Washington).
+  const lower = name.toLowerCase().trim();
+
+  // "Township of Washington" / "The Borough of Washington"
+  const prefixMatch = lower.match(
+    /^(?:the\s+)?(borough|township|city|village|town)\s+of\s+(.+)$/i,
+  );
+  // "Washington Township" / "Bergenfield Borough"
+  const suffixMatch = lower.match(
+    /^(.+?)\s+(borough|township|city|village|town)$/i,
+  );
+
+  let designator: string | null = null;
+  let bare = lower;
+  if (prefixMatch) {
+    designator = prefixMatch[1];
+    bare = prefixMatch[2];
+  } else if (suffixMatch) {
+    designator = suffixMatch[2];
+    bare = suffixMatch[1];
+  }
+
+  const slugify = (s: string) =>
+    s.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+  const bareSlug = slugify(bare);
+  return designator ? `${bareSlug}-${designator}` : bareSlug;
 }
 
 Deno.serve(async (req) => {
