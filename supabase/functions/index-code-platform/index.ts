@@ -28,10 +28,15 @@ type Platform = "ecode360" | "municode" | "generalcode";
 // State-level directory URL per platform. The full state name is needed
 // for some platforms; the USPS code for others. We pass both to the URL
 // builder so each platform can pick.
+//
+// NOTE: For eCode360, the canonical public directory of every town is
+// General Code's text-library page (General Code is the company that
+// operates eCode360). It's a single static HTML page listing every state,
+// with each town linking to its `https://ecode360.com/<CUSTOMER_ID>` root.
+// We deterministically parse the NJ (or any state) section instead of
+// trying to scrape ecode360.com directly (which has no state index).
 const PLATFORM_DIRECTORY_URL: Record<Platform, (stateCode: string, stateName: string) => string> = {
-  // eCode360 lists every NJ town at a state path. Confirmed pattern via
-  // their public site map; the page lists town names linking to /<CODE>.
-  ecode360: (stateCode) => `https://ecode360.com/${stateCode}`,
+  ecode360: () => `https://www.generalcode.com/text-library/`,
   // Municode's library is organized by state name (lowercase, hyphenated).
   municode: (_stateCode, stateName) =>
     `https://library.municode.com/${stateName.toLowerCase().replace(/\s+/g, "-")}`,
@@ -91,6 +96,63 @@ async function firecrawlScrape(url: string): Promise<string> {
   const md = data.data?.markdown ?? data.markdown;
   if (!md) throw new Error("Firecrawl returned no markdown");
   return md as string;
+}
+
+// Direct fetch (no Firecrawl) for static HTML pages we can parse ourselves.
+async function rawFetchHtml(url: string): Promise<string> {
+  const resp = await withTimeout(
+    fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (compatible; TownCenterIndexer/1.0; +https://towncenter.lovable.app)",
+        Accept: "text/html,application/xhtml+xml",
+      },
+    }),
+    30_000,
+    `raw fetch ${url}`,
+  );
+  if (!resp.ok) {
+    const body = await resp.text().catch(() => "");
+    throw new Error(`raw fetch ${url} -> ${resp.status}: ${body.slice(0, 200)}`);
+  }
+  return await resp.text();
+}
+
+// Deterministically parse General Code's text-library HTML for a single state.
+// Structure (verified 2026-04): a `<div class="state XX">` block per state,
+// followed by `<div class="listItem">` entries each containing
+//   <a class="codeLink" href="https://ecode360.com/<CUSTOMER_ID>" ...>
+//     <town name with prefix>
+//   </a>
+//   <div class="codeCounty">(<county> County)</div>
+function parseGeneralCodeTextLibrary(html: string, stateCode: string): ExtractedTown[] {
+  // Slice out just the requested state's block. We avoid a giant lazy
+  // regex (catastrophic backtracking on 2MB input) by doing string
+  // index math: find the state's opening marker, then find the next
+  // state-block opener and slice between them.
+  const startMarker = `<div class="state ${stateCode}">`;
+  const startIdx = html.indexOf(startMarker);
+  if (startIdx === -1) return [];
+
+  // Look for the next "<div class=\"state XX\">" after our start.
+  const nextStateRe = /<div class="state [A-Z]{2}">/g;
+  nextStateRe.lastIndex = startIdx + startMarker.length;
+  const nextMatch = nextStateRe.exec(html);
+  const endIdx = nextMatch ? nextMatch.index : html.length;
+  const block = html.slice(startIdx, endIdx);
+
+  const itemRe =
+    /<a class="codeLink"\s+href="(https?:\/\/ecode360\.com\/[^"]+)"[^>]*>\s*([^<]+?)\s*<\/a>/g;
+  const out: ExtractedTown[] = [];
+  for (const m of block.matchAll(itemRe)) {
+    const baseUrl = m[1].trim();
+    const townName = m[2].replace(/\s+/g, " ").trim();
+    if (!townName || !baseUrl) continue;
+    // Customer ID is the last path segment of the eCode360 URL.
+    const customerId = baseUrl.split("/").filter(Boolean).pop() ?? null;
+    out.push({ town_name: townName, customer_id: customerId, base_url: baseUrl });
+  }
+  return out;
 }
 
 type ExtractedTown = {
@@ -177,14 +239,36 @@ async function aiExtractDirectory(
 }
 
 function normalizeTownName(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    // Strip common prefixes/suffixes the publisher may include
-    .replace(/^(the\s+)?(borough|township|city|village|town)\s+of\s+/i, "")
-    .replace(/\s+(borough|township|city|village|town)$/i, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+  // Extract the municipal-type designator (borough/township/city/etc.) and
+  // the bare name separately, then recombine as "<name>-<designator>".
+  // This is critical in NJ where many bare names collide across types
+  // (e.g. Washington Township vs. Washington Borough vs. Town of Washington).
+  const lower = name.toLowerCase().trim();
+
+  // "Township of Washington" / "The Borough of Washington"
+  const prefixMatch = lower.match(
+    /^(?:the\s+)?(borough|township|city|village|town)\s+of\s+(.+)$/i,
+  );
+  // "Washington Township" / "Bergenfield Borough"
+  const suffixMatch = lower.match(
+    /^(.+?)\s+(borough|township|city|village|town)$/i,
+  );
+
+  let designator: string | null = null;
+  let bare = lower;
+  if (prefixMatch) {
+    designator = prefixMatch[1];
+    bare = prefixMatch[2];
+  } else if (suffixMatch) {
+    designator = suffixMatch[2];
+    bare = suffixMatch[1];
+  }
+
+  const slugify = (s: string) =>
+    s.replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+
+  const bareSlug = slugify(bare);
+  return designator ? `${bareSlug}-${designator}` : bareSlug;
 }
 
 Deno.serve(async (req) => {
@@ -241,11 +325,23 @@ Deno.serve(async (req) => {
     const stateName = STATE_NAMES[state] ?? state;
     const directoryUrl = PLATFORM_DIRECTORY_URL[platform](state, stateName);
 
-    console.log(`[index-code-platform] scraping ${directoryUrl}`);
-    const markdown = await firecrawlScrape(directoryUrl);
+    let towns: ExtractedTown[];
+    let extractionMethod: "deterministic" | "ai" = "ai";
 
-    console.log(`[index-code-platform] AI extract from ${markdown.length} chars`);
-    const towns = await aiExtractDirectory(platform, state, directoryUrl, markdown);
+    if (platform === "ecode360") {
+      // Deterministic path: General Code's text-library page lists every
+      // eCode360 town in stable HTML. No Firecrawl, no AI, no cost.
+      console.log(`[index-code-platform] deterministic fetch ${directoryUrl}`);
+      const html = await rawFetchHtml(directoryUrl);
+      console.log(`[index-code-platform] parsing ${html.length} chars for state ${state}`);
+      towns = parseGeneralCodeTextLibrary(html, state);
+      extractionMethod = "deterministic";
+    } else {
+      console.log(`[index-code-platform] scraping ${directoryUrl}`);
+      const markdown = await firecrawlScrape(directoryUrl);
+      console.log(`[index-code-platform] AI extract from ${markdown.length} chars`);
+      towns = await aiExtractDirectory(platform, state, directoryUrl, markdown);
+    }
 
     if (!towns.length) {
       return new Response(
@@ -254,6 +350,8 @@ Deno.serve(async (req) => {
           state,
           platform,
           indexed: 0,
+          method: extractionMethod,
+          directory_url: directoryUrl,
           message: "No towns extracted. Page may have changed structure or returned no usable content.",
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -261,7 +359,7 @@ Deno.serve(async (req) => {
     }
 
     // Upsert into code_platform_index
-    const rows = towns
+    const rawRows = towns
       .filter((t) => t.town_name && t.base_url)
       .map((t) => ({
         state,
@@ -273,6 +371,15 @@ Deno.serve(async (req) => {
         last_indexed_at: new Date().toISOString(),
       }))
       .filter((r) => r.town_name_normalized.length > 0);
+
+    // De-dupe within the batch — Postgres rejects a single upsert that
+    // tries to touch the same conflict-target row twice. Last writer wins.
+    const dedupedMap = new Map<string, typeof rawRows[number]>();
+    for (const r of rawRows) {
+      dedupedMap.set(`${r.state}|${r.platform}|${r.town_name_normalized}`, r);
+    }
+    const rows = Array.from(dedupedMap.values());
+    const droppedDuplicates = rawRows.length - rows.length;
 
     if (!rows.length) {
       return new Response(
@@ -295,6 +402,9 @@ Deno.serve(async (req) => {
         state,
         platform,
         indexed: rows.length,
+        method: extractionMethod,
+        directory_url: directoryUrl,
+        dropped_duplicates: droppedDuplicates,
         sample: rows.slice(0, 5).map((r) => ({
           town_name: r.town_name,
           town_name_normalized: r.town_name_normalized,
@@ -305,7 +415,7 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Unknown error";
+    const msg = e instanceof Error ? `${e.message}\n${e.stack ?? ""}` : `Non-Error thrown: ${JSON.stringify(e)}`;
     console.error("[index-code-platform] error:", msg);
     return new Response(JSON.stringify({ error: msg }), {
       status: 500,

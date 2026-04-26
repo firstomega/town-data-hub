@@ -86,6 +86,42 @@ export type Database = {
         }
         Relationships: []
       }
+      code_platform_index: {
+        Row: {
+          base_url: string
+          created_at: string
+          customer_id: string | null
+          id: string
+          last_indexed_at: string
+          platform: string
+          state: string
+          town_name: string
+          town_name_normalized: string
+        }
+        Insert: {
+          base_url: string
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          last_indexed_at?: string
+          platform: string
+          state: string
+          town_name: string
+          town_name_normalized: string
+        }
+        Update: {
+          base_url?: string
+          created_at?: string
+          customer_id?: string | null
+          id?: string
+          last_indexed_at?: string
+          platform?: string
+          state?: string
+          town_name?: string
+          town_name_normalized?: string
+        }
+        Relationships: []
+      }
       contacts: {
         Row: {
           address: string | null
@@ -649,6 +685,9 @@ export type Database = {
         Row: {
           created_at: string
           discovered_by: string | null
+          discovery_confidence: number | null
+          discovery_method: string | null
+          discovery_reasoning: string | null
           id: string
           ingestion_type: string
           last_used_at: string | null
@@ -658,10 +697,15 @@ export type Database = {
           source_url: string
           town_slug: string
           updated_at: string
+          verified_at: string | null
+          verified_by: string | null
         }
         Insert: {
           created_at?: string
           discovered_by?: string | null
+          discovery_confidence?: number | null
+          discovery_method?: string | null
+          discovery_reasoning?: string | null
           id?: string
           ingestion_type: string
           last_used_at?: string | null
@@ -671,10 +715,15 @@ export type Database = {
           source_url: string
           town_slug: string
           updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Update: {
           created_at?: string
           discovered_by?: string | null
+          discovery_confidence?: number | null
+          discovery_method?: string | null
+          discovery_reasoning?: string | null
           id?: string
           ingestion_type?: string
           last_used_at?: string | null
@@ -684,6 +733,8 @@ export type Database = {
           source_url?: string
           town_slug?: string
           updated_at?: string
+          verified_at?: string | null
+          verified_by?: string | null
         }
         Relationships: []
       }
