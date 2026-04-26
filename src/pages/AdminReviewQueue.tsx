@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { ExternalLink, Check, X, RefreshCw, Loader2, Inbox, Filter } from "lucide-react";
+import { ExternalLink, Check, X, RefreshCw, Loader2, Inbox, Filter, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { LoadingState } from "@/components/states/LoadingState";
@@ -136,6 +136,9 @@ export default function AdminReviewQueue() {
   return (
     <AppLayout showSearch contained={false}>
       <div className="container py-6 max-w-5xl">
+        <Link to="/admin" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+          <ArrowLeft className="h-3.5 w-3.5" /> Back to Admin Dashboard
+        </Link>
         <div className="flex items-start justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-primary">Source Review Queue</h1>

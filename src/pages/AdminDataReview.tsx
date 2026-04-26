@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,7 +11,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { Loader2, ExternalLink, Check, X, Sparkles, RefreshCw, ShieldCheck, Clock, AlertTriangle, Search, Bookmark, Trash2 } from "lucide-react";
+import { Loader2, ExternalLink, Check, X, Sparkles, RefreshCw, ShieldCheck, Clock, AlertTriangle, Search, Bookmark, Trash2, ArrowLeft } from "lucide-react";
 import { useAllTowns } from "@/hooks/useTownData";
 import { Switch } from "@/components/ui/switch";
 import { LoadingState } from "@/components/states/LoadingState";
@@ -643,6 +644,9 @@ export default function AdminDataReview() {
   return (
     <AppLayout showSearch contained={false}>
       <div className="container py-6 max-w-6xl">
+        <Link to="/admin" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground mb-4">
+          <ArrowLeft className="h-3.5 w-3.5" /> Back to Admin Dashboard
+        </Link>
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-primary">Data Review</h1>
