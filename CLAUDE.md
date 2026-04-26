@@ -93,81 +93,334 @@ Solo-operated. No employees planned. Long-term ambition is a moat built on struc
 
 ---
 
-## Phone-friendly backlog (50 ideas)
+## Phone-friendly backlog (50 ideas, with full rationale)
 
-These are pre-vetted as appropriate for cross-device sessions: small-to-medium scope, mostly frontend, no Lovable coordination needed unless noted. The user can pick any and prompt with just "do #N from the backlog" or describe the task.
+Pre-vetted for cross-device sessions: small-to-medium scope, mostly frontend, no Lovable coordination needed unless flagged.
+
+**How to pick one:** prompt with "do #N" or describe the task. Each item has:
+- **What** — the concrete change
+- **Why** — the rationale
+- **Risk** — what happens if you skip it
+- **💰** — revenue impact tier (🟢 direct / 🟡 strong indirect / 🔵 weak indirect / ⚪ none)
+
+**Verify before pushing:** `npm run build` clean + lint count ≤ baseline (11 errors / 9 warnings as of `0dd9e53`).
 
 ### SEO
-1. JSON-LD structured data (`Organization`, `Place`) on town profile pages
-2. Dynamic `sitemap.xml` covering all 70 town slugs + subpages
-3. Per-town `<title>` / `<meta description>` pulled from `town.character` / zoning summary
-4. `robots.txt` with sitemap reference; allow `/town/*`, `/guides/*`; block `/admin/*`
-5. Canonical URL tags on every public page
-6. OpenGraph image generator edge function — town summary share card (NOTE: needs Lovable to deploy edge function)
+
+**1. JSON-LD structured data on town pages**
+- What: Schema.org markup (`Organization`, `Place`) on town profile pages
+- Why: Google shows rich snippets — bigger SERP footprint
+- Risk: Compete on plain blue links against rivals with enhanced listings
+- 💰 🟡 Indirect SEO lift, feeds organic → Free → Project Pack funnel
+
+**2. Dynamic `sitemap.xml`**
+- What: Auto-generated XML listing all 70 town slugs + each section page
+- Why: Google can't index pages it doesn't know exist
+- Risk: Most of your 70 town pages stay invisible to Google indefinitely
+- 💰 🟡 Foundational for SEO; potentially the biggest organic-traffic unlock
+
+**3. Per-town `<title>` and `<meta description>`**
+- What: Unique titles/descriptions per town pulled from `town.character` or zoning summary
+- Why: Identical/generic meta = Google deduplicates and ranks only one
+- Risk: 70 town pages compete with each other for the same search rank
+- 💰 🟡 Each town then ranks for "<town> zoning"/"permits" long-tail queries
+
+**4. `robots.txt` with crawl directives**
+- What: Allow `/town/*`, `/guides/*`; block `/admin/*`
+- Why: Stops Google from indexing admin pages (security + crawl budget)
+- Risk: Admin URLs leak into search results
+- 💰 🔵 Hygiene more than revenue
+
+**5. Canonical URL tags**
+- What: `<link rel="canonical">` on every public page
+- Why: Trailing-slash and `?utm=` variants don't dilute ranking
+- Risk: SEO ranking diluted across URL variants
+- 💰 🔵 Hygiene
+
+**6. OpenGraph image generator edge function** *(Lovable for deploy)*
+- What: Dynamic share-card image per town (logo + name + key stats)
+- Why: Social shares look professional vs broken/generic
+- Risk: Twitter/LinkedIn shares get unstyled fallback → fewer clicks
+- 💰 🟡 Each shared link's CTR ~3× higher with proper OG image
 
 ### Engagement & retention
-7. "Recently viewed towns" widget on homepage (localStorage)
-8. "Email me when this town updates" capture (works pre-auth)
-9. Sticky table-of-contents on long town profile pages
-10. "Share this page" button with copy-link + Twitter/LinkedIn pre-fill
-11. "Helpful?" thumbs widget on every data row → stores feedback
-12. "What's New" changelog page in `/about` showing recent ordinance changes
+
+**7. "Recently viewed towns" widget on homepage**
+- What: localStorage-based history shown on `/`
+- Why: Brings repeat visitors back to where they left
+- Risk: Users forget the URL of a town they were researching, never return
+- 💰 🟡 Retention lever — every return visit increases conversion probability
+
+**8. Email-capture for town updates (pre-auth)**
+- What: "Email me when this changes" form on every town page
+- Why: Captures interested users before signup friction
+- Risk: Hot leads bounce with no way to re-engage them
+- 💰 🟢 Owned email list = direct future revenue (industry avg $36 per $1)
+
+**9. Sticky table-of-contents on town profile pages**
+- What: In-page nav that follows the scroll
+- Why: Long pages otherwise feel daunting
+- Risk: Users bounce before reaching the section they need
+- 💰 🔵 Reduces bounce, modest engagement lift
+
+**10. Share buttons (copy-link + Twitter/LinkedIn pre-fill)**
+- What: One-click share with pre-written text per town
+- Why: Removes friction from organic distribution
+- Risk: Zero shares; pure paid acquisition only
+- 💰 🟡 Each share averages ~3-5 new visitors
+
+**11. "Helpful?" thumbs widget on every data row**
+- What: 👍/👎 + optional comment, stored for admin review
+- Why: User feedback signal beats no signal
+- Risk: Bad data persists because nobody knows it's bad
+- 💰 🔵 Long-term data quality moat
+
+**12. "What's New" changelog page**
+- What: `/about/whats-new` showing recent ordinance changes detected
+- Why: Shows the system is alive + SEO content
+- Risk: Product feels static; nothing for content marketers to link to
+- 💰 🔵 Trust signal
 
 ### Profile & settings
-13. Avatar upload to `/settings` (Supabase storage bucket)
-14. Granular email notification toggles (drift, weekly digest, comments)
-15. Pinned towns (up to 5, separate from saved)
-16. "Reset onboarding" link in settings
-17. Typed-confirm account deletion flow (type your email)
-18. "Member since" badge on profile
+
+**13. Avatar upload**
+- What: Supabase storage bucket + upload UI in `/settings`
+- Why: Personalization
+- Risk: Generic
+- 💰 ⚪
+
+**14. Granular email notification preferences**
+- What: Separate toggles for drift alerts, weekly digest, comments
+- Why: Users get the emails they want, opt out of the ones they don't
+- Risk: One-bad-email triggers full unsubscribe → lose channel forever
+- 💰 🟡 Protects email deliverability and the entire channel's value
+
+**15. Pinned towns (separate from saved)**
+- What: Up to 5 towns featured prominently on dashboard
+- Why: Contractors operate in 2-5 active markets; needs fast access
+- Risk: Contractors can't manage portfolio in the tool
+- 💰 🟡 Contractor stickiness — directly affects retention of paid users
+
+**16. "Reset onboarding" link in settings**
+- What: Re-trigger the welcome flow
+- Why: Useful for users who skipped or want to redo
+- Risk: Minor
+- 💰 ⚪
+
+**17. Typed-confirm account deletion**
+- What: User must type their email to delete (currently single-click)
+- Why: Prevents accidental destruction
+- Risk: One angry support ticket from accidental deletion → reputation damage
+- 💰 🔵 Churn defense
+
+**18. "Member since" date on profile**
+- What: Badge showing account age
+- Why: Trust + slight gamification
+- Risk: Minor
+- 💰 ⚪
 
 ### Automated content / blog
-19. New `/blog` route + `blog_posts` table (admin write, public read) (NOTE: schema = Lovable migration)
-20. Edge function every 3 days drafts an article from recent drift (NOTE: needs Lovable to deploy)
-21. Anti-AI prompt rules: no em-dashes, no "delve/leverage/comprehensive", varied sentence length, specific numbers, occasional first-person opinions
-22. Article templates: "What changed in Bergen zoning this week", "5 towns adding ADUs", etc.
-23. Byline = "The Town Center editorial team" — never reveal AI authorship
-24. Auto-post new articles via webhook (Buffer / Twitter / LinkedIn)
+
+**19. New `/blog` route + `blog_posts` table** *(Lovable for migration)*
+- What: Public blog with admin-write/public-read schema
+- Why: Foundation for #20-24
+- Risk: No platform for content marketing
+- 💰 🟡 Foundation for the SEO-content engine
+
+**20. Edge function: every 3 days, draft a new article** *(Lovable for deploy)*
+- What: Cron-driven generation from recent drift in `data_drifts`
+- Why: Cheapest possible content marketing
+- Risk: Stagnant content → search traffic decays
+- 💰 🟢 Content-driven SEO is the lowest-CAC channel
+
+**21. Anti-AI-detection prompt rules**
+- What: Prompt rules to avoid em-dashes, "delve/leverage/comprehensive", vary sentence length, first-person opinions, specific numbers
+- Why: Google's helpful-content updates penalize obvious AI content
+- Risk: All generated articles get de-ranked or de-indexed
+- 💰 🟢 Preserves the value of #20
+
+**22. Article topic templates**
+- What: Pre-defined formats — "What changed", "5 towns adding X", "Why Y just changed"
+- Why: Variety + on-topic relevance
+- Risk: Random off-topic articles
+- 💰 🟢 Multiplies the SEO value of #20
+
+**23. "The Town Center editorial team" byline**
+- What: Human-attributed author, never reveal AI
+- Why: Google's E-E-A-T evaluation
+- Risk: Disclosed AI authorship triggers de-ranking
+- 💰 🟢 Required to make #20 actually work
+
+**24. Auto-post new articles to social**
+- What: Webhook to Buffer / X / LinkedIn on publish
+- Why: Distribution multiplies content value
+- Risk: Articles publish to nobody
+- 💰 🟡 Supports #20-23 reach
 
 ### Pricing page & conversion
-25. **Update PricingPage to new tier model** (Free / Project Pack $19 / Contractor $29/seat / +$15 per state). Current page still has $3 homeowner. **High priority.**
-26. Feature × tier comparison matrix at bottom of PricingPage
-27. FAQ section on PricingPage
-28. State picker on Contractor tier (shows price as user adds states)
-29. "Most Popular" text badge on Contractor tier
+
+**25. ⚠️ Update PricingPage to new tier model**
+- What: Replace current $3/$15 with Free / Project Pack $19 / Contractor $29 / +$15 per state
+- Why: Page currently misrepresents your business
+- Risk: Users sign up at expected old price → churn / refund / bad reviews
+- 💰 🟢 **CRITICAL** — must precede any Stripe wiring
+
+**26. Feature × tier comparison matrix**
+- What: Table showing which features are in which tier
+- Why: Decision aid for fence-sitters
+- Risk: Confused prospects don't pick a tier
+- 💰 🟢 Direct conversion aid
+
+**27. FAQ section on PricingPage**
+- What: Pre-empt "Can I cancel?" / "What's a Project Pack?" / "How fresh is data?"
+- Why: Each unanswered objection = lost conversion
+- Risk: Fence-sitters churn at the page
+- 💰 🟡 Conversion lift on paid signup
+
+**28. Interactive state picker on Contractor tier**
+- What: Toggle states; price updates live
+- Why: Shows multi-state value visually
+- Risk: Contractors don't realize multi-state is even possible
+- 💰 🟢 Drives state add-ons (highest-margin upsell)
+
+**29. "Most Popular" text badge on Contractor tier**
+- What: Prominent visual nudge
+- Why: Anchor effect — most users default to "most popular"
+- Risk: Even split across tiers; lower ARPU
+- 💰 🟡 Steers users to the right tier for them
 
 ### Consistency & polish
-30. Page-title audit — enforce `Town Center | <Page>` format everywhere
-31. Empty-state audit — grep for bespoke "no results" divs; migrate to `<EmptyState>`
-32. Loading-spinner audit — migrate standalone `<Loader2>` instances to `<LoadingState>`
-33. Button text capitalization sweep — pick one convention, enforce
-34. Heading hierarchy audit — one `<h1>` per page, semantic `<h2>`/`<h3>`
+
+**30. Page-title audit (`Town Center | <Page>` format)**
+- What: Enforce one consistent title format across all pages
+- Why: Browser tabs, bookmarks, SEO
+- Risk: Looks unprofessional
+- 💰 🔵
+
+**31. Empty-state primitive audit**
+- What: Find any bespoke "no results" divs and migrate to `<EmptyState>`
+- Why: Visual consistency = perceived quality
+- Risk: Some pages feel broken
+- 💰 🔵
+
+**32. Loading-spinner primitive audit**
+- What: Find standalone `<Loader2>` and migrate to `<LoadingState>`
+- Why: Same as #31
+- Risk: Same
+- 💰 🔵
+
+**33. Button text capitalization sweep**
+- What: Pick one convention (Title for primary / sentence for secondary), enforce
+- Why: Polish
+- Risk: Looks amateur
+- 💰 🔵
+
+**34. Heading hierarchy audit (h1 → h2 → h3)**
+- What: One `<h1>` per page; semantic nesting
+- Why: SEO + screen readers
+- Risk: SEO penalty + a11y violation
+- 💰 🟡 SEO bonus + a11y compliance
 
 ### Competitor-inspired features
-35. Free permit-cost-estimator widget on homepage
-36. "Find a contractor" directory (start with empty state + waitlist)
-37. "Compare us to BuildZoom / Procore / Zonda" comparison page
-38. "Permit difficulty score" A/B/C/D rating per town with methodology link
 
-### Data scope expansion (beyond zoning/ordinances)
-39. Property tax rates per town (NJ Treasury data) (NOTE: needs Lovable for new edge fn + table)
-40. School ratings per town (NJ DOE / GreatSchools)
-41. Recent home sales per town (Zillow/Realtor scrape)
-42. Crime statistics per town (FBI UCR annual data)
-43. Town events calendar (iCal aggregation)
+**35. Free permit cost estimator on homepage**
+- What: Interactive widget — pick town + project type → estimated fees
+- Why: BuildZoom built businesses on this single tool
+- Risk: Lose top-of-funnel traffic to competitors
+- 💰 🟢 Top-of-funnel lead magnet
+
+**36. "Find a contractor" directory (start with empty state)**
+- What: Marketplace stub — "Be among the first listed" for contractors
+- Why: Two-sided value
+- Risk: Lose the transactional revenue layer
+- 💰 🟢 Potential transaction revenue (referral fees, premium listings)
+
+**37. "Town Center vs BuildZoom / Procore" comparison pages**
+- What: Honest side-by-side feature/price comparisons
+- Why: Captures "X vs Y" search intent
+- Risk: Lose comparison searches to competitor-authored content
+- 💰 🟡 High-intent SEO traffic
+
+**38. "Permit Difficulty Score" (A/B/C/D) per town**
+- What: Heuristic rating based on avg fees + # permits + zoning complexity
+- Why: Engagement bait + media-quotable
+- Risk: Controversial = either huge PR win or local-paper attack
+- 💰 🟡 PR + virality lift
+
+### Data scope expansion
+
+**39. Property tax rates per town** *(Lovable for table + edge fn)*
+- What: Pull NJ Treasury data, display on town overview
+- Why: Homeowners researching where to buy = different + larger audience
+- Risk: Competitor with broader homeowner data wins discovery
+- 💰 🟢 Expands TAM beyond builders
+
+**40. School ratings per town**
+- What: NJ DOE + GreatSchools API integration
+- Why: Parents = primary homeowner buyers
+- Risk: Lose this huge segment to Niche / GreatSchools
+- 💰 🟢 Major TAM expansion
+
+**41. Recent home sales per town**
+- What: Comp data from public records / Zillow scrape
+- Why: Contextualizes the value of zoning decisions
+- Risk: Zillow has it natively
+- 💰 🟡 Differentiation play
+
+**42. Crime statistics per town**
+- What: FBI UCR open data, refreshed annually
+- Why: Safety-conscious buyers
+- Risk: Lose safety-segment users
+- 💰 🔵 Segment play
+
+**43. Town events calendar**
+- What: Aggregate iCal feeds from town websites
+- Why: Engagement, repeat visits
+- Risk: Town pages feel one-dimensional (just regulations)
+- 💰 🔵 Engagement lift
 
 ### Trust & social proof
-44. "Last verified by admin" timestamp publicly on every data row
-45. "Dispute this data" button on every public row → admin review queue
-46. "Powered by official sources" footer with publisher logos
-47. Testimonials section on homepage (placeholder copy initially)
+
+**44. "Last verified by admin" timestamp on every public data row**
+- What: Show users when the data was last verified
+- Why: Without this, users assume data is stale
+- Risk: Trust is the #1 reason a user converts on regulatory data
+- 💰 🟢 Conversion blocker — trust is the gating factor
+
+**45. "Dispute this data" button on every public row**
+- What: Crowd-sourced correction flagging
+- Why: Data quality improves silently as user base grows
+- Risk: Quality degrades silently; competitors with corrections beat you
+- 💰 🟡 Long-term data-quality moat
+
+**46. "Powered by official sources" footer with publisher logos**
+- What: eCode360 / Municode / town gov logos linked to actual source
+- Why: Borrowed trust from authoritative publishers
+- Risk: Look like just another aggregator
+- 💰 🔵 Trust signal
+
+**47. Testimonials section on homepage**
+- What: Placeholder copy now → real testimonials when you have them
+- Why: Social proof is the highest-converting hero element
+- Risk: Conversion 30-50% lower without trust signals on landing
+- 💰 🟢 Direct conversion impact (when real)
 
 ### Mobile & accessibility
-48. Admin mobile audit — `/admin` was desktop-first; tables overflow on small screens
-49. Keyboard navigation pass — tab order, focus traps in modals, `:focus-visible` styles
-50. Screen reader labels — audit icon-only buttons in admin for missing `aria-label`s
 
-**Notes for picking up an item:**
-- Items marked `(NOTE: …Lovable…)` need backend deploy through Lovable — write the code, commit, then the user prompts Lovable to apply.
-- All others are pure-frontend and ship via the standard `git push origin main` → Vercel pipeline.
-- Verify before pushing: `npm run build` clean + lint count ≤ baseline (11 errors / 9 warnings as of `0dd9e53`).
+**48. Admin mobile responsive audit**
+- What: Fix `/admin` for small screens (tables overflow, cards stack badly)
+- Why: You need to manage content from anywhere
+- Risk: Admin work is desktop-only → ops bottleneck
+- 💰 🔵 Ops capacity (your time = revenue indirectly)
+
+**49. Keyboard navigation pass**
+- What: Tab order, focus traps in modals, `:focus-visible` styles
+- Why: ADA compliance + power-user segment
+- Risk: ADA lawsuits (real risk for SaaS in 2026); lose power users
+- 💰 🟡 Compliance + segment
+
+**50. Screen reader labels (`aria-label` on icon-only buttons)**
+- What: Audit all icon-only buttons (especially admin) for missing labels
+- Why: Same as #49
+- Risk: Same
+- 💰 🟡 Compliance + segment
