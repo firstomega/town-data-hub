@@ -359,7 +359,7 @@ Deno.serve(async (req) => {
     }
 
     // Upsert into code_platform_index
-    const rows = towns
+    const rawRows = towns
       .filter((t) => t.town_name && t.base_url)
       .map((t) => ({
         state,
@@ -371,6 +371,15 @@ Deno.serve(async (req) => {
         last_indexed_at: new Date().toISOString(),
       }))
       .filter((r) => r.town_name_normalized.length > 0);
+
+    // De-dupe within the batch — Postgres rejects a single upsert that
+    // tries to touch the same conflict-target row twice. Last writer wins.
+    const dedupedMap = new Map<string, typeof rawRows[number]>();
+    for (const r of rawRows) {
+      dedupedMap.set(`${r.state}|${r.platform}|${r.town_name_normalized}`, r);
+    }
+    const rows = Array.from(dedupedMap.values());
+    const droppedDuplicates = rawRows.length - rows.length;
 
     if (!rows.length) {
       return new Response(
