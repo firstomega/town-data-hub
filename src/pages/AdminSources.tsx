@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/layouts/AppLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -53,7 +54,20 @@ function useTownSources(townSlug: string | null) {
 
 export default function AdminSources() {
   const { data: towns = [], isLoading: loadingTowns } = useAllTowns();
-  const [selectedSlug, setSelectedSlug] = useState<string>("");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialSlug = searchParams.get("slug") ?? "";
+  const [selectedSlug, setSelectedSlug] = useState<string>(initialSlug);
+  // Keep URL in sync when picker changes — admins can deep-link / share.
+  useEffect(() => {
+    if (selectedSlug) {
+      setSearchParams({ slug: selectedSlug }, { replace: true });
+    } else if (searchParams.get("slug")) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("slug");
+      setSearchParams(next, { replace: true });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedSlug]);
   const { data: sources = [], isLoading: loadingSources } = useTownSources(selectedSlug || null);
   const qc = useQueryClient();
 

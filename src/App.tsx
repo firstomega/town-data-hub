@@ -1,6 +1,6 @@
 import { lazy, Suspense } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -36,7 +36,6 @@ const TermsPage = lazy(() => import("./pages/TermsPage"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdminDataReview = lazy(() => import("./pages/AdminDataReview"));
 const AdminSources = lazy(() => import("./pages/AdminSources"));
-const AdminReviewQueue = lazy(() => import("./pages/AdminReviewQueue"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -80,7 +79,8 @@ const App = () => (
               <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
               <Route path="/admin/data-review" element={<ProtectedRoute><AdminDataReview /></ProtectedRoute>} />
               <Route path="/admin/sources" element={<ProtectedRoute><AdminSources /></ProtectedRoute>} />
-              <Route path="/admin/review-queue" element={<ProtectedRoute><AdminReviewQueue /></ProtectedRoute>} />
+              {/* /admin/review-queue is now inline on /admin. Redirect for old bookmarks. */}
+              <Route path="/admin/review-queue" element={<Navigate to="/admin" replace />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </Suspense>
