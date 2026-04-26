@@ -126,14 +126,20 @@ async function rawFetchHtml(url: string): Promise<string> {
 //   </a>
 //   <div class="codeCounty">(<county> County)</div>
 function parseGeneralCodeTextLibrary(html: string, stateCode: string): ExtractedTown[] {
-  // Slice out just the requested state's block to keep regex anchored.
-  const stateBlockRe = new RegExp(
-    `<div class="state ${stateCode}">[\\s\\S]*?(?=<div class="state [A-Z]{2}">|<\\/section>|<footer)`,
-    "i",
-  );
-  const blockMatch = html.match(stateBlockRe);
-  if (!blockMatch) return [];
-  const block = blockMatch[0];
+  // Slice out just the requested state's block. We avoid a giant lazy
+  // regex (catastrophic backtracking on 2MB input) by doing string
+  // index math: find the state's opening marker, then find the next
+  // state-block opener and slice between them.
+  const startMarker = `<div class="state ${stateCode}">`;
+  const startIdx = html.indexOf(startMarker);
+  if (startIdx === -1) return [];
+
+  // Look for the next "<div class=\"state XX\">" after our start.
+  const nextStateRe = /<div class="state [A-Z]{2}">/g;
+  nextStateRe.lastIndex = startIdx + startMarker.length;
+  const nextMatch = nextStateRe.exec(html);
+  const endIdx = nextMatch ? nextMatch.index : html.length;
+  const block = html.slice(startIdx, endIdx);
 
   const itemRe =
     /<a class="codeLink"\s+href="(https?:\/\/ecode360\.com\/[^"]+)"[^>]*>\s*([^<]+?)\s*<\/a>/g;
