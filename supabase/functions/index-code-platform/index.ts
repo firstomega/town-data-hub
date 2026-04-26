@@ -297,11 +297,23 @@ Deno.serve(async (req) => {
     const stateName = STATE_NAMES[state] ?? state;
     const directoryUrl = PLATFORM_DIRECTORY_URL[platform](state, stateName);
 
-    console.log(`[index-code-platform] scraping ${directoryUrl}`);
-    const markdown = await firecrawlScrape(directoryUrl);
+    let towns: ExtractedTown[];
+    let extractionMethod: "deterministic" | "ai" = "ai";
 
-    console.log(`[index-code-platform] AI extract from ${markdown.length} chars`);
-    const towns = await aiExtractDirectory(platform, state, directoryUrl, markdown);
+    if (platform === "ecode360") {
+      // Deterministic path: General Code's text-library page lists every
+      // eCode360 town in stable HTML. No Firecrawl, no AI, no cost.
+      console.log(`[index-code-platform] deterministic fetch ${directoryUrl}`);
+      const html = await rawFetchHtml(directoryUrl);
+      console.log(`[index-code-platform] parsing ${html.length} chars for state ${state}`);
+      towns = parseGeneralCodeTextLibrary(html, state);
+      extractionMethod = "deterministic";
+    } else {
+      console.log(`[index-code-platform] scraping ${directoryUrl}`);
+      const markdown = await firecrawlScrape(directoryUrl);
+      console.log(`[index-code-platform] AI extract from ${markdown.length} chars`);
+      towns = await aiExtractDirectory(platform, state, directoryUrl, markdown);
+    }
 
     if (!towns.length) {
       return new Response(
@@ -310,6 +322,8 @@ Deno.serve(async (req) => {
           state,
           platform,
           indexed: 0,
+          method: extractionMethod,
+          directory_url: directoryUrl,
           message: "No towns extracted. Page may have changed structure or returned no usable content.",
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -351,6 +365,8 @@ Deno.serve(async (req) => {
         state,
         platform,
         indexed: rows.length,
+        method: extractionMethod,
+        directory_url: directoryUrl,
         sample: rows.slice(0, 5).map((r) => ({
           town_name: r.town_name,
           town_name_normalized: r.town_name_normalized,
