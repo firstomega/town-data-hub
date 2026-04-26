@@ -383,7 +383,7 @@ Deno.serve(async (req) => {
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
-    const msg = e instanceof Error ? e.message : "Unknown error";
+    const msg = e instanceof Error ? `${e.message}\n${e.stack ?? ""}` : `Non-Error thrown: ${JSON.stringify(e)}`;
     console.error("[index-code-platform] error:", msg);
     return new Response(JSON.stringify({ error: msg }), {
       status: 500,
