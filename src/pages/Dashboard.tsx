@@ -238,7 +238,7 @@ export default function Dashboard() {
               ) : savedTowns.length === 0 ? (
                 <Card><CardContent padding="lg" className="text-center">
                   <p className="text-sm text-muted-foreground mb-3">You haven't saved any towns yet.</p>
-                  <Link to="/onboarding"><Button size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground">Add your first town</Button></Link>
+                  <Link to="/onboarding"><Button size="sm" className="bg-accent hover:bg-accent/90 text-accent-foreground">Add Your First Town</Button></Link>
                 </CardContent></Card>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -279,7 +279,7 @@ export default function Dashboard() {
               ) : projects.length === 0 ? (
                 <Card><CardContent padding="lg" className="text-center">
                   <p className="text-sm text-muted-foreground mb-3">No projects yet. Start one with a checklist.</p>
-                  <Link to="/checklist"><Button size="sm" variant="outline">Create a checklist</Button></Link>
+                  <Link to="/checklist"><Button size="sm" variant="outline">Create a Checklist</Button></Link>
                 </CardContent></Card>
               ) : (
                 <Card>

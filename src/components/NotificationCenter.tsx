@@ -74,7 +74,7 @@ export function NotificationCenter() {
       <DropdownMenuContent align="end" className="w-80 p-0">
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <h3 className="text-sm font-semibold">Notifications</h3>
-          <Button variant="ghost" size="sm" className="text-xs text-accent h-auto py-1">Mark all read</Button>
+          <Button variant="ghost" size="sm" className="text-xs text-accent h-auto py-1">Mark All Read</Button>
         </div>
         <div className="max-h-80 overflow-y-auto">
           {notifications.map((n) => (
