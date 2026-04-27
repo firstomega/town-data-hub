@@ -10,7 +10,6 @@ import { z } from "zod";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable";
 import { useAuth } from "@/hooks/useAuth";
 
 const emailSchema = z.string().trim().email("Enter a valid email").max(255);
@@ -68,10 +67,15 @@ export default function LoginPage() {
   };
 
   const handleGoogle = async () => {
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: `${window.location.origin}/dashboard`,
+    // Use Supabase's native OAuth flow directly. The previous code went
+    // through Lovable's @lovable.dev/cloud-auth-js wrapper, which routes
+    // through `/~oauth/initiate` — a path that only exists on Lovable's
+    // preview infrastructure and 404s on Vercel.
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: `${window.location.origin}/dashboard` },
     });
-    if (result.error) toast.error(result.error.message ?? "Google sign-in failed");
+    if (error) toast.error(error.message ?? "Google sign-in failed");
   };
 
   const handleForgotPassword = async () => {
