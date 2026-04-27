@@ -335,15 +335,21 @@ function useBulkIngest() {
     // few minutes total.
     for (const t of targets) {
       try {
-        const { error: invokeErr } = await supabase.functions.invoke("ingest-town-data", {
+        const { data, error: invokeErr } = await supabase.functions.invoke("ingest-town-data", {
           body: {
             town_slug: t.town_slug,
             ingestion_type: t.ingestion_type,
             source_url: t.source_url,
           },
         });
+        // Genuine 5xx / network error: edge function code bug or auth issue.
         if (invokeErr) {
           failures.push(`${t.town_slug}/${t.ingestion_type}: ${invokeErr.message}`);
+        } else if (data && (data as { ok?: boolean }).ok === false) {
+          // Handled failure: scrape timeout, AI gave nothing, etc. Run row
+          // already marked failed and source marked used by the edge fn.
+          const errMsg = (data as { error?: string }).error ?? "ingestion failed";
+          failures.push(`${t.town_slug}/${t.ingestion_type}: ${errMsg}`);
         }
       } catch (e) {
         failures.push(

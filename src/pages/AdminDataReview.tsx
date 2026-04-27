@@ -144,10 +144,16 @@ function IngestForm() {
         body: { town_slug: townSlug, ingestion_type: type, source_url: url, source_doc: doc || null },
       });
       if (error) throw error;
-      const d = data as { rows_added?: number };
-      toast.success(`Ingested ${d?.rows_added ?? 0} rows. Review below.`);
-      setUrl("");
-      setDoc("");
+      // Edge function returns 200 even on handled failures (timeout, empty AI response).
+      // Distinguish via the `ok` field.
+      const d = data as { ok?: boolean; rows_added?: number; error?: string };
+      if (d?.ok === false) {
+        toast.error(d.error ?? "Ingestion failed");
+      } else {
+        toast.success(`Ingested ${d?.rows_added ?? 0} rows. Review below.`);
+        setUrl("");
+        setDoc("");
+      }
       qc.invalidateQueries({ queryKey: ["extracted", type] });
       qc.invalidateQueries({ queryKey: ["ingestion-runs"] });
     } catch (e) {

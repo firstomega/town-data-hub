@@ -341,16 +341,25 @@ Deno.serve(async (req) => {
       // Also mark the source as attempted so it's not endlessly retried in bulk runs.
       // Failed sources will show in the per-row review with the error_message; if the
       // admin wants to retry one, they can click "Re-discover" or rerun via /admin/data-review.
-      await admin
+      const { error: usedErr } = await admin
         .from("town_sources")
         .update({ last_used_at: new Date().toISOString() })
         .eq("town_slug", town_slug)
         .eq("ingestion_type", ingestion_type)
-        .eq("source_url", source_url)
-        .then(({ error }) => {
-          if (error) console.warn(`[ingest-town-data] could not mark failed source as used: ${error.message}`);
-        });
-      throw innerErr;
+        .eq("source_url", source_url);
+      if (usedErr) {
+        console.warn(`[ingest-town-data] could not mark failed source as used: ${usedErr.message}`);
+      }
+      // Return 200 with ok: false. The error was *handled* (run marked
+      // failed, source marked used) — surfacing it as a 500 makes Lovable's
+      // monitoring panel cry wolf on every external timeout. Genuine
+      // unexpected errors (auth, env config) still 500 via the outer catch
+      // because they happen BEFORE we open the run record.
+      console.warn(`[ingest-town-data] handled failure for ${town_slug}/${ingestion_type}: ${msg}`);
+      return new Response(
+        JSON.stringify({ ok: false, run_id: run.id, error: msg }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : "Unknown error";
