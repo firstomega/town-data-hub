@@ -118,9 +118,8 @@ const SYSTEM_PROMPTS: Record<IngestType, string> = {
     "You extract municipal department / board contact info from town websites. One row per department (Building, Planning, Zoning Board of Adjustment, Construction, etc.). Only include fields that appear in the source.",
 };
 
-async function firecrawlScrape(url: string): Promise<string> {
-  const apiKey = Deno.env.get("FIRECRAWL_API_KEY");
-  if (!apiKey) throw new Error("FIRECRAWL_API_KEY is not configured");
+// Single Firecrawl scrape attempt. Returns the page markdown on success.
+async function firecrawlScrapeOnce(url: string, apiKey: string): Promise<string> {
   const resp = await fetch("https://api.firecrawl.dev/v2/scrape", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
@@ -131,6 +130,31 @@ async function firecrawlScrape(url: string): Promise<string> {
   const md = data.data?.markdown ?? data.markdown;
   if (!md) throw new Error("Firecrawl returned no markdown");
   return md as string;
+}
+
+// Wrapper: retries once on transient errors (network timeouts, 5xx, ERR_TIMED_OUT)
+// after a short backoff. Permanent errors (4xx that aren't 429) fail fast.
+async function firecrawlScrape(url: string): Promise<string> {
+  const apiKey = Deno.env.get("FIRECRAWL_API_KEY");
+  if (!apiKey) throw new Error("FIRECRAWL_API_KEY is not configured");
+
+  try {
+    return await firecrawlScrapeOnce(url, apiKey);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const isTransient =
+      msg.includes("ERR_TIMED_OUT") ||
+      msg.includes("Firecrawl 5") ||  // any 5xx
+      msg.includes("Firecrawl 429") || // rate limit
+      msg.includes("timed out") ||
+      msg.includes("ECONNRESET") ||
+      msg.includes("ETIMEDOUT");
+    if (!isTransient) throw err;
+
+    console.warn(`[ingest-town-data] transient Firecrawl error for ${url}, retrying once after 3s: ${msg}`);
+    await new Promise((r) => setTimeout(r, 3000));
+    return await firecrawlScrapeOnce(url, apiKey);
+  }
 }
 
 async function aiExtract(type: IngestType, sourceMarkdown: string, sourceUrl: string) {
@@ -168,9 +192,32 @@ async function aiExtract(type: IngestType, sourceMarkdown: string, sourceUrl: st
   const data = await resp.json();
   if (!resp.ok) throw new Error(`Lovable AI ${resp.status}: ${JSON.stringify(data)}`);
   const call = data.choices?.[0]?.message?.tool_calls?.[0];
-  if (!call) throw new Error("AI returned no tool call");
-  const parsed = JSON.parse(call.function.arguments);
-  return parsed.rows ?? [];
+  if (!call) {
+    // AI declined to call the tool — happens occasionally when the page
+    // doesn't actually contain extractable data. Return zero rows; the
+    // ingestion_runs row will still record the attempt as "completed
+    // with 0 rows" so the source is marked as scraped (last_used_at)
+    // and won't be re-attempted on the next bulk run.
+    console.warn("[ingest-town-data] AI returned no tool call — treating as 0 extracted rows");
+    return [];
+  }
+  const argsRaw = call.function?.arguments;
+  if (!argsRaw || typeof argsRaw !== "string" || !argsRaw.trim()) {
+    console.warn("[ingest-town-data] AI tool call had empty arguments — treating as 0 extracted rows");
+    return [];
+  }
+  let parsed: { rows?: unknown[] };
+  try {
+    parsed = JSON.parse(argsRaw) as { rows?: unknown[] };
+  } catch (e) {
+    // Truncated/malformed JSON from the AI. Don't crash the whole ingest —
+    // log and treat as zero rows so the run completes cleanly.
+    console.warn(
+      `[ingest-town-data] AI returned malformed JSON tool args: ${e instanceof Error ? e.message : String(e)}. First 200 chars: ${argsRaw.slice(0, 200)}`,
+    );
+    return [];
+  }
+  return Array.isArray(parsed.rows) ? parsed.rows : [];
 }
 
 Deno.serve(async (req) => {
@@ -269,6 +316,19 @@ Deno.serve(async (req) => {
         })
         .eq("id", run.id);
 
+      // Mark the source as used so bulk-ingest doesn't re-process it.
+      // Match on (town_slug, ingestion_type, source_url) — the natural key.
+      // Best-effort: don't fail the whole run if this update errors.
+      const { error: usedErr } = await admin
+        .from("town_sources")
+        .update({ last_used_at: new Date().toISOString() })
+        .eq("town_slug", town_slug)
+        .eq("ingestion_type", ingestion_type)
+        .eq("source_url", source_url);
+      if (usedErr) {
+        console.warn(`[ingest-town-data] could not update town_sources.last_used_at: ${usedErr.message}`);
+      }
+
       return new Response(JSON.stringify({ ok: true, run_id: run.id, rows_added: inserted, preview: rows.slice(0, 3) }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
@@ -278,6 +338,18 @@ Deno.serve(async (req) => {
         .from("ingestion_runs")
         .update({ status: "failed", finished_at: new Date().toISOString(), error_message: msg })
         .eq("id", run.id);
+      // Also mark the source as attempted so it's not endlessly retried in bulk runs.
+      // Failed sources will show in the per-row review with the error_message; if the
+      // admin wants to retry one, they can click "Re-discover" or rerun via /admin/data-review.
+      await admin
+        .from("town_sources")
+        .update({ last_used_at: new Date().toISOString() })
+        .eq("town_slug", town_slug)
+        .eq("ingestion_type", ingestion_type)
+        .eq("source_url", source_url)
+        .then(({ error }) => {
+          if (error) console.warn(`[ingest-town-data] could not mark failed source as used: ${error.message}`);
+        });
       throw innerErr;
     }
   } catch (err) {
