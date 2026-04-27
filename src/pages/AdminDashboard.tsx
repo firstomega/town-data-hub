@@ -301,6 +301,107 @@ function useBulkDiscover() {
   return { progress, run };
 }
 
+// Bulk-ingest: for every verified town_sources row that hasn't been
+// scraped yet (last_used_at IS NULL), invoke ingest-town-data. This is
+// the manual stepping stone toward Phase 3's pg_cron auto-ingest.
+function useBulkIngest() {
+  const qc = useQueryClient();
+  const [progress, setProgress] = useState<BulkProgress>(null);
+
+  const run = async () => {
+    const { data: rows, error } = await supabase
+      .from("town_sources")
+      .select("id, town_slug, ingestion_type, source_url")
+      .not("verified_at", "is", null)
+      .is("last_used_at", null)
+      .order("town_slug");
+
+    if (error) {
+      toast.error(error.message);
+      return;
+    }
+    const targets = rows ?? [];
+
+    if (!targets.length) {
+      toast.success("Every verified source has already been ingested. Nothing to do.");
+      return;
+    }
+
+    setProgress({ running: true, completed: 0, total: targets.length, failures: [] });
+    const failures: string[] = [];
+
+    // Sequential — Firecrawl + Lovable AI both have rate limits, and
+    // each ingest takes ~5–10s anyway. Concurrency would only save a
+    // few minutes total.
+    for (const t of targets) {
+      try {
+        const { error: invokeErr } = await supabase.functions.invoke("ingest-town-data", {
+          body: {
+            town_slug: t.town_slug,
+            ingestion_type: t.ingestion_type,
+            source_url: t.source_url,
+          },
+        });
+        if (invokeErr) {
+          failures.push(`${t.town_slug}/${t.ingestion_type}: ${invokeErr.message}`);
+        }
+      } catch (e) {
+        failures.push(
+          `${t.town_slug}/${t.ingestion_type}: ${e instanceof Error ? e.message : "unknown error"}`,
+        );
+      }
+      setProgress((prev) => prev ? { ...prev, completed: prev.completed + 1, failures } : prev);
+    }
+
+    setProgress((prev) => prev ? { ...prev, running: false, failures } : prev);
+    toast.success(
+      `Ingestion complete — ${targets.length - failures.length}/${targets.length} succeeded${
+        failures.length ? `, ${failures.length} failed` : ""
+      }`,
+    );
+    qc.invalidateQueries({ queryKey: ["admin-stats"] });
+    qc.invalidateQueries({ queryKey: ["admin-pending-extracted"] });
+    qc.invalidateQueries({ queryKey: ["admin-town-completeness"] });
+    qc.invalidateQueries({ queryKey: ["admin-recent-runs"] });
+    qc.invalidateQueries({ queryKey: ["admin-review-queue"] });
+  };
+
+  return { progress, run };
+}
+
+// Lightweight slug → display-name lookup (e.g. 'cliffside-park' → 'Cliffside Park').
+// We cache it as React Query state so multiple admin views share one fetch.
+function useTownNameLookup() {
+  return useQuery({
+    queryKey: ["town-name-lookup"],
+    queryFn: async () => {
+      const { data, error } = await supabase.from("towns").select("slug, name");
+      if (error) throw error;
+      const map: Record<string, string> = {};
+      for (const row of data ?? []) map[row.slug] = row.name;
+      return map;
+    },
+    staleTime: 60_000 * 10, // names don't change often
+  });
+}
+
+// Count of verified-but-not-yet-ingested town_sources rows. Drives the
+// Bulk Ingest button's enabled state + label.
+function usePendingIngest() {
+  return useQuery({
+    queryKey: ["admin-pending-ingest"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("town_sources")
+        .select("id", { count: "exact", head: true })
+        .not("verified_at", "is", null)
+        .is("last_used_at", null);
+      if (error) throw error;
+      return count ?? 0;
+    },
+  });
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Component
 // ─────────────────────────────────────────────────────────────────────────────
@@ -417,6 +518,10 @@ export default function AdminDashboard() {
   });
 
   const { progress: bulkProgress, run: runBulkDiscover } = useBulkDiscover();
+  const { progress: ingestProgress, run: runBulkIngest } = useBulkIngest();
+  const { data: pendingIngestCount = 0 } = usePendingIngest();
+  const { data: townNameMap = {} } = useTownNameLookup();
+  const anyBulkRunning = bulkProgress?.running || ingestProgress?.running;
 
   return (
     <AppLayout showSearch contained={false}>
@@ -469,33 +574,72 @@ export default function AdminDashboard() {
         {/* Bulk actions */}
         <Card className="mb-6 border-accent/30">
           <CardContent padding="sm">
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 mb-3">
               <Zap className="h-5 w-5 text-accent" />
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm">Bulk operations</p>
-                <p className="text-xs text-muted-foreground">
-                  {placeholderCount > 0
-                    ? `${placeholderCount} town${placeholderCount === 1 ? "" : "s"} still placeholder. Discover sources for all of them at once.`
-                    : "All towns have sources. Run ingest from Data Review to actually scrape data."}
-                </p>
+              <p className="font-semibold text-sm">Bulk operations</p>
+              <p className="text-xs text-muted-foreground hidden md:block ml-auto">
+                Pipeline: <span className="font-mono">discover → review → ingest → publish</span>
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-3">
+              {/* Step 1: bulk discover */}
+              <div className="flex items-start gap-3 p-3 rounded border bg-card">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-foreground mb-0.5">1. Discover sources</p>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    {placeholderCount > 0
+                      ? `${placeholderCount} town${placeholderCount === 1 ? "" : "s"} have no sources yet.`
+                      : "All towns have sources."}
+                  </p>
+                  <Button
+                    size="sm"
+                    onClick={runBulkDiscover}
+                    disabled={anyBulkRunning || placeholderCount === 0}
+                    className="gap-2"
+                  >
+                    {bulkProgress?.running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
+                    Discover for {placeholderCount} town{placeholderCount === 1 ? "" : "s"}
+                  </Button>
+                </div>
               </div>
-              <Button
-                size="sm"
-                onClick={runBulkDiscover}
-                disabled={bulkProgress?.running || placeholderCount === 0}
-                className="gap-2"
-              >
-                {bulkProgress?.running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
-                Discover sources for all placeholder towns
-              </Button>
+
+              {/* Step 2: bulk ingest */}
+              <div className="flex items-start gap-3 p-3 rounded border bg-card">
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs font-semibold text-foreground mb-0.5">2. Ingest verified sources</p>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    {pendingIngestCount > 0
+                      ? `${pendingIngestCount} verified URL${pendingIngestCount === 1 ? "" : "s"} not yet scraped.`
+                      : "No verified URLs awaiting ingestion."}
+                  </p>
+                  <Button
+                    size="sm"
+                    onClick={runBulkIngest}
+                    disabled={anyBulkRunning || pendingIngestCount === 0}
+                    className="gap-2"
+                  >
+                    {ingestProgress?.running ? <Loader2 className="h-4 w-4 animate-spin" /> : <Database className="h-4 w-4" />}
+                    Ingest {pendingIngestCount} source{pendingIngestCount === 1 ? "" : "s"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-3 pt-3 border-t flex items-center justify-between gap-2">
+              <p className="text-micro text-muted-foreground">
+                Future Phase 3: pg_cron will auto-ingest verified sources on a monthly schedule (no manual click needed).
+              </p>
               <Link to="/admin/data-review">
-                <Button size="sm" variant="outline" className="gap-2">
-                  <Database className="h-4 w-4" /> Open advanced data review
+                <Button size="sm" variant="ghost" className="gap-1.5 text-xs">
+                  <Database className="h-3.5 w-3.5" /> Per-row review
                 </Button>
               </Link>
             </div>
+
+            {/* Progress indicators */}
             {bulkProgress && (
-              <div className="mt-3">
+              <div className="mt-3 p-3 bg-secondary/30 rounded">
                 <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
                   <span>
                     {bulkProgress.running ? "Discovering" : "Discovery finished"}: {bulkProgress.completed} of {bulkProgress.total}
@@ -509,6 +653,27 @@ export default function AdminDashboard() {
                     <summary className="cursor-pointer">{bulkProgress.failures.length} failures (click to expand)</summary>
                     <ul className="list-disc ml-5 mt-1">
                       {bulkProgress.failures.map((f, i) => <li key={i}>{f}</li>)}
+                    </ul>
+                  </details>
+                )}
+              </div>
+            )}
+
+            {ingestProgress && (
+              <div className="mt-3 p-3 bg-secondary/30 rounded">
+                <div className="flex items-center justify-between text-xs text-muted-foreground mb-1">
+                  <span>
+                    {ingestProgress.running ? "Ingesting" : "Ingestion finished"}: {ingestProgress.completed} of {ingestProgress.total}
+                    {ingestProgress.failures.length > 0 ? ` · ${ingestProgress.failures.length} failed` : ""}
+                  </span>
+                  <span>{Math.round((ingestProgress.completed / ingestProgress.total) * 100)}%</span>
+                </div>
+                <Progress value={(ingestProgress.completed / ingestProgress.total) * 100} className="h-2" />
+                {!ingestProgress.running && ingestProgress.failures.length > 0 && (
+                  <details className="text-xs text-destructive mt-2">
+                    <summary className="cursor-pointer">{ingestProgress.failures.length} failures (click to expand)</summary>
+                    <ul className="list-disc ml-5 mt-1">
+                      {ingestProgress.failures.map((f, i) => <li key={i}>{f}</li>)}
                     </ul>
                   </details>
                 )}
@@ -584,6 +749,7 @@ export default function AdminDashboard() {
                       <ReviewItem
                         key={row.id}
                         row={row}
+                        townName={townNameMap[row.town_slug]}
                         onApprove={() => approve.mutate(row.id)}
                         onReplace={(url) => replaceUrl.mutate({ id: row.id, source_url: url })}
                         onReject={() => reject.mutate(row.id)}
@@ -785,6 +951,7 @@ export default function AdminDashboard() {
 
 function ReviewItem({
   row,
+  townName,
   onApprove,
   onReplace,
   onReject,
@@ -792,6 +959,7 @@ function ReviewItem({
   busy,
 }: {
   row: QueueRow;
+  townName?: string;
   onApprove: () => void;
   onReplace: (url: string) => void;
   onReject: () => void;
@@ -801,13 +969,15 @@ function ReviewItem({
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(row.source_url);
   const checks = useMemo(() => autoChecksFor(row), [row]);
+  // Friendly display name (e.g. "Cliffside Park") with the slug as small caps for technical reference.
+  const displayTown = townName ?? row.town_slug;
 
   return (
     <div className="p-4 hover:bg-secondary/20 transition-colors">
       <div className="flex items-start justify-between gap-4 mb-2">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <Badge variant="secondary" className="text-micro capitalize">{row.town_slug}</Badge>
+            <Badge variant="secondary" className="text-micro">{displayTown}</Badge>
             <Badge variant="outline" className="text-micro capitalize">{row.ingestion_type}</Badge>
             <ConfidenceBadge confidence={row.discovery_confidence} method={row.discovery_method} />
             <span className="text-micro text-muted-foreground">
