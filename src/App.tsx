@@ -33,6 +33,7 @@ const FeasibilityCheck = lazy(() => import("./pages/FeasibilityCheck"));
 const GlossaryPage = lazy(() => import("./pages/GlossaryPage"));
 const ProjectDetail = lazy(() => import("./pages/ProjectDetail"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const AdminDataReview = lazy(() => import("./pages/AdminDataReview"));
 const AdminSources = lazy(() => import("./pages/AdminSources"));
@@ -76,6 +77,7 @@ const App = () => (
               <Route path="/glossary" element={<GlossaryPage />} />
               <Route path="/project/:id" element={<ProtectedRoute><ProjectDetail /></ProtectedRoute>} />
               <Route path="/terms" element={<TermsPage />} />
+              <Route path="/privacy" element={<PrivacyPage />} />
               <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
               <Route path="/admin/data-review" element={<ProtectedRoute><AdminDataReview /></ProtectedRoute>} />
               <Route path="/admin/sources" element={<ProtectedRoute><AdminSources /></ProtectedRoute>} />
